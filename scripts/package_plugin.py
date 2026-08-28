@@ -55,6 +55,10 @@ ROOT_FILES = (
     "THIRD_PARTY_LICENSES.md",
 )
 
+DOC_FILES = (
+    "docs/filter-stack.png",
+)
+
 
 def load_metadata() -> configparser.ConfigParser:
     parser = configparser.ConfigParser(interpolation=None)
@@ -86,6 +90,7 @@ def update_version(version: str) -> None:
 
 def package_files() -> list[Path]:
     files = [ROOT / relative_path for relative_path in ROOT_FILES]
+    files.extend(ROOT / relative_path for relative_path in DOC_FILES)
     files.extend(sorted((ROOT / "algorithms").glob("*.py")))
     return files
 
