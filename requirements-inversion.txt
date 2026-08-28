@@ -1,0 +1,5 @@
+# 3D inversion-only subset for manual or isolated environments.
+# The same packages are also declared in requirements.txt for QPIP discovery.
+simpeg>=0.25,<0.26
+discretize>=0.12,<0.13
+choclo>=0.3,<0.4

@@ -5,6 +5,7 @@ from qgis.core import QgsProcessingParameterNumber
 
 from .base import RasterAlgorithmBase
 from ..dependencies import import_harmonica
+from ..qgis_compat import PROCESSING_NUMBER_DOUBLE
 from ..raster_io import nodata_mask, write_geotiff
 
 
@@ -26,7 +27,7 @@ class BouguerCorrectionAlgorithm(RasterAlgorithmBase):
             QgsProcessingParameterNumber(
                 self.DENSITY_CRUST,
                 self.tr("Crust density (kg/m³)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=2670.0,
                 minValue=1.0,
             )
@@ -35,7 +36,7 @@ class BouguerCorrectionAlgorithm(RasterAlgorithmBase):
             QgsProcessingParameterNumber(
                 self.DENSITY_WATER,
                 self.tr("Water density (kg/m³)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=1040.0,
                 minValue=0.0,
             )

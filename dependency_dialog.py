@@ -14,10 +14,39 @@ from qgis.PyQt.QtWidgets import (
     QVBoxLayout,
 )
 
+from .metadata_utils import plugin_version
 
-PLUGIN_VERSION = "0.3.0"
+
+PLUGIN_VERSION = plugin_version()
 SETTINGS_KEY = "TerraWorkbench/dependencyDialogVersion"
 QPIP_URL = "https://github.com/opengisch/qpip"
+
+
+def _qt_enum(owner, scoped_name, member_name, legacy_name):
+    scoped_enum = getattr(owner, scoped_name, None)
+    if scoped_enum is not None:
+        return getattr(scoped_enum, member_name)
+    return getattr(owner, legacy_name)
+
+
+TEXT_SELECTABLE_BY_MOUSE = _qt_enum(
+    Qt,
+    "TextInteractionFlag",
+    "TextSelectableByMouse",
+    "TextSelectableByMouse",
+)
+DIALOG_CLOSE = _qt_enum(
+    QDialogButtonBox,
+    "StandardButton",
+    "Close",
+    "Close",
+)
+DIALOG_ACTION_ROLE = _qt_enum(
+    QDialogButtonBox,
+    "ButtonRole",
+    "ActionRole",
+    "ActionRole",
+)
 
 
 @dataclass(frozen=True)
@@ -28,6 +57,7 @@ class Dependency:
     import_name: str
     license_name: str
     repository: str
+    optional: bool = False
 
 
 DEPENDENCIES = (
@@ -85,6 +115,18 @@ DEPENDENCIES = (
         "BSD-3-Clause",
         "https://github.com/dask/dask",
     ),
+    Dependency(
+        "SimPEG (3D inversion)",
+        "simpeg",
+        "MIT",
+        "https://github.com/simpeg/simpeg",
+    ),
+    Dependency(
+        "discretize (3D meshes)",
+        "discretize",
+        "MIT",
+        "https://github.com/simpeg/discretize",
+    ),
 )
 
 
@@ -106,7 +148,8 @@ def _status_html(status):
         )
         rows.append(
             "<tr>"
-            f'<td><a href="{dependency.repository}">{dependency.name}</a></td>'
+            f'<td><a href="{dependency.repository}">{dependency.name}</a>'
+            f"{' — optional' if dependency.optional else ''}</td>"
             f"<td>{state}</td>"
             f"<td>{dependency.license_name}</td>"
             "</tr>"
@@ -135,7 +178,9 @@ class DependencyDialog(QDialog):
             "<p>The packages below are required by the current gravity and magnetic "
             "module. QPIP checks the active QGIS profile and offers to install missing "
             "packages. Installation starts only after user approval and is stored in "
-            "the user profile, not in the QGIS program directory.</p>"
+            "the user profile, not in the QGIS program directory. SimPEG and "
+            "discretize are optional and only needed by the 3D inversion tools; "
+            "their pinned subset is also documented in requirements-inversion.txt.</p>"
             "<table cellspacing='0' cellpadding='7' width='100%' "
             "style='border-collapse:collapse'>"
             "<tr style='background:#e9eef4;font-weight:600'>"
@@ -153,15 +198,13 @@ class DependencyDialog(QDialog):
             "installation prompt. Restart QGIS after installation."
         )
         note.setWordWrap(True)
-        note.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        note.setTextInteractionFlags(TEXT_SELECTABLE_BY_MOUSE)
         layout.addWidget(note)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Close, parent=self)
+        buttons = QDialogButtonBox(DIALOG_CLOSE, parent=self)
         qpip_button = QPushButton("Open QPIP repository", self)
-        buttons.addButton(qpip_button, QDialogButtonBox.ActionRole)
-        qpip_button.clicked.connect(
-            lambda: QDesktopServices.openUrl(QUrl(QPIP_URL))
-        )
+        buttons.addButton(qpip_button, DIALOG_ACTION_ROLE)
+        qpip_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(QPIP_URL)))
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
@@ -169,7 +212,9 @@ class DependencyDialog(QDialog):
 def show_dependency_dialog(parent=None):
     """Show once per version, or on every activation while anything is missing."""
     status = dependency_status()
-    missing = any(not installed for _, installed in status)
+    missing = any(
+        not installed and not dependency.optional for dependency, installed in status
+    )
     settings = QSettings()
     already_seen = settings.value(SETTINGS_KEY, "", type=str) == PLUGIN_VERSION
     if already_seen and not missing:

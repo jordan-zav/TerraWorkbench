@@ -4,6 +4,7 @@ import numpy as np
 from qgis.core import QgsProcessingParameterNumber
 
 from .transforms import HarmonicaTransformBase
+from ..qgis_compat import PROCESSING_NUMBER_DOUBLE
 
 
 def _components(harmonica, data):
@@ -121,7 +122,7 @@ class ResidualEnhancementAlgorithm(MagneticFilterBase):
             QgsProcessingParameterNumber(
                 self.HEIGHT,
                 self.tr("Upward-continuation distance (CRS units)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=500.0,
                 minValue=0.000001,
             )
@@ -129,9 +130,7 @@ class ResidualEnhancementAlgorithm(MagneticFilterBase):
 
     def calculate(self, harmonica, data, parameters, context):
         height = self.parameterAsDouble(parameters, self.HEIGHT, context)
-        regional = harmonica.upward_continuation(
-            data, height_displacement=height
-        )
+        regional = harmonica.upward_continuation(data, height_displacement=height)
         return data - regional
 
 
@@ -164,19 +163,34 @@ class TiltAlgorithm(MagneticFilterBase):
         return _like(data, np.degrees(np.arctan2(dz.values, thdr)))
 
 
-class Directional45Algorithm(MagneticFilterBase):
-    output_description = "45HG directional horizontal gradient"
+class DirectionalHorizontalGradientAlgorithm(MagneticFilterBase):
+    AZIMUTH = "AZIMUTH"
+    output_description = "Directional horizontal gradient"
 
     def name(self):
         return "mag_45hg"
 
     def displayName(self):
-        return self.tr("09 45HG — Directional horizontal gradient 45°")
+        return self.tr("09 HG — Directional horizontal gradient")
+
+    def initAlgorithm(self, config=None):
+        super().initAlgorithm(config)
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.AZIMUTH,
+                self.tr("Azimuth clockwise from North (degrees)"),
+                type=PROCESSING_NUMBER_DOUBLE,
+                defaultValue=45.0,
+                minValue=0.0,
+                maxValue=360.0,
+            )
+        )
 
     def calculate(self, harmonica, data, parameters, context):
         dx, dy, _ = _components(harmonica, data)
-        factor = np.sqrt(0.5)
-        return _like(data, factor * (dx.values + dy.values))
+        azimuth = np.deg2rad(self.parameterAsDouble(parameters, self.AZIMUTH, context))
+        gradient = np.sin(azimuth) * dx.values + np.cos(azimuth) * dy.values
+        return _like(data, gradient)
 
 
 class AnalyticSignalAlgorithm(MagneticFilterBase):

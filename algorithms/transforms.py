@@ -4,6 +4,7 @@ from qgis.core import QgsProcessingParameterNumber
 
 from .base import RasterAlgorithmBase
 from ..dependencies import import_harmonica
+from ..qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
 from ..raster_io import (
     restore_raster_order,
     to_regular_data_array,
@@ -57,7 +58,7 @@ class UpwardContinuationAlgorithm(HarmonicaTransformBase):
             QgsProcessingParameterNumber(
                 self.HEIGHT,
                 self.tr("Height displacement (CRS units)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=100.0,
                 minValue=0.000001,
             )
@@ -77,7 +78,7 @@ class GaussianFilterBase(HarmonicaTransformBase):
             QgsProcessingParameterNumber(
                 self.WAVELENGTH,
                 self.tr("Cutoff wavelength (CRS units)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=1000.0,
                 minValue=0.000001,
             )
@@ -136,7 +137,7 @@ class ReductionToPoleAlgorithm(HarmonicaTransformBase):
             QgsProcessingParameterNumber(
                 self.INCLINATION,
                 self.tr("Geomagnetic inclination (degrees)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=-20.0,
                 minValue=-90.0,
                 maxValue=90.0,
@@ -146,7 +147,7 @@ class ReductionToPoleAlgorithm(HarmonicaTransformBase):
             QgsProcessingParameterNumber(
                 self.DECLINATION,
                 self.tr("Geomagnetic declination (degrees)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=0.0,
                 minValue=-360.0,
                 maxValue=360.0,
@@ -156,7 +157,7 @@ class ReductionToPoleAlgorithm(HarmonicaTransformBase):
             QgsProcessingParameterNumber(
                 self.MAGNETIZATION_INCLINATION,
                 self.tr("Magnetization inclination (optional)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 optional=True,
                 minValue=-90.0,
                 maxValue=90.0,
@@ -166,7 +167,7 @@ class ReductionToPoleAlgorithm(HarmonicaTransformBase):
             QgsProcessingParameterNumber(
                 self.MAGNETIZATION_DECLINATION,
                 self.tr("Magnetization declination (optional)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 optional=True,
                 minValue=-360.0,
                 maxValue=360.0,
@@ -203,7 +204,7 @@ class DerivativeBase(HarmonicaTransformBase):
             QgsProcessingParameterNumber(
                 self.ORDER,
                 self.tr("Derivative order"),
-                type=QgsProcessingParameterNumber.Integer,
+                type=PROCESSING_NUMBER_INTEGER,
                 defaultValue=1,
                 minValue=1,
                 maxValue=5,

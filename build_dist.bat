@@ -1,35 +1,36 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
+cd /d "%~dp0"
 
-set "PLUGIN_ID=TerraWorkbench"
-set "PROJECT_ROOT=%~dp0."
-set "DIST_DIR=%~dp0dist"
+echo ============================================================
+echo   TerraWorkbench - QGIS release packager
+echo ============================================================
+echo.
 
-if not exist "%PROJECT_ROOT%\metadata.txt" (
-    echo ERROR: Run this BAT from the TerraWorkbench project root.
-    pause
-    exit /b 1
+where py.exe >nul 2>nul
+if not errorlevel 1 (
+    py.exe -3 scripts\package_plugin.py --interactive
+    set "PACKAGE_RESULT=!ERRORLEVEL!"
+    goto package_done
 )
 
-for /f "tokens=1,* delims==" %%A in ('findstr /B /I "version=" "%PROJECT_ROOT%\metadata.txt"') do set "PLUGIN_VERSION=%%B"
-if not defined PLUGIN_VERSION (
-    echo ERROR: No version was found in metadata.txt.
-    pause
-    exit /b 1
-)
-
-if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
-set "ZIP_PATH=%DIST_DIR%\%PLUGIN_ID%-%PLUGIN_VERSION%.zip"
-if exist "%ZIP_PATH%" del /Q "%ZIP_PATH%"
-
-echo Packaging %PLUGIN_ID% %PLUGIN_VERSION%...
-tar.exe -a -c -f "%ZIP_PATH%" --exclude=dist --exclude=.git --exclude=__pycache__ --exclude=tests --exclude=*.pyc --exclude=0.7 --exclude=install_update_open_qgis.bat --exclude=build_dist.bat -C "%~dp0.." "%PLUGIN_ID%"
+where python.exe >nul 2>nul
 if errorlevel 1 (
-    echo ERROR: The distribution ZIP could not be created.
-    pause
+    echo ERROR: Python 3 was not found in PATH.
     exit /b 1
 )
 
-echo DONE: %ZIP_PATH%
+python.exe scripts\package_plugin.py --interactive
+set "PACKAGE_RESULT=%ERRORLEVEL%"
+
+:package_done
+if not "!PACKAGE_RESULT!"=="0" (
+    echo.
+    echo ERROR: The release package could not be created.
+    exit /b !PACKAGE_RESULT!
+)
+
+echo.
+echo DONE: The validated ZIP is available in dist.
 endlocal
 exit /b 0

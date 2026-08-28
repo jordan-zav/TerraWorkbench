@@ -21,6 +21,24 @@ All current runtime licenses are compatible with distribution of TerraWorkbench 
 | llvmlite | 0.49.0 | BSD-2-Clause and Apache-2.0 with LLVM exception |
 | Pooch | 1.9.0 | BSD-3-Clause |
 | Dask | 2026.8.0 | BSD-3-Clause |
+| ppigrf | 2.1.0 | MIT |
+| defusedxml | 0.7.1 | Python Software Foundation License |
+
+## 3D inversion stack
+
+These packages are declared in canonical `requirements.txt` for automatic QPIP
+discovery. `requirements-inversion.txt` also lists the inversion-only subset for
+manual or isolated environments. TerraWorkbench imports them lazily so the 2D
+code paths remain isolated at runtime.
+
+| Package | Tested version | Declared license |
+|---|---:|---|
+| SimPEG | 0.25.2 | MIT |
+| discretize | 0.12.0 | MIT |
+| geoana | 0.8.1 | MIT |
+| pymatsolver | 0.4.0 | MIT |
+| libdlf | 0.3.0 | MIT |
+| Choclo | 0.3.2 | BSD-3-Clause |
 
 ## Supporting packages installed with the core
 
@@ -28,7 +46,7 @@ Joblib, threadpoolctl, fsspec, Toolz, Cloudpickle and Click declare BSD-3-Clause
 
 ## Optional future integrations
 
-PyVista, GemPy, SimPEG, pyGIMLi, empymod and UBC-GIF are not bundled or required by the current release. Each integration must receive a separate license review before distribution. UBC-GIF executables must never be redistributed; a future connector may only work with a licensed copy installed separately by the user.
+PyVista, GemPy, pyGIMLi, empymod and UBC-GIF are not bundled or required by the current release. Each integration must receive a separate license review before distribution. UBC-GIF executables must never be redistributed; a future connector may only work with a licensed copy installed separately by the user.
 
 ## Redistribution rule
 

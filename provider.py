@@ -5,6 +5,7 @@ import os
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProcessingProvider
 
+from .metadata_utils import plugin_version
 from .algorithms.bouguer import BouguerCorrectionAlgorithm
 from .algorithms.gravity_filters import (
     GravDxAlgorithm,
@@ -20,7 +21,7 @@ from .algorithms.gravity_filters import (
 )
 from .algorithms.magnetic_filters import (
     AnalyticSignalAlgorithm,
-    Directional45Algorithm,
+    DirectionalHorizontalGradientAlgorithm,
     DxAlgorithm,
     DyAlgorithm,
     Dz2Algorithm,
@@ -40,6 +41,36 @@ from .algorithms.transforms import (
     GaussianLowPassAlgorithm,
     ReductionToPoleAlgorithm,
     UpwardContinuationAlgorithm,
+)
+from .algorithms.spectral_filters import (
+    ButterworthBandPassAlgorithm,
+    ButterworthHighPassAlgorithm,
+    ButterworthLowPassAlgorithm,
+    ButterworthNotchAlgorithm,
+    CosineRolloffHighPassAlgorithm,
+    CosineRolloffLowPassAlgorithm,
+    DirectionalCosinePassAlgorithm,
+    DirectionalCosineRejectAlgorithm,
+    DownwardContinuationAlgorithm,
+    HorizontalIntegrationEastingAlgorithm,
+    HorizontalIntegrationNorthingAlgorithm,
+    IdealBandPassAlgorithm,
+    IdealBandRejectAlgorithm,
+    VerticalIntegrationAlgorithm,
+)
+from .algorithms.magnetic_transforms import (
+    FieldDirectionTransformAlgorithm,
+    ReductionToEquatorAlgorithm,
+    ReductionToPoleIgrfAlgorithm,
+)
+from .algorithms.survey_gridding import SurveyPointGriddingAlgorithm
+from .algorithms.line_leveling import CrossoverLevelingAlgorithm
+from .algorithms.microleveling import MicrolevelingAlgorithm
+from .algorithms.inversion import (
+    GravityDensityInversionAlgorithm,
+    JointGravityMagneticInversionAlgorithm,
+    MagneticSusceptibilityInversionAlgorithm,
+    MagneticVectorInversionAlgorithm,
 )
 
 
@@ -65,7 +96,7 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(ResidualEnhancementAlgorithm())
         self.addAlgorithm(ThdrAlgorithm())
         self.addAlgorithm(TiltAlgorithm())
-        self.addAlgorithm(Directional45Algorithm())
+        self.addAlgorithm(DirectionalHorizontalGradientAlgorithm())
         self.addAlgorithm(AnalyticSignalAlgorithm())
         self.addAlgorithm(TdxAlgorithm())
         self.addAlgorithm(ThetaMapAlgorithm())
@@ -77,6 +108,30 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(DerivativeEastingAlgorithm())
         self.addAlgorithm(DerivativeNorthingAlgorithm())
         self.addAlgorithm(DerivativeUpwardAlgorithm())
+        self.addAlgorithm(ButterworthLowPassAlgorithm())
+        self.addAlgorithm(ButterworthHighPassAlgorithm())
+        self.addAlgorithm(ButterworthBandPassAlgorithm())
+        self.addAlgorithm(ButterworthNotchAlgorithm())
+        self.addAlgorithm(IdealBandPassAlgorithm())
+        self.addAlgorithm(IdealBandRejectAlgorithm())
+        self.addAlgorithm(CosineRolloffLowPassAlgorithm())
+        self.addAlgorithm(CosineRolloffHighPassAlgorithm())
+        self.addAlgorithm(DirectionalCosinePassAlgorithm())
+        self.addAlgorithm(DirectionalCosineRejectAlgorithm())
+        self.addAlgorithm(DownwardContinuationAlgorithm())
+        self.addAlgorithm(HorizontalIntegrationEastingAlgorithm())
+        self.addAlgorithm(HorizontalIntegrationNorthingAlgorithm())
+        self.addAlgorithm(VerticalIntegrationAlgorithm())
+        self.addAlgorithm(ReductionToPoleIgrfAlgorithm())
+        self.addAlgorithm(ReductionToEquatorAlgorithm())
+        self.addAlgorithm(FieldDirectionTransformAlgorithm())
+        self.addAlgorithm(SurveyPointGriddingAlgorithm())
+        self.addAlgorithm(CrossoverLevelingAlgorithm())
+        self.addAlgorithm(MicrolevelingAlgorithm())
+        self.addAlgorithm(GravityDensityInversionAlgorithm())
+        self.addAlgorithm(MagneticSusceptibilityInversionAlgorithm())
+        self.addAlgorithm(MagneticVectorInversionAlgorithm())
+        self.addAlgorithm(JointGravityMagneticInversionAlgorithm())
 
     def id(self):
         return "terraworkbench"
@@ -91,4 +146,4 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         return QIcon(os.path.join(os.path.dirname(__file__), "icon.svg"))
 
     def versionInfo(self):
-        return "0.3.0"
+        return plugin_version()

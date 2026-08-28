@@ -4,6 +4,7 @@ import numpy as np
 from qgis.core import QgsProcessingParameterNumber
 
 from .transforms import HarmonicaTransformBase
+from ..qgis_compat import PROCESSING_NUMBER_DOUBLE
 
 
 def _components(harmonica, data):
@@ -119,7 +120,7 @@ class GravGaussianRegionalAlgorithm(GravityFilterBase):
             QgsProcessingParameterNumber(
                 self.WAVELENGTH,
                 self.tr("Cutoff wavelength (CRS units)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=5000.0,
                 minValue=0.000001,
             )
@@ -146,7 +147,7 @@ class GravResidualAlgorithm(GravityFilterBase):
             QgsProcessingParameterNumber(
                 self.HEIGHT,
                 self.tr("Upward-continuation distance (CRS units)"),
-                type=QgsProcessingParameterNumber.Double,
+                type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=500.0,
                 minValue=0.000001,
             )
@@ -154,9 +155,7 @@ class GravResidualAlgorithm(GravityFilterBase):
 
     def calculate(self, harmonica, data, parameters, context):
         height = self.parameterAsDouble(parameters, self.HEIGHT, context)
-        regional = harmonica.upward_continuation(
-            data, height_displacement=height
-        )
+        regional = harmonica.upward_continuation(data, height_displacement=height)
         return data - regional
 
 
