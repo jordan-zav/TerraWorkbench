@@ -1,0 +1,9 @@
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.ruff.lint]
+# Keep the CI contract explicit so Ruff default-rule changes do not create
+# platform-dependent failures. Import sorting is handled separately when the
+# plugin-wide import layout is normalized.
+select = ["E4", "E7", "E9", "F"]
