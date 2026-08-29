@@ -11,7 +11,7 @@
 
   [![Status: internal testing](https://img.shields.io/badge/status-internal%20testing-f59e0b)](#project-status)
   [![Version 0.10.1](https://img.shields.io/badge/version-0.10.1-2563eb)](metadata.txt)
-  [![QGIS 3.28+](https://img.shields.io/badge/QGIS-3.28%2B-589632?logo=qgis&logoColor=white)](https://qgis.org/)
+  [![QGIS 3.28–3.x](https://img.shields.io/badge/QGIS-3.28%E2%80%933.x-589632?logo=qgis&logoColor=white)](https://qgis.org/)
   [![Python](https://img.shields.io/badge/Python-3.9%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
   [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-0f766e)](LICENSE)
 </div>

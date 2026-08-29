@@ -117,10 +117,10 @@ def validate_source() -> list[str]:
         errors.append("plugin_dependencies must declare qpip")
     if "requirements.txt" not in general.get("about", ""):
         errors.append("about must explain the external requirements.txt dependency")
-    if general.get("qgisMaximumVersion", "").strip() == "4.99":
-        for source_name in ("dependency_dialog.py", "qgis_compat.py"):
-            if not (ROOT / source_name).is_file():
-                errors.append(f"QGIS 4 compatibility file is missing: {source_name}")
+    if general.get("qgisMaximumVersion", "").strip() != "3.99":
+        errors.append(
+            "qgisMaximumVersion must remain 3.99 until QGIS 4 runtime tests exist"
+        )
 
     for source in package_files():
         if not source.is_file():

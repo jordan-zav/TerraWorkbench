@@ -1,4 +1,6 @@
-"""Compatibility values shared by supported QGIS 3 and QGIS 4 releases."""
+"""Compatibility values shared by supported QGIS releases."""
+
+from qgis.PyQt.QtCore import QMetaType, QVariant
 
 from qgis.core import (
     Qgis,
@@ -34,3 +36,23 @@ def _processing_number_type(name):
 
 PROCESSING_NUMBER_DOUBLE = _processing_number_type("Double")
 PROCESSING_NUMBER_INTEGER = _processing_number_type("Integer")
+
+
+def _field_type(name):
+    """Return the non-deprecated field type supported by this QGIS version."""
+    if Qgis.QGIS_VERSION_INT >= 33800:
+        scoped_enum = getattr(QMetaType, "Type", QMetaType)
+        return getattr(scoped_enum, name)
+    legacy_names = {
+        "QString": "String",
+        "Double": "Double",
+        "Int": "Int",
+        "Bool": "Bool",
+    }
+    return getattr(QVariant, legacy_names[name])
+
+
+FIELD_TYPE_STRING = _field_type("QString")
+FIELD_TYPE_DOUBLE = _field_type("Double")
+FIELD_TYPE_INTEGER = _field_type("Int")
+FIELD_TYPE_BOOL = _field_type("Bool")

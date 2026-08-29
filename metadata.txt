@@ -1,7 +1,7 @@
 [general]
 name=TerraWorkbench
 qgisMinimumVersion=3.28
-qgisMaximumVersion=4.99
+qgisMaximumVersion=3.99
 description=Batch-ready geophysical processing for QGIS
 about=Provides QGIS Processing algorithms for gravity and magnetic raster data using Harmonica, IGRF-14 parameters, survey gridding, crossover leveling, microleveling, and SimPEG 3D gravity, susceptibility, MVI and joint inversion workflows. The complete runtime stack is declared in requirements.txt for QPIP installation; requirements-inversion.txt documents the inversion-only subset. QPIP checks the active profile and asks before installing anything. TerraWorkbench is an independent community plugin and is not an official Fatiando a Terra or SimPEG product.
 version=0.10.1

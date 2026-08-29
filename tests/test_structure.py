@@ -17,6 +17,8 @@ def test_metadata_declares_processing_provider():
         r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", parser["general"]["version"]
     )
     assert parser["general"]["plugin_dependencies"] == "qpip"
+    assert parser["general"]["qgismaximumversion"] == "3.99"
+    assert parser["general"]["experimental"] == "True"
     assert "requirements.txt" in parser["general"]["about"]
 
 

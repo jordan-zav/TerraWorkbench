@@ -22,10 +22,14 @@ from qgis.core import (
     QgsProcessingParameterString,
     QgsWkbTypes,
 )
-from qgis.PyQt.QtCore import QVariant
-
 from ..line_processing import residual_statistics, robust_line_corrections
-from ..qgis_compat import PROCESSING_NUMBER_DOUBLE
+from ..qgis_compat import (
+    FIELD_TYPE_BOOL,
+    FIELD_TYPE_DOUBLE,
+    FIELD_TYPE_INTEGER,
+    FIELD_TYPE_STRING,
+    PROCESSING_NUMBER_DOUBLE,
+)
 
 
 def _is_tie(value, requested):
@@ -244,8 +248,8 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
             )
 
         corrected_fields = QgsFields(source.fields())
-        corrected_fields.append(QgsField("tw_line_corr", QVariant.Double))
-        corrected_fields.append(QgsField("tw_corrected", QVariant.Double))
+        corrected_fields.append(QgsField("tw_line_corr", FIELD_TYPE_DOUBLE))
+        corrected_fields.append(QgsField("tw_corrected", FIELD_TYPE_DOUBLE))
         corrected_sink, corrected_id = self.parameterAsSink(
             parameters,
             self.CORRECTED,
@@ -256,13 +260,13 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
         )
         cross_fields = QgsFields()
         for name, variant in (
-            ("traverse", QVariant.String),
-            ("tie", QVariant.String),
-            ("trav_value", QVariant.Double),
-            ("tie_value", QVariant.Double),
-            ("res_before", QVariant.Double),
-            ("res_after", QVariant.Double),
-            ("accepted", QVariant.Bool),
+            ("traverse", FIELD_TYPE_STRING),
+            ("tie", FIELD_TYPE_STRING),
+            ("trav_value", FIELD_TYPE_DOUBLE),
+            ("tie_value", FIELD_TYPE_DOUBLE),
+            ("res_before", FIELD_TYPE_DOUBLE),
+            ("res_after", FIELD_TYPE_DOUBLE),
+            ("accepted", FIELD_TYPE_BOOL),
         ):
             cross_fields.append(QgsField(name, variant))
         cross_sink, cross_id = self.parameterAsSink(
@@ -274,9 +278,9 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
             source.sourceCrs(),
         )
         correction_fields = QgsFields()
-        correction_fields.append(QgsField("line", QVariant.String))
-        correction_fields.append(QgsField("correction", QVariant.Double))
-        correction_fields.append(QgsField("crossovers", QVariant.Int))
+        correction_fields.append(QgsField("line", FIELD_TYPE_STRING))
+        correction_fields.append(QgsField("correction", FIELD_TYPE_DOUBLE))
+        correction_fields.append(QgsField("crossovers", FIELD_TYPE_INTEGER))
         correction_sink, correction_id = self.parameterAsSink(
             parameters,
             self.CORRECTIONS,
