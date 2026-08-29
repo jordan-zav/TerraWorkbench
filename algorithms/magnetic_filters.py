@@ -23,6 +23,7 @@ def _like(data, values):
 
 class MagneticFilterBase(HarmonicaTransformBase):
     """Common metadata for the twelve MAG exploration filters."""
+    processing_domain = "MIXED GRID / FFT"
 
     def group(self):
         return self.tr("MAG exploration filters")
@@ -43,12 +44,13 @@ class MagneticFilterBase(HarmonicaTransformBase):
 
 class DxAlgorithm(MagneticFilterBase):
     output_description = "DX first horizontal derivative in easting"
+    processing_domain = "SPATIAL / FINITE DIFFERENCE"
 
     def name(self):
         return "mag_dx"
 
     def displayName(self):
-        return self.tr("01 DX — First horizontal derivative X")
+        return self.tr("01 [SPATIAL] DX — First horizontal derivative X")
 
     def calculate(self, harmonica, data, parameters, context):
         return harmonica.derivative_easting(data, order=1)
@@ -56,12 +58,13 @@ class DxAlgorithm(MagneticFilterBase):
 
 class DyAlgorithm(MagneticFilterBase):
     output_description = "DY first horizontal derivative in northing"
+    processing_domain = "SPATIAL / FINITE DIFFERENCE"
 
     def name(self):
         return "mag_dy"
 
     def displayName(self):
-        return self.tr("02 DY — First horizontal derivative Y")
+        return self.tr("02 [SPATIAL] DY — First horizontal derivative Y")
 
     def calculate(self, harmonica, data, parameters, context):
         return harmonica.derivative_northing(data, order=1)
@@ -69,12 +72,13 @@ class DyAlgorithm(MagneticFilterBase):
 
 class DzAlgorithm(MagneticFilterBase):
     output_description = "DZ first upward derivative"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
         return "mag_dz"
 
     def displayName(self):
-        return self.tr("03 DZ — First vertical derivative")
+        return self.tr("03 [FFT] DZ — First vertical derivative")
 
     def calculate(self, harmonica, data, parameters, context):
         return harmonica.derivative_upward(data, order=1)
@@ -82,39 +86,56 @@ class DzAlgorithm(MagneticFilterBase):
 
 class Dz2Algorithm(MagneticFilterBase):
     output_description = "DZ2 second upward derivative"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
         return "mag_dz2"
 
     def displayName(self):
-        return self.tr("04 DZ2 — Second vertical derivative")
+        return self.tr("04 [FFT] DZ2 — Second vertical derivative")
 
     def calculate(self, harmonica, data, parameters, context):
         return harmonica.derivative_upward(data, order=2)
 
 
-class Uc500Algorithm(MagneticFilterBase):
-    output_description = "UC500 upward continuation"
+class MagneticUpwardContinuationAlgorithm(MagneticFilterBase):
+    HEIGHT = "HEIGHT"
+    output_description = "Magnetic upward continuation"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
-        return "mag_uc500"
+        return "mag_upward_continuation"
 
     def displayName(self):
-        return self.tr("05 UC500m — Upward continuation 500 m")
+        return self.tr("05 [FFT] UC — Upward continuation (configurable)")
+
+    def initAlgorithm(self, config=None):
+        super().initAlgorithm(config)
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.HEIGHT,
+                self.tr("Upward-continuation distance (CRS units)"),
+                type=PROCESSING_NUMBER_DOUBLE,
+                defaultValue=500.0,
+                minValue=0.000001,
+            )
+        )
 
     def calculate(self, harmonica, data, parameters, context):
-        return harmonica.upward_continuation(data, height_displacement=500.0)
+        height = self.parameterAsDouble(parameters, self.HEIGHT, context)
+        return harmonica.upward_continuation(data, height_displacement=height)
 
 
 class ResidualEnhancementAlgorithm(MagneticFilterBase):
     HEIGHT = "HEIGHT"
     output_description = "RS residual enhancement"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
         return "mag_rs"
 
     def displayName(self):
-        return self.tr("06 RS — Residual enhancement")
+        return self.tr("06 [FFT] RS — Residual enhancement")
 
     def initAlgorithm(self, config=None):
         super().initAlgorithm(config)
@@ -136,15 +157,17 @@ class ResidualEnhancementAlgorithm(MagneticFilterBase):
 
 class ThdrAlgorithm(MagneticFilterBase):
     output_description = "THDR total horizontal derivative"
+    processing_domain = "SPATIAL / FINITE DIFFERENCE"
 
     def name(self):
         return "mag_thdr"
 
     def displayName(self):
-        return self.tr("07 THDR — Total horizontal derivative")
+        return self.tr("07 [SPATIAL] THDR — Total horizontal derivative")
 
     def calculate(self, harmonica, data, parameters, context):
-        dx, dy, _ = _components(harmonica, data)
+        dx = harmonica.derivative_easting(data, order=1)
+        dy = harmonica.derivative_northing(data, order=1)
         return _like(data, np.hypot(dx.values, dy.values))
 
 
@@ -155,7 +178,7 @@ class TiltAlgorithm(MagneticFilterBase):
         return "mag_tilt"
 
     def displayName(self):
-        return self.tr("08 Tilt — Tilt angle")
+        return self.tr("08 [MIXED] Tilt — Tilt angle")
 
     def calculate(self, harmonica, data, parameters, context):
         dx, dy, dz = _components(harmonica, data)
@@ -166,12 +189,13 @@ class TiltAlgorithm(MagneticFilterBase):
 class DirectionalHorizontalGradientAlgorithm(MagneticFilterBase):
     AZIMUTH = "AZIMUTH"
     output_description = "Directional horizontal gradient"
+    processing_domain = "SPATIAL / FINITE DIFFERENCE"
 
     def name(self):
-        return "mag_45hg"
+        return "mag_directional_horizontal_gradient"
 
     def displayName(self):
-        return self.tr("09 HG — Directional horizontal gradient")
+        return self.tr("09 [SPATIAL] HG — Directional horizontal gradient")
 
     def initAlgorithm(self, config=None):
         super().initAlgorithm(config)
@@ -187,7 +211,8 @@ class DirectionalHorizontalGradientAlgorithm(MagneticFilterBase):
         )
 
     def calculate(self, harmonica, data, parameters, context):
-        dx, dy, _ = _components(harmonica, data)
+        dx = harmonica.derivative_easting(data, order=1)
+        dy = harmonica.derivative_northing(data, order=1)
         azimuth = np.deg2rad(self.parameterAsDouble(parameters, self.AZIMUTH, context))
         gradient = np.sin(azimuth) * dx.values + np.cos(azimuth) * dy.values
         return _like(data, gradient)
@@ -200,7 +225,7 @@ class AnalyticSignalAlgorithm(MagneticFilterBase):
         return "mag_as"
 
     def displayName(self):
-        return self.tr("10 AS / ASA — Analytic signal amplitude")
+        return self.tr("10 [MIXED] AS / ASA — Analytic signal amplitude")
 
     def calculate(self, harmonica, data, parameters, context):
         dx, dy, dz = _components(harmonica, data)
@@ -215,7 +240,7 @@ class TdxAlgorithm(MagneticFilterBase):
         return "mag_tdx"
 
     def displayName(self):
-        return self.tr("11 TDX — Horizontal tilt angle")
+        return self.tr("11 [MIXED] TDX — Horizontal tilt angle")
 
     def calculate(self, harmonica, data, parameters, context):
         dx, dy, dz = _components(harmonica, data)
@@ -230,7 +255,7 @@ class ThetaMapAlgorithm(MagneticFilterBase):
         return "mag_theta"
 
     def displayName(self):
-        return self.tr("12 Theta — Theta angle map")
+        return self.tr("12 [MIXED] Theta — Theta angle map")
 
     def calculate(self, harmonica, data, parameters, context):
         dx, dy, dz = _components(harmonica, data)

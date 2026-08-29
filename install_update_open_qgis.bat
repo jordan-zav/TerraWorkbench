@@ -64,7 +64,7 @@ if not exist "%PLUGIN_DEST%" mkdir "%PLUGIN_DEST%"
 
 echo.
 echo [1/4] Installing or updating %PLUGIN_ID% in profile "%PROFILE_NAME%"...
-robocopy "%PLUGIN_SOURCE%" "%PLUGIN_DEST%" /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD .git __pycache__ .pytest_cache tests dist scripts /XF install_update_open_qgis.bat build_dist.bat *.pyc
+robocopy "%PLUGIN_SOURCE%" "%PLUGIN_DEST%" /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD .git __pycache__ .pytest_cache tests dist scripts local_private /XF install_update_open_qgis.bat build_dist.bat *.pyc
 set "COPY_RESULT=%ERRORLEVEL%"
 if %COPY_RESULT% GEQ 8 (
     echo ERROR: The plugin files could not be copied. Close QGIS and try again.

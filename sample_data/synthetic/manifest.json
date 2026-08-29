@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "license": "CC0-1.0",
+  "crs": "EPSG:32718",
+  "cell_size_m": 100.0,
+  "dimensions": [
+    96,
+    96
+  ],
+  "nodata": -99999.0,
+  "files": {
+    "synthetic_magnetic_anomaly.tif": {
+      "quantity": "magnetic anomaly",
+      "units": "nT"
+    },
+    "synthetic_gravity_anomaly.tif": {
+      "quantity": "gravity anomaly",
+      "units": "mGal"
+    },
+    "synthetic_dem.tif": {
+      "quantity": "elevation",
+      "units": "m"
+    },
+    "synthetic_survey_points.csv": {
+      "quantity": "sampled flight lines",
+      "columns": [
+        "easting",
+        "northing",
+        "line_id",
+        "magnetic_nt",
+        "gravity_mgal",
+        "height_m"
+      ]
+    }
+  },
+  "warning": "Synthetic educational data. Do not use for geological decisions."
+}

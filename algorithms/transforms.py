@@ -16,6 +16,7 @@ class HarmonicaTransformBase(RasterAlgorithmBase):
     """Base class for complete regular-grid transformations."""
 
     output_description = "TerraWorkbench result"
+    processing_domain = "GRID TRANSFORM"
 
     def calculate(self, harmonica, data, parameters, context):
         raise NotImplementedError
@@ -45,6 +46,7 @@ class HarmonicaTransformBase(RasterAlgorithmBase):
 class UpwardContinuationAlgorithm(HarmonicaTransformBase):
     HEIGHT = "HEIGHT"
     output_description = "Upward continued field"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
         return "upward_continuation"
@@ -90,6 +92,7 @@ class GaussianFilterBase(HarmonicaTransformBase):
 
 class GaussianLowPassAlgorithm(GaussianFilterBase):
     output_description = "Gaussian low-pass field"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
         return "gaussian_lowpass"
@@ -105,6 +108,7 @@ class GaussianLowPassAlgorithm(GaussianFilterBase):
 
 class GaussianHighPassAlgorithm(GaussianFilterBase):
     output_description = "Gaussian high-pass field"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
         return "gaussian_highpass"
@@ -124,12 +128,13 @@ class ReductionToPoleAlgorithm(HarmonicaTransformBase):
     MAGNETIZATION_INCLINATION = "MAGNETIZATION_INCLINATION"
     MAGNETIZATION_DECLINATION = "MAGNETIZATION_DECLINATION"
     output_description = "Magnetic anomaly reduced to the pole"
+    processing_domain = "FFT / HARMONICA RTP"
 
     def name(self):
         return "reduction_to_pole"
 
     def displayName(self):
-        return self.tr("Reduction to the pole")
+        return self.tr("RTP — manual Harmonica")
 
     def initAlgorithm(self, config=None):
         self.add_raster_parameters()
@@ -220,31 +225,34 @@ class DerivativeBase(HarmonicaTransformBase):
 class DerivativeEastingAlgorithm(DerivativeBase):
     derivative_function = "derivative_easting"
     output_description = "Easting derivative"
+    processing_domain = "SPATIAL / FINITE DIFFERENCE"
 
     def name(self):
         return "derivative_easting"
 
     def displayName(self):
-        return self.tr("Derivative — easting")
+        return self.tr("Derivative — easting (spatial finite difference)")
 
 
 class DerivativeNorthingAlgorithm(DerivativeBase):
     derivative_function = "derivative_northing"
     output_description = "Northing derivative"
+    processing_domain = "SPATIAL / FINITE DIFFERENCE"
 
     def name(self):
         return "derivative_northing"
 
     def displayName(self):
-        return self.tr("Derivative — northing")
+        return self.tr("Derivative — northing (spatial finite difference)")
 
 
 class DerivativeUpwardAlgorithm(DerivativeBase):
     derivative_function = "derivative_upward"
     output_description = "Upward derivative"
+    processing_domain = "FFT / HARMONICA"
 
     def name(self):
         return "derivative_upward"
 
     def displayName(self):
-        return self.tr("Derivative — upward")
+        return self.tr("Derivative — upward (FFT)")

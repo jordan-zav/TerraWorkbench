@@ -20,6 +20,7 @@ from qgis.core import (
 )
 
 from ..qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
+from ..i18n import translate
 
 
 class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
@@ -49,7 +50,7 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
         return type(self)()
 
     def tr(self, text):
-        return text
+        return translate(text)
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -214,7 +215,7 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             from scipy.spatial import cKDTree
         except ImportError as error:
             raise QgsProcessingException(
-                "SciPy is required for survey gridding. Install TerraWorkbench requirements with QPIP."
+                "SciPy is required for survey gridding. Use TerraWorkbench's built-in dependency manager."
             ) from error
         tree = cKDTree(coordinates)
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)

@@ -15,9 +15,11 @@ from ..spectral import (
     butterworth_lowpass,
     cosine_rolloff_lowpass,
     directional_cosine,
+    finish_fft_grid,
     frequency_grid,
     ideal_bandpass,
     integration_transfer,
+    prepare_fft_grid,
     stabilized_downward_continuation,
     vertical_integration_transfer,
 )
@@ -27,16 +29,73 @@ class SpectralFilterBase(RasterAlgorithmBase):
     """Base class for explicitly defined FFT transfer functions."""
 
     output_description = "TerraWorkbench spectral result"
+    processing_domain = "FFT / MAGMAP-LIKE"
+    restore_trend_default = False
+    DETREND_ORDER = "FFT_DETREND_ORDER"
+    PADDING_PERCENT = "FFT_PADDING_PERCENT"
+    TAPER_PERCENT = "FFT_TAPER_PERCENT"
+    RESTORE_TREND = "FFT_RESTORE_TREND"
 
     def group(self):
-        return self.tr("FFT spectral filters")
+        return self.tr("FFT / MAGMAP-like spectral filters")
 
     def groupId(self):
         return "fft_spectral_filters"
 
     def initAlgorithm(self, config=None):
         self.add_raster_parameters()
+        self.add_preprocessing_parameters()
         self.add_filter_parameters()
+
+    def add_preprocessing_parameters(self):
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.DETREND_ORDER,
+                self.tr("FFT detrend: -1 = none, 0 = mean, 1 = plane"),
+                type=PROCESSING_NUMBER_INTEGER,
+                defaultValue=1,
+                minValue=-1,
+                maxValue=1,
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.PADDING_PERCENT,
+                self.tr("FFT reflected padding per side (% of grid size)"),
+                type=PROCESSING_NUMBER_DOUBLE,
+                defaultValue=25.0,
+                minValue=0.0,
+                maxValue=100.0,
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.TAPER_PERCENT,
+                self.tr("FFT taper across padded margin (%)"),
+                type=PROCESSING_NUMBER_DOUBLE,
+                defaultValue=100.0,
+                minValue=0.0,
+                maxValue=100.0,
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.RESTORE_TREND,
+                self.tr("Restore removed trend: 0 = no, 1 = yes"),
+                type=PROCESSING_NUMBER_INTEGER,
+                defaultValue=1 if self.restore_trend_default else 0,
+                minValue=0,
+                maxValue=1,
+            )
+        )
+
+    def preprocessing_values(self, parameters, context):
+        return (
+            self.parameterAsInt(parameters, self.DETREND_ORDER, context),
+            self.parameterAsDouble(parameters, self.PADDING_PERCENT, context),
+            self.parameterAsDouble(parameters, self.TAPER_PERCENT, context),
+            self.parameterAsInt(parameters, self.RESTORE_TREND, context) == 1,
+        )
 
     def add_filter_parameters(self):
         pass
@@ -56,9 +115,19 @@ class SpectralFilterBase(RasterAlgorithmBase):
         easting = np.asarray(data.coords["easting"])
         spacing_northing = abs(float(northing[1] - northing[0]))
         spacing_easting = abs(float(easting[1] - easting[0]))
+        detrend, padding, taper, restore_trend = self.preprocessing_values(
+            parameters, context
+        )
+        prepared, fft_state = prepare_fft_grid(
+            data.values, detrend, padding, taper
+        )
+        feedback.pushInfo(
+            f"FFT preprocessing: detrend={detrend}, padding={padding:g}%, "
+            f"taper={taper:g}%, restore_trend={int(restore_trend)}."
+        )
         feedback.setProgress(15)
         k_east, k_north, radial = frequency_grid(
-            data.shape, spacing_northing, spacing_easting
+            prepared.shape, spacing_northing, spacing_easting
         )
         try:
             response = self.transfer(k_east, k_north, radial, parameters, context)
@@ -69,7 +138,9 @@ class SpectralFilterBase(RasterAlgorithmBase):
                 "The spectral transfer function is not finite."
             )
         feedback.setProgress(45)
-        filtered = apply_transfer(data.values, response)
+        filtered = finish_fft_grid(
+            apply_transfer(prepared, response), fft_state, restore_trend
+        )
         values = restore_raster_order(filtered, orientation)
         feedback.setProgress(85)
         output = self.output_path(parameters, context)
@@ -81,8 +152,69 @@ class SpectralFilterBase(RasterAlgorithmBase):
         return self.tr(
             "Applies an explicit two-dimensional Fourier transfer function. Input "
             "must be a complete, evenly spaced raster in a projected CRS. Wavelengths "
-            "and distances use the raster CRS units. Edge tapering is not automatic."
+            "and distances use the raster CRS units. The MAGMAP-like preprocessing "
+            "removes a mean/plane, reflect-pads the grid, tapers the padded margin, "
+            "and optionally restores the trend after inverse FFT."
         )
+
+
+class FftDerivativeBase(SpectralFilterBase):
+    ORDER = "ORDER"
+    component = None
+
+    def add_filter_parameters(self):
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.ORDER,
+                self.tr("Derivative order"),
+                type=PROCESSING_NUMBER_INTEGER,
+                defaultValue=1,
+                minValue=1,
+                maxValue=5,
+            )
+        )
+
+    def transfer(self, k_east, k_north, radial, parameters, context):
+        component = k_east if self.component == "easting" else k_north
+        return (1j * component) ** self.parameterAsInt(
+            parameters, self.ORDER, context
+        )
+
+
+class FftDerivativeEastingAlgorithm(FftDerivativeBase):
+    component = "easting"
+    output_description = "FFT easting derivative"
+
+    def name(self):
+        return "fft_derivative_easting"
+
+    def displayName(self):
+        return self.tr("Derivative — easting (FFT)")
+
+
+class FftDerivativeNorthingAlgorithm(FftDerivativeBase):
+    component = "northing"
+    output_description = "FFT northing derivative"
+
+    def name(self):
+        return "fft_derivative_northing"
+
+    def displayName(self):
+        return self.tr("Derivative — northing (FFT)")
+
+
+class FftDerivativeUpwardAlgorithm(FftDerivativeBase):
+    component = "upward"
+    output_description = "FFT upward derivative"
+
+    def name(self):
+        return "fft_derivative_upward"
+
+    def displayName(self):
+        return self.tr("Derivative — upward (FFT)")
+
+    def transfer(self, k_east, k_north, radial, parameters, context):
+        return (-radial) ** self.parameterAsInt(parameters, self.ORDER, context)
 
 
 class WavelengthOrderBase(SpectralFilterBase):
@@ -119,6 +251,7 @@ class WavelengthOrderBase(SpectralFilterBase):
 
 class ButterworthLowPassAlgorithm(WavelengthOrderBase):
     output_description = "Butterworth low-pass field"
+    restore_trend_default = True
 
     def name(self):
         return "butterworth_lowpass"
@@ -213,6 +346,7 @@ class ButterworthBandPassAlgorithm(ButterworthBandBase):
 
 class ButterworthNotchAlgorithm(ButterworthBandBase):
     output_description = "Butterworth notch field"
+    restore_trend_default = True
 
     def name(self):
         return "butterworth_notch"
@@ -252,6 +386,7 @@ class IdealBandPassAlgorithm(IdealBandBase):
 
 class IdealBandRejectAlgorithm(IdealBandBase):
     output_description = "Ideal band-reject field"
+    restore_trend_default = True
 
     def name(self):
         return "ideal_band_reject"
@@ -289,6 +424,7 @@ class CosineRolloffBase(WavelengthBandBase):
 
 class CosineRolloffLowPassAlgorithm(CosineRolloffBase):
     output_description = "Cosine roll-off low-pass field"
+    restore_trend_default = True
 
     def name(self):
         return "cosine_rolloff_lowpass"
@@ -363,6 +499,7 @@ class DirectionalCosinePassAlgorithm(DirectionalCosineBase):
 
 class DirectionalCosineRejectAlgorithm(DirectionalCosineBase):
     output_description = "Directional cosine reject field"
+    restore_trend_default = True
 
     def name(self):
         return "directional_cosine_reject"
@@ -380,6 +517,7 @@ class DownwardContinuationAlgorithm(SpectralFilterBase):
     ORDER = "ORDER"
     MAX_GAIN = "MAX_GAIN"
     output_description = "Stabilized downward-continued field"
+    restore_trend_default = True
 
     def name(self):
         return "downward_continuation"

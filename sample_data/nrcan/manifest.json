@@ -1,0 +1,20 @@
+{
+  "source_portal": "https://geophysical-data.canada.ca/portal",
+  "license": "Open Government Licence - Canada",
+  "license_url": "https://open.canada.ca/en/open-government-licence-canada",
+  "contact": "infogdc-infocdg@nrcan-rncan.gc.ca",
+  "citation": "Natural Resources Canada (2024), Canadian Airborne Geophysical Data Base, Airborne Geophysics Section, Geological Survey of Canada, Lands and Minerals Sector, Natural Resources Canada.",
+  "datasets": [
+    {
+      "name": "BC 2004 - G - Hydraulic",
+      "publication": "Geological Survey of Canada Open File 5290",
+      "source_url": "https://geoscan.nrcan.gc.ca/starweb/geoscan/servlet.starweb?path=geoscan/fulle.web&search1=R=222418"
+    }
+  ],
+  "files": [
+    {"path": "Hydraulic/BC_2004_G_Hydraulic_dem.GRD", "bytes": 41898, "sha256": "0b81caf9920e8c495ab60eb510ce77839098985deff19fcc04195d6d457c57b3"},
+    {"path": "Hydraulic/BC_2004_G_Hydraulic_dem.GRD.xml", "bytes": 9529, "sha256": "3579eb0fd62b3febaa7a3fc886b026f7386f45e51d55663c31c006b76ba2c4df"},
+    {"path": "Hydraulic/BC_2004_G_Hydraulic_mag_res.GRD", "bytes": 45307, "sha256": "155659a5d76ecd030ae3c814cfcfc0369daf83e6b3c7e0db7059d20ad42ab625"},
+    {"path": "Hydraulic/BC_2004_G_Hydraulic_mag_res.GRD.xml", "bytes": 9513, "sha256": "becb4cec6f5a796710f354d204b1ea536ab7aabf299e0d4ee4b9e687f65785c9"}
+  ]
+}

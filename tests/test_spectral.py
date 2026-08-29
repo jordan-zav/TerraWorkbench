@@ -3,6 +3,7 @@
 import numpy as np
 
 from spectral import (
+    apply_spectrum,
     apply_transfer,
     butterworth_highpass,
     butterworth_lowpass,
@@ -12,8 +13,33 @@ from spectral import (
     ideal_bandpass,
     magnetic_direction_factor,
     magnetic_field_transform,
+    finish_fft_grid,
+    prepare_fft_grid,
     stabilized_downward_continuation,
 )
+
+
+def test_magmap_style_preprocessing_restores_original_footprint_and_plane():
+    y, x = np.meshgrid(np.arange(12.0), np.arange(16.0), indexing="ij")
+    values = 10.0 + 2.0 * x - 0.5 * y + np.sin(x)
+    prepared, state = prepare_fft_grid(
+        values, detrend_order=1, padding_percent=25.0, taper_percent=100.0
+    )
+    assert prepared.shape == (18, 24)
+    restored = finish_fft_grid(prepared, state, restore_trend=True)
+    assert np.allclose(restored, values)
+    assert np.allclose(prepared[[0, -1], :], 0.0)
+    assert np.allclose(prepared[:, [0, -1]], 0.0)
+
+
+def test_existing_spectrum_can_be_reused_for_combined_filters():
+    rng = np.random.default_rng(42)
+    values = rng.normal(size=(16, 16))
+    _east, _north, radial = frequency_grid(values.shape, 100.0, 100.0)
+    response = butterworth_lowpass(radial, 1000.0, 4)
+    expected = apply_transfer(values, response)
+    actual = apply_spectrum(np.fft.fft2(values), response)
+    assert np.allclose(actual, expected)
 
 
 def test_magnetic_transform_is_identity_when_target_matches_source():

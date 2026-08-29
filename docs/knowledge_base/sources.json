@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-08-29",
+  "policy": "Reference links are for study and numerical comparison. Reuse requires a separate license and attribution review.",
+  "sources": [
+    {"id":"harmonica","url":"https://github.com/fatiando/harmonica","license":"BSD-3-Clause","roles":["gravity","magnetics","filters","forward","equivalent-sources","euler","io-grd"]},
+    {"id":"verde","url":"https://github.com/fatiando/verde","license":"BSD-3-Clause","roles":["gridding","spatial-validation","trend"]},
+    {"id":"boule","url":"https://github.com/fatiando/boule","license":"BSD-3-Clause","roles":["ellipsoids","normal-gravity","geodesy"]},
+    {"id":"choclo","url":"https://github.com/fatiando/choclo","license":"BSD-3-Clause","roles":["gravity-kernels","magnetic-kernels","forward"]},
+    {"id":"xrft","url":"https://github.com/xgcm/xrft","license":"MIT","roles":["fft","xarray","frequency-coordinates"]},
+    {"id":"gmt","url":"https://github.com/GenericMappingTools/gmt","license":"LGPL-3.0-or-later","roles":["grid-processing","fft","gravity","magnetics"]},
+    {"id":"pygmt","url":"https://github.com/GenericMappingTools/pygmt","license":"BSD-3-Clause","roles":["gmt-python","grids","visualization"]},
+    {"id":"pygmi","url":"https://github.com/Patrick-Cole/pygmi","license":"GPL-3.0","roles":["gravity","magnetics","gui","forward","raster"]},
+    {"id":"sgtool","url":"https://github.com/swaxi/SGTool","license":"MIT","roles":["qgis-plugin","potential-fields","filters","pseudogravity"]},
+    {"id":"simpeg","url":"https://github.com/simpeg/simpeg","license":"MIT","roles":["gravity-inversion","magnetic-inversion","mvi","joint-inversion"]},
+    {"id":"discretize","url":"https://github.com/simpeg/discretize","license":"MIT","roles":["meshes","operators","vtk"]},
+    {"id":"geoana","url":"https://github.com/simpeg/geoana","license":"MIT","roles":["analytic-solutions","synthetic-tests"]},
+    {"id":"pygimli","url":"https://github.com/gimli-org/pyGIMLi","license":"Apache-2.0","roles":["inversion","joint-inversion","fem","fvm"]},
+    {"id":"euler-inversion","url":"https://github.com/compgeolab/euler-inversion","license":"CC-BY-4.0","roles":["source-location","euler","reproducible-research"]},
+    {"id":"pynoddy","url":"https://github.com/cgre-aachen/pynoddy","license":"GPL-2.0","roles":["synthetic-geology","forward-models"]},
+    {"id":"ppigrf","url":"https://github.com/IAGA-VMOD/ppigrf","license":"MIT","roles":["igrf-14","main-field"]},
+    {"id":"gdal","url":"https://github.com/OSGeo/gdal","license":"MIT","roles":["raster-io","vector-io","metadata","filegdb"]},
+    {"id":"rasterio","url":"https://github.com/rasterio/rasterio","license":"BSD-3-Clause","roles":["raster-io","geotransform","nodata"]},
+    {"id":"qgis","url":"https://github.com/qgis/QGIS","license":"GPL-2.0","roles":["host","processing","gui","tasks"]},
+    {"id":"gempy","url":"https://github.com/gempy-project/gempy","license":"EUPL-1.2","roles":["geological-modeling","stochastic-models"]},
+    {"id":"loopstructural","url":"https://github.com/Loop3D/LoopStructural","license":"MIT","roles":["structural-modeling","geological-constraints"]},
+    {"id":"awesome-open-geoscience","url":"https://github.com/softwareunderground/awesome-open-geoscience","license":"CC0-1.0","roles":["discovery","catalog"]}
+  ]
+}

@@ -1,7 +1,6 @@
-"""Dependency status dialog shown when the plugin is activated."""
+"""TerraWorkbench's embedded, QPIP-derived dependency manager dialog."""
 
-from dataclasses import dataclass
-import importlib.util
+from __future__ import annotations
 
 from qgis.PyQt.QtCore import QSettings, Qt, QUrl
 from qgis.PyQt.QtGui import QDesktopServices
@@ -14,12 +13,27 @@ from qgis.PyQt.QtWidgets import (
     QVBoxLayout,
 )
 
+from .embedded_qpip import (
+    dependency_directory,
+    dependency_status,
+    install_requirements,
+)
 from .metadata_utils import plugin_version
+from .i18n import text
 
 
 PLUGIN_VERSION = plugin_version()
 SETTINGS_KEY = "TerraWorkbench/dependencyDialogVersion"
 QPIP_URL = "https://github.com/opengisch/qpip"
+
+DEPENDENCY_DETAILS = {
+    "harmonica": ("BSD-3-Clause", "https://github.com/fatiando/harmonica"),
+    "ppigrf": ("MIT", "https://github.com/IAGA-VMOD/ppigrf"),
+    "defusedxml": ("PSF", "https://github.com/tiran/defusedxml"),
+    "simpeg": ("MIT", "https://github.com/simpeg/simpeg"),
+    "discretize": ("MIT", "https://github.com/simpeg/discretize"),
+    "choclo": ("BSD-3-Clause", "https://github.com/fatiando/choclo"),
+}
 
 
 def _qt_enum(owner, scoped_name, member_name, legacy_name):
@@ -49,178 +63,174 @@ DIALOG_ACTION_ROLE = _qt_enum(
 )
 
 
-@dataclass(frozen=True)
-class Dependency:
-    """One runtime dependency displayed to the user."""
-
-    name: str
-    import_name: str
-    license_name: str
-    repository: str
-    optional: bool = False
-
-
-DEPENDENCIES = (
-    Dependency(
-        "Harmonica",
-        "harmonica",
-        "BSD-3-Clause",
-        "https://github.com/fatiando/harmonica",
-    ),
-    Dependency(
-        "Verde",
-        "verde",
-        "BSD-3-Clause",
-        "https://github.com/fatiando/verde",
-    ),
-    Dependency(
-        "Choclo",
-        "choclo",
-        "BSD-3-Clause",
-        "https://github.com/fatiando/choclo",
-    ),
-    Dependency(
-        "Xarray",
-        "xarray",
-        "Apache-2.0",
-        "https://github.com/pydata/xarray",
-    ),
-    Dependency(
-        "xrft",
-        "xrft",
-        "MIT",
-        "https://github.com/xgcm/xrft",
-    ),
-    Dependency(
-        "Numba",
-        "numba",
-        "BSD",
-        "https://github.com/numba/numba",
-    ),
-    Dependency(
-        "Scikit-learn",
-        "sklearn",
-        "BSD-3-Clause",
-        "https://github.com/scikit-learn/scikit-learn",
-    ),
-    Dependency(
-        "Pooch",
-        "pooch",
-        "BSD-3-Clause",
-        "https://github.com/fatiando/pooch",
-    ),
-    Dependency(
-        "Dask",
-        "dask",
-        "BSD-3-Clause",
-        "https://github.com/dask/dask",
-    ),
-    Dependency(
-        "SimPEG (3D inversion)",
-        "simpeg",
-        "MIT",
-        "https://github.com/simpeg/simpeg",
-    ),
-    Dependency(
-        "discretize (3D meshes)",
-        "discretize",
-        "MIT",
-        "https://github.com/simpeg/discretize",
-    ),
-)
-
-
-def dependency_status():
-    """Return dependency records paired with their import availability."""
-    return tuple(
-        (dependency, importlib.util.find_spec(dependency.import_name) is not None)
-        for dependency in DEPENDENCIES
-    )
-
-
 def _status_html(status):
     rows = []
-    for dependency, installed in status:
-        state = (
-            '<span style="color:#1b7f3a;font-weight:600">Installed</span>'
-            if installed
-            else '<span style="color:#b42318;font-weight:700">Missing</span>'
+    for item in status:
+        name = item.requirement.name
+        license_name, repository = DEPENDENCY_DETAILS.get(
+            name.casefold(), ("See upstream", "")
+        )
+        if item.satisfied:
+            state = (
+                '<span style="color:#1b7f3a;font-weight:600">'
+                f"{text('Installed', 'Instalado')} {item.installed_version}</span>"
+            )
+        else:
+            state = (
+                '<span style="color:#b42318;font-weight:700">'
+                f"{item.state}</span>"
+            )
+        linked_name = (
+            f'<a href="{repository}">{name}</a>' if repository else name
         )
         rows.append(
             "<tr>"
-            f'<td><a href="{dependency.repository}">{dependency.name}</a>'
-            f"{' — optional' if dependency.optional else ''}</td>"
-            f"<td>{state}</td>"
-            f"<td>{dependency.license_name}</td>"
+            f"<td>{linked_name}<br><code>{item.requirement}</code></td>"
+            f"<td>{state}</td><td>{license_name}</td>"
             "</tr>"
         )
     return "".join(rows)
 
 
 class DependencyDialog(QDialog):
-    """Explain requirements, status, licenses and installation behavior."""
+    """Show version-aware status and install through the embedded progress UI."""
 
-    def __init__(self, status, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("TerraWorkbench — Scientific dependencies")
-        self.setMinimumSize(680, 510)
+        self.setWindowTitle(
+            text(
+                "TerraWorkbench — Dependency manager",
+                "TerraWorkbench — Administrador de dependencias",
+            )
+        )
+        self.setMinimumSize(720, 540)
+        self.resize(760, 580)
 
         layout = QVBoxLayout(self)
-        heading = QLabel(
-            "TerraWorkbench combines independent open-source scientific libraries."
-        )
-        heading.setStyleSheet("font-size: 15px; font-weight: 600; margin: 4px;")
-        layout.addWidget(heading)
+        self.heading = QLabel()
+        self.heading.setStyleSheet("font-size: 15px; font-weight: 600; margin: 4px;")
+        layout.addWidget(self.heading)
 
-        browser = QTextBrowser(self)
-        browser.setOpenExternalLinks(True)
-        browser.setHtml(
-            "<p>The packages below are required by the current gravity and magnetic "
-            "module. QPIP checks the active QGIS profile and offers to install missing "
-            "packages. Installation starts only after user approval and is stored in "
-            "the user profile, not in the QGIS program directory. SimPEG and "
-            "discretize are optional and only needed by the 3D inversion tools; "
-            "their pinned subset is also documented in requirements-inversion.txt.</p>"
+        self.browser = QTextBrowser(self)
+        self.browser.setOpenExternalLinks(True)
+        layout.addWidget(self.browser, 1)
+
+        self.note = QLabel()
+        self.note.setWordWrap(True)
+        self.note.setTextInteractionFlags(TEXT_SELECTABLE_BY_MOUSE)
+        layout.addWidget(self.note)
+
+        buttons = QDialogButtonBox(DIALOG_CLOSE, parent=self)
+        self.install_button = QPushButton(self)
+        self.install_button.setDefault(True)
+        self.install_button.setAutoDefault(True)
+        self.install_button.setStyleSheet(
+            "font-weight: 600; padding: 6px 12px;"
+        )
+        self.reinstall_button = QPushButton(self)
+        self.folder_button = QPushButton(self)
+        self.upstream_button = QPushButton(self)
+        for button in (
+            self.install_button,
+            self.reinstall_button,
+            self.folder_button,
+            self.upstream_button,
+        ):
+            buttons.addButton(button, DIALOG_ACTION_ROLE)
+        self.install_button.clicked.connect(self.install_missing)
+        self.reinstall_button.clicked.connect(self.reinstall_all)
+        self.folder_button.clicked.connect(self.open_dependency_folder)
+        self.upstream_button.clicked.connect(
+            lambda: QDesktopServices.openUrl(QUrl(QPIP_URL))
+        )
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        self.close_button = buttons.button(DIALOG_CLOSE)
+        self.retranslate()
+        self.refresh()
+
+    def retranslate(self):
+        self.setWindowTitle(
+            text(
+                "TerraWorkbench — Dependency manager",
+                "TerraWorkbench — Administrador de dependencias",
+            )
+        )
+        self.heading.setText(
+            text(
+                "TerraWorkbench scientific dependency manager",
+                "Administrador de dependencias científicas de TerraWorkbench",
+            )
+        )
+        self.install_button.setText(
+            text("Install missing / repair", "Instalar faltantes / reparar")
+        )
+        self.reinstall_button.setText(text("Reinstall all", "Reinstalar todo"))
+        self.folder_button.setText(
+            text("Open dependency folder", "Abrir carpeta de dependencias")
+        )
+        self.upstream_button.setText(text("QPIP upstream", "Proyecto original QPIP"))
+        if self.close_button is not None:
+            self.close_button.setText(text("Close", "Cerrar"))
+
+    def refresh(self):
+        self.status = dependency_status()
+        missing = [item for item in self.status if not item.satisfied]
+        self.browser.setHtml(
+            f"<p>{text('This manager is built into TerraWorkbench from modified QPIP progress components. It manages only TerraWorkbench requirements and installs into the active QGIS user profile after explicit approval.', 'Este administrador está integrado en TerraWorkbench a partir de componentes de progreso modificados de QPIP. Solo administra los requisitos de TerraWorkbench y los instala en el perfil activo de QGIS después de una aprobación explícita.')}</p>"
             "<table cellspacing='0' cellpadding='7' width='100%' "
             "style='border-collapse:collapse'>"
             "<tr style='background:#e9eef4;font-weight:600'>"
-            "<td>Project and repository</td><td>Status</td><td>License</td></tr>"
-            f"{_status_html(status)}"
-            "</table>"
-            "<p>TerraWorkbench is GPLv3. The listed permissive licenses are compatible with "
-            "GPLv3. Each project remains independent and retains its own copyright, "
-            "license and repository.</p>"
+            f"<td>{text('Package and requirement', 'Paquete y requisito')}</td><td>{text('Status', 'Estado')}</td><td>{text('License', 'Licencia')}</td></tr>"
+            f"{_status_html(self.status)}</table>"
+            f"<p><b>{text('Install location', 'Ubicación de instalación')}:</b><br>"
+            f"<code>{dependency_directory()}</code></p>"
         )
-        layout.addWidget(browser)
-
-        note = QLabel(
-            "If packages are missing, close this window and approve the QPIP "
-            "installation prompt. Restart QGIS after installation."
+        self.install_button.setEnabled(bool(missing))
+        self.note.setText(
+            text(
+                "Missing or conflicting dependencies remain.",
+                "Quedan dependencias faltantes o en conflicto.",
+            )
+            if missing
+            else text(
+                "All direct requirements are satisfied. Restart QGIS after any repair.",
+                "Todos los requisitos directos están satisfechos. Reinicie QGIS después de cualquier reparación.",
+            )
         )
-        note.setWordWrap(True)
-        note.setTextInteractionFlags(TEXT_SELECTABLE_BY_MOUSE)
-        layout.addWidget(note)
 
-        buttons = QDialogButtonBox(DIALOG_CLOSE, parent=self)
-        qpip_button = QPushButton("Open QPIP repository", self)
-        buttons.addButton(qpip_button, DIALOG_ACTION_ROLE)
-        qpip_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(QPIP_URL)))
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+    def install_missing(self):
+        if install_requirements(self, force_all=False):
+            self.refresh()
+
+    def reinstall_all(self):
+        if install_requirements(self, force_all=True):
+            self.refresh()
+
+    @staticmethod
+    def open_dependency_folder():
+        path = dependency_directory()
+        path.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+
+
+def open_dependency_dialog(parent=None):
+    """Open the dependency manager on demand from the TerraWorkbench menu."""
+    dialog = DependencyDialog(parent)
+    dialog.exec()
+    return dialog
 
 
 def show_dependency_dialog(parent=None):
-    """Show once per version, or on every activation while anything is missing."""
+    """Show first on a new version, and every activation while requirements fail."""
     status = dependency_status()
-    missing = any(
-        not installed and not dependency.optional for dependency, installed in status
-    )
+    missing = any(not item.satisfied for item in status)
     settings = QSettings()
     already_seen = settings.value(SETTINGS_KEY, "", type=str) == PLUGIN_VERSION
     if already_seen and not missing:
         return
 
-    dialog = DependencyDialog(status, parent)
+    dialog = DependencyDialog(parent)
     dialog.exec()
-    if not missing:
+    if not any(not item.satisfied for item in dependency_status()):
         settings.setValue(SETTINGS_KEY, PLUGIN_VERSION)

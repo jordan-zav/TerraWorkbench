@@ -16,6 +16,8 @@ from ..spectral import magnetic_field_transform
 
 
 class MagneticDirectionTransformBase(SpectralFilterBase):
+    processing_domain = "FFT / MAGNETIC WAVENUMBER"
+    restore_trend_default = True
     FIELD_MODE = "FIELD_MODE"
     INCLINATION = "INCLINATION"
     DECLINATION = "DECLINATION"
@@ -27,6 +29,12 @@ class MagneticDirectionTransformBase(SpectralFilterBase):
     MAGNETIZATION_INCLINATION = "MAGNETIZATION_INCLINATION"
     MAGNETIZATION_DECLINATION = "MAGNETIZATION_DECLINATION"
     MAX_GAIN = "MAX_GAIN"
+
+    def group(self):
+        return self.tr("MAG field-direction transforms")
+
+    def groupId(self):
+        return "magnetic_field_direction"
 
     def add_filter_parameters(self):
         self.addParameter(
@@ -280,7 +288,7 @@ class ReductionToPoleIgrfAlgorithm(MagneticDirectionTransformBase):
         return "reduction_to_pole_igrf"
 
     def displayName(self):
-        return self.tr("Reduction to pole — automatic IGRF-14 / manual")
+        return self.tr("RTP — automatic IGRF-14 / manual (stabilized)")
 
     def target_angles(self, parameters, context):
         return 90.0, 0.0
@@ -293,7 +301,7 @@ class ReductionToEquatorAlgorithm(MagneticDirectionTransformBase):
         return "reduction_to_equator"
 
     def displayName(self):
-        return self.tr("Reduction to equator — automatic IGRF-14 / manual")
+        return self.tr("RTE — automatic IGRF-14 / manual (stabilized)")
 
     def target_angles(self, parameters, context):
         return 0.0, self._field_declination

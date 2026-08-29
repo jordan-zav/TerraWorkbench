@@ -22,6 +22,7 @@ from qgis.core import (
 )
 
 from ..dependencies import import_simpeg_stack
+from ..i18n import translate
 from ..inversion_core import (
     full_model,
     joint_full_models,
@@ -65,7 +66,7 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
         return type(self)()
 
     def tr(self, text):
-        return text
+        return translate(text)
 
     def initAlgorithm(self, config=None):
         del config
@@ -568,7 +569,7 @@ class JointGravityMagneticInversionAlgorithm(QgsProcessingAlgorithm):
         return type(self)()
 
     def tr(self, text):
-        return text
+        return translate(text)
 
     def initAlgorithm(self, config=None):
         del config

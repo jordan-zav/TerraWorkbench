@@ -4,3 +4,4 @@ dist/
 .pytest_cache/
 0.7
 *.log
+sample_data/local_private/

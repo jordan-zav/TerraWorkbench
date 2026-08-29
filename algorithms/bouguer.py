@@ -11,6 +11,7 @@ from ..raster_io import nodata_mask, write_geotiff
 
 class BouguerCorrectionAlgorithm(RasterAlgorithmBase):
     """Calculate the gravitational effect of topography in mGal."""
+    processing_domain = "PHYSICAL CORRECTION / GRID"
 
     DENSITY_CRUST = "DENSITY_CRUST"
     DENSITY_WATER = "DENSITY_WATER"

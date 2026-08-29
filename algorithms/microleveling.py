@@ -14,6 +14,7 @@ from ..raster_io import nodata_mask, write_geotiff
 
 
 class MicrolevelingAlgorithm(RasterAlgorithmBase):
+    processing_domain = "FFT / DIRECTIONAL DECORRUGATION"
     AZIMUTH = "AZIMUTH"
     ACROSS_WAVELENGTH = "ACROSS_WAVELENGTH"
     ALONG_WAVELENGTH = "ALONG_WAVELENGTH"

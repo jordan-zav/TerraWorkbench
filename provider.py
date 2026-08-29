@@ -7,6 +7,18 @@ from qgis.core import QgsProcessingProvider
 
 from .metadata_utils import plugin_version
 from .algorithms.bouguer import BouguerCorrectionAlgorithm
+from .algorithms.gravity_corrections import (
+    AiryIsostaticAnomalyAlgorithm,
+    AiryMohoAlgorithm,
+    CompleteBouguerAnomalyAlgorithm,
+    CurvatureCorrectionAlgorithm,
+    FreeAirAnomalyAlgorithm,
+    FreeAirCorrectionAlgorithm,
+    LatitudeCorrectionAlgorithm,
+    NormalGravityAlgorithm,
+    SimpleBouguerAnomalyAlgorithm,
+    TerrainCorrectionAlgorithm,
+)
 from .algorithms.gravity_filters import (
     GravDxAlgorithm,
     GravDyAlgorithm,
@@ -17,7 +29,7 @@ from .algorithms.gravity_filters import (
     GravThdrAlgorithm,
     GravTiltAlgorithm,
     GravTotalGradientAmplitudeAlgorithm,
-    GravUc500Algorithm,
+    GravityUpwardContinuationAlgorithm,
 )
 from .algorithms.magnetic_filters import (
     AnalyticSignalAlgorithm,
@@ -31,7 +43,7 @@ from .algorithms.magnetic_filters import (
     ThetaMapAlgorithm,
     ThdrAlgorithm,
     TiltAlgorithm,
-    Uc500Algorithm,
+    MagneticUpwardContinuationAlgorithm,
 )
 from .algorithms.transforms import (
     DerivativeEastingAlgorithm,
@@ -52,6 +64,9 @@ from .algorithms.spectral_filters import (
     DirectionalCosinePassAlgorithm,
     DirectionalCosineRejectAlgorithm,
     DownwardContinuationAlgorithm,
+    FftDerivativeEastingAlgorithm,
+    FftDerivativeNorthingAlgorithm,
+    FftDerivativeUpwardAlgorithm,
     HorizontalIntegrationEastingAlgorithm,
     HorizontalIntegrationNorthingAlgorithm,
     IdealBandPassAlgorithm,
@@ -82,7 +97,7 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(GravDyAlgorithm())
         self.addAlgorithm(GravDzAlgorithm())
         self.addAlgorithm(GravDz2Algorithm())
-        self.addAlgorithm(GravUc500Algorithm())
+        self.addAlgorithm(GravityUpwardContinuationAlgorithm())
         self.addAlgorithm(GravGaussianRegionalAlgorithm())
         self.addAlgorithm(GravResidualAlgorithm())
         self.addAlgorithm(GravThdrAlgorithm())
@@ -92,7 +107,7 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(DyAlgorithm())
         self.addAlgorithm(DzAlgorithm())
         self.addAlgorithm(Dz2Algorithm())
-        self.addAlgorithm(Uc500Algorithm())
+        self.addAlgorithm(MagneticUpwardContinuationAlgorithm())
         self.addAlgorithm(ResidualEnhancementAlgorithm())
         self.addAlgorithm(ThdrAlgorithm())
         self.addAlgorithm(TiltAlgorithm())
@@ -101,6 +116,16 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(TdxAlgorithm())
         self.addAlgorithm(ThetaMapAlgorithm())
         self.addAlgorithm(BouguerCorrectionAlgorithm())
+        self.addAlgorithm(NormalGravityAlgorithm())
+        self.addAlgorithm(LatitudeCorrectionAlgorithm())
+        self.addAlgorithm(FreeAirCorrectionAlgorithm())
+        self.addAlgorithm(FreeAirAnomalyAlgorithm())
+        self.addAlgorithm(CurvatureCorrectionAlgorithm())
+        self.addAlgorithm(SimpleBouguerAnomalyAlgorithm())
+        self.addAlgorithm(TerrainCorrectionAlgorithm())
+        self.addAlgorithm(CompleteBouguerAnomalyAlgorithm())
+        self.addAlgorithm(AiryMohoAlgorithm())
+        self.addAlgorithm(AiryIsostaticAnomalyAlgorithm())
         self.addAlgorithm(UpwardContinuationAlgorithm())
         self.addAlgorithm(GaussianLowPassAlgorithm())
         self.addAlgorithm(GaussianHighPassAlgorithm())
@@ -119,6 +144,9 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(DirectionalCosinePassAlgorithm())
         self.addAlgorithm(DirectionalCosineRejectAlgorithm())
         self.addAlgorithm(DownwardContinuationAlgorithm())
+        self.addAlgorithm(FftDerivativeEastingAlgorithm())
+        self.addAlgorithm(FftDerivativeNorthingAlgorithm())
+        self.addAlgorithm(FftDerivativeUpwardAlgorithm())
         self.addAlgorithm(HorizontalIntegrationEastingAlgorithm())
         self.addAlgorithm(HorizontalIntegrationNorthingAlgorithm())
         self.addAlgorithm(VerticalIntegrationAlgorithm())

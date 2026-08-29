@@ -48,7 +48,8 @@ def main():
         QgsRasterLayer,
         QgsVectorLayer,
     )
-    from qgis.PyQt.QtWidgets import QMainWindow
+    from qgis.PyQt.QtCore import QSettings, Qt
+    from qgis.PyQt.QtWidgets import QAbstractItemView, QMainWindow
 
     QgsApplication.setPrefixPath(prefix, True)
     application = QgsApplication([], False)
@@ -67,6 +68,13 @@ def main():
     from TerraWorkbench.provider import TerraWorkbenchProvider
     from TerraWorkbench.plugin import TerraWorkbenchPlugin
     import TerraWorkbench.plugin as plugin_module
+    from TerraWorkbench.dependency_dialog import DependencyDialog
+    from TerraWorkbench.embedded_qpip.install_progress import (
+        PipInstallProgressDialog,
+    )
+    from TerraWorkbench.embedded_qpip.pip_progress import ProgressUpdate
+    from TerraWorkbench.embedded_qpip.manager import _python_command
+    from TerraWorkbench.i18n import LANGUAGE_KEY, set_language
     from TerraWorkbench.workflow_dock import (
         FilterStackDock,
         PipelineStep,
@@ -78,6 +86,38 @@ def main():
     import_harmonica()
     import_ppigrf()
     import_xarray()
+
+    dependency_dialog = DependencyDialog()
+    progress_dialog = PipInstallProgressDialog(
+        [sys.executable, "-m", "pip", "--version"],
+        ["harmonica>=0.7,<0.8", "ppigrf>=2.1,<3"],
+        "testing embedded dependency progress",
+        lambda _message: None,
+    )
+    progress_dialog._apply_update(
+        ProgressUpdate("harmonica", "Downloading", 75, 100)
+    )
+    _row, progress_bar = progress_dialog.rows["harmonica"]
+    if (
+        "QPIP" not in dependency_dialog.browser.toPlainText()
+        or progress_bar.value() != 75
+    ):
+        raise AssertionError("Embedded QPIP dependency UI failed")
+    dependency_dialog.close()
+    progress_dialog.close()
+    dependency_dialog.deleteLater()
+    progress_dialog.deleteLater()
+
+    process_dialog = PipInstallProgressDialog(
+        [_python_command(), "-um", "pip", "--version"],
+        ["packaging"],
+        "testing embedded QProcess execution",
+        lambda _message: None,
+    )
+    process_code, process_cancelled, _process_output = process_dialog.execute()
+    if process_code != 0 or process_cancelled:
+        raise AssertionError("Embedded dependency QProcess execution failed")
+    process_dialog.deleteLater()
 
     provider = None
     algorithm_ids = set()
@@ -92,7 +132,7 @@ def main():
             "terraworkbench:grav_dy",
             "terraworkbench:grav_dz",
             "terraworkbench:grav_dz2",
-            "terraworkbench:grav_uc500",
+            "terraworkbench:grav_upward_continuation",
             "terraworkbench:grav_regional",
             "terraworkbench:grav_residual",
             "terraworkbench:grav_thdr",
@@ -102,14 +142,27 @@ def main():
             "terraworkbench:mag_dy",
             "terraworkbench:mag_dz",
             "terraworkbench:mag_dz2",
-            "terraworkbench:mag_uc500",
+            "terraworkbench:mag_upward_continuation",
             "terraworkbench:mag_rs",
             "terraworkbench:mag_thdr",
             "terraworkbench:mag_tilt",
-            "terraworkbench:mag_45hg",
+            "terraworkbench:mag_directional_horizontal_gradient",
             "terraworkbench:mag_as",
             "terraworkbench:mag_tdx",
             "terraworkbench:mag_theta",
+            "terraworkbench:fft_derivative_easting",
+            "terraworkbench:fft_derivative_northing",
+            "terraworkbench:fft_derivative_upward",
+            "terraworkbench:normal_gravity_grs80",
+            "terraworkbench:gravity_disturbance_grs80",
+            "terraworkbench:free_air_correction",
+            "terraworkbench:free_air_anomaly",
+            "terraworkbench:bullard_b_curvature",
+            "terraworkbench:simple_bouguer_anomaly",
+            "terraworkbench:terrain_correction_prisms",
+            "terraworkbench:complete_bouguer_anomaly",
+            "terraworkbench:airy_isostatic_moho",
+            "terraworkbench:airy_isostatic_anomaly",
             "terraworkbench:grid_survey_points",
             "terraworkbench:crossover_line_leveling",
             "terraworkbench:microlevel_grid",
@@ -122,8 +175,8 @@ def main():
             raise AssertionError(
                 f"Missing algorithms: {sorted(expected - algorithm_ids)}"
             )
-        if len(algorithm_ids) != 54:
-            raise AssertionError(f"Expected 54 algorithms, found {len(algorithm_ids)}")
+        if len(algorithm_ids) != 67:
+            raise AssertionError(f"Expected 67 algorithms, found {len(algorithm_ids)}")
 
         with tempfile.TemporaryDirectory(
             prefix="terraworkbench_"
@@ -131,6 +184,12 @@ def main():
             temporary_path = Path(temporary_directory)
             input_path = temporary_path / "input.tif"
             bouguer_path = temporary_path / "bouguer.tif"
+            normal_gravity_path = temporary_path / "normal_gravity.tif"
+            free_air_path = temporary_path / "free_air.tif"
+            terrain_path = temporary_path / "terrain.tif"
+            complete_bouguer_path = temporary_path / "complete_bouguer.tif"
+            airy_moho_path = temporary_path / "airy_moho.tif"
+            isostatic_path = temporary_path / "isostatic.tif"
             upward_path = temporary_path / "upward.tif"
             stack_path = temporary_path / "stack"
             directional_path = temporary_path / "directional.tif"
@@ -331,6 +390,8 @@ def main():
                     flush=True,
                 )
             layer = None
+            terrain_layer = None
+            complete_layer = None
             try:
                 layer = QgsRasterLayer(str(input_path), "input")
                 if not layer.isValid():
@@ -344,6 +405,81 @@ def main():
                         "DENSITY_CRUST": 2670.0,
                         "DENSITY_WATER": 1040.0,
                         "OUTPUT": str(bouguer_path),
+                    },
+                )
+                processing.run(
+                    "terraworkbench:normal_gravity_grs80",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "OUTPUT": str(normal_gravity_path),
+                    },
+                )
+                processing.run(
+                    "terraworkbench:free_air_anomaly",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "ELEVATION": layer,
+                        "ELEVATION_BAND": 1,
+                        "VERTICAL_GRADIENT": 0.3086,
+                        "OUTPUT": str(free_air_path),
+                    },
+                )
+                processing.run(
+                    "terraworkbench:terrain_correction_prisms",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "DENSITY_CRUST": 2670.0,
+                        "DENSITY_WATER": 1040.0,
+                        "CLEARANCE": 1.0,
+                        "MAX_CELLS": 100,
+                        "OUTPUT": str(terrain_path),
+                    },
+                )
+                terrain_layer = QgsRasterLayer(str(terrain_path), "terrain")
+                processing.run(
+                    "terraworkbench:complete_bouguer_anomaly",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "ELEVATION": layer,
+                        "ELEVATION_BAND": 1,
+                        "TERRAIN": terrain_layer,
+                        "TERRAIN_BAND": 1,
+                        "DENSITY_CRUST": 2670.0,
+                        "DENSITY_WATER": 1040.0,
+                        "VERTICAL_GRADIENT": 0.3086,
+                        "OUTPUT": str(complete_bouguer_path),
+                    },
+                )
+                processing.run(
+                    "terraworkbench:airy_isostatic_moho",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "REFERENCE_DEPTH": 25000.0,
+                        "DENSITY_CRUST": 2670.0,
+                        "DENSITY_MANTLE": 3070.0,
+                        "OUTPUT": str(airy_moho_path),
+                    },
+                )
+                complete_layer = QgsRasterLayer(
+                    str(complete_bouguer_path), "complete Bouguer"
+                )
+                processing.run(
+                    "terraworkbench:airy_isostatic_anomaly",
+                    {
+                        "INPUT": complete_layer,
+                        "BAND": 1,
+                        "ELEVATION": layer,
+                        "ELEVATION_BAND": 1,
+                        "REFERENCE_DEPTH": 25000.0,
+                        "DENSITY_CRUST": 2670.0,
+                        "DENSITY_MANTLE": 3070.0,
+                        "MAX_CELLS": 100,
+                        "OUTPUT": str(isostatic_path),
                     },
                 )
                 processing.run(
@@ -370,7 +506,7 @@ def main():
                     },
                 )
                 processing.run(
-                    "terraworkbench:mag_45hg",
+                    "terraworkbench:mag_directional_horizontal_gradient",
                     {
                         "INPUT": layer,
                         "BAND": 1,
@@ -406,8 +542,63 @@ def main():
                 print("OK: two-step Processing chain completed", flush=True)
 
                 dock = FilterStackDock()
+                dock.show()
+                application.processEvents()
                 print("OK: Filter Stack dock constructed", flush=True)
                 try:
+                    sample_raster = dock.load_sample_raster(
+                        "synthetic_magnetic_anomaly.tif"
+                    )
+                    sample_points = dock.load_sample_points()
+                    if (
+                        sample_raster is None
+                        or not sample_raster.isValid()
+                        or sample_points is None
+                        or not sample_points.isValid()
+                        or sample_raster.crs().authid() != "EPSG:32718"
+                    ):
+                        raise AssertionError(
+                            "Bundled synthetic sample datasets did not load"
+                        )
+                    QgsProject.instance().removeMapLayers(
+                        [sample_raster.id(), sample_points.id()]
+                    )
+                    print(
+                        "OK: bundled MAG raster and survey CSV loaded",
+                        flush=True,
+                    )
+                    nrcan_root = (
+                        Path(__file__).resolve().parents[1]
+                        / "sample_data"
+                        / "nrcan"
+                    )
+                    nrcan_grids = sorted(
+                        path
+                        for path in nrcan_root.rglob("*")
+                        if path.is_file() and path.suffix.casefold() == ".grd"
+                    )
+                    if len(nrcan_grids) != 2:
+                        raise AssertionError("Expected two bundled NRCan GRD files")
+                    if nrcan_grids:
+                        real_output = temporary_path / "nrcan_reference_grid.tif"
+                        imported, metadata = import_survey_grid(
+                            str(nrcan_grids[0]), str(real_output)
+                        )
+                        real_layer = QgsRasterLayer(imported, "NRCan reference grid")
+                        if not real_layer.isValid():
+                            raise AssertionError(
+                                "A local reference GRD did not convert to GeoTIFF"
+                            )
+                        if nrcan_grids[0].with_suffix(".GRD.xml").is_file() and not metadata:
+                            raise AssertionError(
+                                "The local GRD sidecar metadata was not recovered"
+                            )
+                        print(
+                            f"OK: bundled NRCan GRD imported ({nrcan_grids[0].name})",
+                            flush=True,
+                        )
+                        real_layer = None
+                        gc.collect()
                     gdb_source = os.environ.get("TERRAWORKBENCH_GDB_TEST_SOURCE")
                     gdb_export = os.environ.get("TERRAWORKBENCH_GDB_TEST_OUTPUT")
                     if gdb_source and gdb_export:
@@ -435,10 +626,71 @@ def main():
                     if spectrum_plot.grab().isNull():
                         raise AssertionError("Spectrum preview did not render")
                     spectrum_plot.deleteLater()
-                    if len(available_algorithms()) != len(algorithm_ids) - 6:
+                    if len(available_algorithms()) != len(algorithm_ids) - 11:
                         raise AssertionError(
                             "Filter Stack is missing registered algorithms"
                         )
+                    dock.show_algorithm_picker()
+                    application.processEvents()
+                    if (
+                        not dock.algorithm_picker.isVisible()
+                        or dock.algorithm_picker.width() > 440
+                    ):
+                        raise AssertionError(
+                            "Compact left-side algorithm chooser failed"
+                        )
+                    dock.algorithm_search.setText("RTP IGRF")
+                    application.processEvents()
+                    visible_algorithms = [
+                        dock._algorithm_labels.get(
+                            dock.algorithm_list.item(index).data(
+                                Qt.ItemDataRole.UserRole
+                            ),
+                            "",
+                        )
+                        for index in range(dock.algorithm_list.count())
+                        if not dock.algorithm_list.item(index).isHidden()
+                    ]
+                    if not any("RTP" in label for label in visible_algorithms):
+                        raise AssertionError("RTP is not discoverable in the chooser")
+                    for index in range(dock.algorithm_list.count()):
+                        item = dock.algorithm_list.item(index)
+                        row_widget = dock.algorithm_list.itemWidget(item)
+                        if (
+                            item.text()
+                            or row_widget is None
+                            or item.sizeHint().height()
+                            < row_widget.sizeHint().height()
+                        ):
+                            raise AssertionError(
+                                "Filter chooser row text/height overlaps its custom widget"
+                            )
+                    dock.show_algorithm_info(
+                        "terraworkbench:butterworth_lowpass"
+                    )
+                    application.processEvents()
+                    if (
+                        not dock.filter_info.isVisible()
+                        or "Butterworth"
+                        not in dock.filter_info.browser.toPlainText()
+                    ):
+                        raise AssertionError(
+                            "Per-filter information button/dialog failed"
+                        )
+                    dock.filter_info.hide()
+                    dock.algorithm_picker.hide()
+                    dock.show_knowledge_base()
+                    application.processEvents()
+                    if (
+                        not dock.knowledge_base.isVisible()
+                        or dock.knowledge_base.width() > 900
+                        or "Harmonica"
+                        not in dock.knowledge_base.repository_browser.toPlainText()
+                    ):
+                        raise AssertionError(
+                            "Clickable Knowledge Base did not open correctly"
+                        )
+                    dock.knowledge_base.hide()
                     dock.algorithm_combo.setCurrentIndex(
                         dock.algorithm_combo.findData(
                             "terraworkbench:butterworth_lowpass"
@@ -465,6 +717,12 @@ def main():
 
                 for output_path in (
                     bouguer_path,
+                    normal_gravity_path,
+                    free_air_path,
+                    terrain_path,
+                    complete_bouguer_path,
+                    airy_moho_path,
+                    isostatic_path,
                     upward_path,
                     directional_path,
                     rtp_path,
@@ -558,10 +816,14 @@ def main():
                 print("OK: regular CSV grid imported with geographic CRS", flush=True)
             finally:
                 layer = None
+                terrain_layer = None
+                complete_layer = None
                 gc.collect()
 
         QgsApplication.processingRegistry().removeProvider(provider)
         provider = None
+
+        lifecycle_events = []
 
         class FakeInterface:
             def __init__(self):
@@ -572,6 +834,7 @@ def main():
                 return self.window
 
             def addDockWidget(self, area, dock):
+                lifecycle_events.append("dock")
                 self.dock_area = area
                 self.window.addDockWidget(area, dock)
 
@@ -591,17 +854,88 @@ def main():
                 pass
 
         original_dependency_dialog = plugin_module.show_dependency_dialog
-        plugin_module.show_dependency_dialog = lambda _parent: None
+        plugin_module.show_dependency_dialog = (
+            lambda _parent: lifecycle_events.append("dependencies")
+        )
         plugin = TerraWorkbenchPlugin(FakeInterface())
+        settings = QSettings()
+        previous_language = settings.value(LANGUAGE_KEY, None)
         try:
             plugin.initGui()
-            if plugin.filter_stack_dock is None or plugin.filter_stack_action is None:
+            if (
+                plugin.filter_stack_dock is None
+                or plugin.filter_stack_action is None
+                or plugin.knowledge_action is None
+                or plugin.dependency_action is None
+            ):
                 raise AssertionError(
-                    "Plugin lifecycle did not register the Filter Stack"
+                    "Plugin lifecycle did not register the Filter Stack and Knowledge Base"
                 )
+            if lifecycle_events[:2] != ["dependencies", "dock"]:
+                raise AssertionError(
+                    "Dependency manager was not the first TerraWorkbench UI"
+                )
+            set_language("es")
+            plugin.filter_stack_dock.preferences_changed()
+            magnetic_dx = QgsApplication.processingRegistry().algorithmById(
+                "terraworkbench:mag_dx"
+            )
+            if (
+                plugin.filter_stack_dock.settings_button.text()
+                != "Configuración…"
+                or "Primera derivada" not in magnetic_dx.displayName()
+                or "Jordan Zavaleta (GisGeo Dev)"
+                not in plugin.filter_stack_dock.settings_dialog.about_label.text()
+                or "jordanzav@gisgeo.dev"
+                not in plugin.filter_stack_dock.settings_dialog.about_label.text()
+            ):
+                raise AssertionError("Spanish runtime localization/settings failed")
+            drag_drop_enum = getattr(
+                QAbstractItemView, "DragDropMode", QAbstractItemView
+            )
+            settings_position = plugin.filter_stack_dock.file_grid.getItemPosition(
+                plugin.filter_stack_dock.file_grid.indexOf(
+                    plugin.filter_stack_dock.settings_button
+                )
+            )
+            if (
+                plugin.filter_stack_dock.step_list.dragDropMode()
+                != drag_drop_enum.InternalMove
+                or settings_position != (0, 2, 1, 1)
+            ):
+                raise AssertionError(
+                    "Drag-reordering or compact Settings placement failed"
+                )
+            set_language("pt")
+            plugin.filter_stack_dock.preferences_changed()
+            if (
+                plugin.filter_stack_dock.settings_button.text()
+                != "Configurações…"
+                or "Primeira derivada"
+                not in QgsApplication.processingRegistry()
+                .algorithmById("terraworkbench:mag_dx")
+                .displayName()
+                or "Geofísica de Campos Potenciais"
+                not in plugin.filter_stack_dock.knowledge_base.reference_browser.toPlainText()
+            ):
+                raise AssertionError("Portuguese runtime localization failed")
+            set_language("en")
+            plugin.filter_stack_dock.preferences_changed()
+            if (
+                plugin.filter_stack_dock.settings_button.text() != "Settings…"
+                or "First horizontal derivative"
+                not in QgsApplication.processingRegistry()
+                .algorithmById("terraworkbench:mag_dx")
+                .displayName()
+            ):
+                raise AssertionError("English runtime localization failed")
         finally:
             plugin.unload()
             plugin_module.show_dependency_dialog = original_dependency_dialog
+            if previous_language is None:
+                settings.remove(LANGUAGE_KEY)
+            else:
+                settings.setValue(LANGUAGE_KEY, previous_language)
         print(
             "OK: plugin lifecycle registered and removed the right-side dock",
             flush=True,

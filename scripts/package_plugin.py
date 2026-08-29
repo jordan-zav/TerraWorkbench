@@ -33,6 +33,7 @@ ROOT_FILES = (
     "__init__.py",
     "metadata.txt",
     "metadata_utils.py",
+    "i18n.py",
     "qgis_compat.py",
     "plugin.py",
     "provider.py",
@@ -41,8 +42,10 @@ ROOT_FILES = (
     "line_processing.py",
     "microlevel.py",
     "inversion_core.py",
+    "gravity_corrections.py",
     "dependencies.py",
     "dependency_dialog.py",
+    "settings_dialog.py",
     "workflow_dock.py",
     "data_import.py",
     "geosoft_runtime.py",
@@ -57,6 +60,38 @@ ROOT_FILES = (
 
 DOC_FILES = (
     "docs/filter-stack.png",
+    "docs/knowledge_base/README.md",
+    "docs/knowledge_base/geofisica_potencial_referencia.md",
+    "docs/knowledge_base/potential_fields_reference_en.md",
+    "docs/knowledge_base/potential_fields_reference_pt.md",
+    "docs/knowledge_base/repositorios_referencia.md",
+    "docs/knowledge_base/roadmap_cobertura.md",
+    "docs/knowledge_base/sources.json",
+)
+
+EMBEDDED_QPIP_FILES = (
+    "embedded_qpip/__init__.py",
+    "embedded_qpip/manager.py",
+    "embedded_qpip/install_progress.py",
+    "embedded_qpip/pip_progress.py",
+    "embedded_qpip/NOTICE.md",
+    "embedded_qpip/LICENSE.qpip",
+)
+
+SAMPLE_FILES = (
+    "sample_data/README.md",
+    "sample_data/synthetic/manifest.json",
+    "sample_data/synthetic/synthetic_magnetic_anomaly.tif",
+    "sample_data/synthetic/synthetic_gravity_anomaly.tif",
+    "sample_data/synthetic/synthetic_dem.tif",
+    "sample_data/synthetic/synthetic_survey_points.csv",
+    "sample_data/nrcan/NOTICE.md",
+    "sample_data/nrcan/PUBLICATION_NOTIFICATION.md",
+    "sample_data/nrcan/manifest.json",
+    "sample_data/nrcan/Hydraulic/BC_2004_G_Hydraulic_dem.GRD",
+    "sample_data/nrcan/Hydraulic/BC_2004_G_Hydraulic_dem.GRD.xml",
+    "sample_data/nrcan/Hydraulic/BC_2004_G_Hydraulic_mag_res.GRD",
+    "sample_data/nrcan/Hydraulic/BC_2004_G_Hydraulic_mag_res.GRD.xml",
 )
 
 
@@ -91,6 +126,8 @@ def update_version(version: str) -> None:
 def package_files() -> list[Path]:
     files = [ROOT / relative_path for relative_path in ROOT_FILES]
     files.extend(ROOT / relative_path for relative_path in DOC_FILES)
+    files.extend(ROOT / relative_path for relative_path in EMBEDDED_QPIP_FILES)
+    files.extend(ROOT / relative_path for relative_path in SAMPLE_FILES)
     files.extend(sorted((ROOT / "algorithms").glob("*.py")))
     return files
 
@@ -113,8 +150,10 @@ def validate_source() -> list[str]:
     version = general.get("version", "").strip()
     if version and VERSION_PATTERN.fullmatch(version) is None:
         errors.append(f"invalid semantic version: {version}")
-    if general.get("plugin_dependencies", "").strip() != "qpip":
-        errors.append("plugin_dependencies must declare qpip")
+    if general.get("plugin_dependencies", "").strip():
+        errors.append(
+            "plugin_dependencies must remain empty while the dependency manager is embedded"
+        )
     if "requirements.txt" not in general.get("about", ""):
         errors.append("about must explain the external requirements.txt dependency")
     if general.get("qgisMaximumVersion", "").strip() != "3.99":

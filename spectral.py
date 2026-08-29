@@ -5,6 +5,90 @@ from __future__ import annotations
 import numpy as np
 
 
+def _trend_surface(values, order):
+    """Fit no trend (-1), a mean (0), or a least-squares plane (1)."""
+    values = np.asarray(values, dtype=np.float64)
+    order = int(order)
+    if order == -1:
+        return np.zeros_like(values)
+    if order == 0:
+        return np.full_like(values, float(np.mean(values)))
+    if order != 1:
+        raise ValueError("FFT detrend order must be -1, 0, or 1")
+    rows, columns = values.shape
+    y, x = np.meshgrid(
+        np.linspace(-1.0, 1.0, rows),
+        np.linspace(-1.0, 1.0, columns),
+        indexing="ij",
+    )
+    design = np.column_stack((np.ones(values.size), x.ravel(), y.ravel()))
+    coefficients = np.linalg.lstsq(design, values.ravel(), rcond=None)[0]
+    return (design @ coefficients).reshape(values.shape)
+
+
+def _padding_window(shape, pad_rows, pad_columns, taper_percent):
+    """Return an edge taper that leaves the original unpadded footprint intact."""
+    rows, columns = shape
+    window_y = np.ones(rows, dtype=np.float64)
+    window_x = np.ones(columns, dtype=np.float64)
+    taper_percent = float(taper_percent)
+    if taper_percent < 0.0 or taper_percent > 100.0:
+        raise ValueError("FFT taper percent must be between 0 and 100")
+
+    for window, padding in ((window_y, pad_rows), (window_x, pad_columns)):
+        taper = min(padding, int(round(padding * taper_percent / 100.0)))
+        if taper > 0:
+            ramp = np.sin(np.linspace(0.0, 0.5 * np.pi, taper + 1))[:-1]
+            window[:taper] = ramp
+            window[-taper:] = ramp[::-1]
+    return np.outer(window_y, window_x)
+
+
+def prepare_fft_grid(
+    values,
+    detrend_order=1,
+    padding_percent=25.0,
+    taper_percent=100.0,
+):
+    """Detrend, reflect-pad, and taper a grid for geophysical 2D FFT filtering.
+
+    Returns the prepared grid and a state dictionary consumed by
+    :func:`finish_fft_grid`.
+    """
+    values = np.asarray(values, dtype=np.float64)
+    if values.ndim != 2 or min(values.shape) < 2:
+        raise ValueError("FFT filtering requires a two-dimensional grid")
+    padding_percent = float(padding_percent)
+    if padding_percent < 0.0 or padding_percent > 100.0:
+        raise ValueError("FFT padding percent must be between 0 and 100")
+    trend = _trend_surface(values, detrend_order)
+    residual = values - trend
+    pad_rows = int(round(values.shape[0] * padding_percent / 100.0))
+    pad_columns = int(round(values.shape[1] * padding_percent / 100.0))
+    padding = ((pad_rows, pad_rows), (pad_columns, pad_columns))
+    prepared = np.pad(residual, padding, mode="reflect") if any(padding[0] + padding[1]) else residual.copy()
+    if pad_rows or pad_columns:
+        prepared *= _padding_window(
+            prepared.shape, pad_rows, pad_columns, taper_percent
+        )
+    state = {
+        "trend": trend,
+        "row_slice": slice(pad_rows, pad_rows + values.shape[0]),
+        "column_slice": slice(pad_columns, pad_columns + values.shape[1]),
+    }
+    return prepared, state
+
+
+def finish_fft_grid(filtered, state, restore_trend=True):
+    """Crop an FFT result to the original footprint and optionally restore trend."""
+    result = np.asarray(filtered, dtype=np.float64)[
+        state["row_slice"], state["column_slice"]
+    ]
+    if restore_trend:
+        result = result + state["trend"]
+    return result
+
+
 def frequency_grid(shape, spacing_northing, spacing_easting):
     """Return east, north and radial angular wavenumbers in radians/unit."""
     rows, columns = shape
@@ -17,7 +101,12 @@ def frequency_grid(shape, spacing_northing, spacing_easting):
 def apply_transfer(values, transfer):
     """Apply a real-valued or complex Fourier transfer function."""
     transformed = np.fft.fft2(np.asarray(values, dtype=np.float64))
-    result = np.fft.ifft2(transformed * transfer)
+    return apply_spectrum(transformed, transfer)
+
+
+def apply_spectrum(transformed, transfer):
+    """Apply a transfer function to an existing 2D Fourier spectrum."""
+    result = np.fft.ifft2(np.asarray(transformed) * transfer)
     return np.real_if_close(result, tol=1000).real.astype(np.float64)
 
 

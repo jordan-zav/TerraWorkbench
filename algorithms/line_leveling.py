@@ -23,6 +23,7 @@ from qgis.core import (
     QgsWkbTypes,
 )
 from ..line_processing import residual_statistics, robust_line_corrections
+from ..i18n import translate
 from ..qgis_compat import (
     FIELD_TYPE_BOOL,
     FIELD_TYPE_DOUBLE,
@@ -79,7 +80,7 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
         return type(self)()
 
     def tr(self, text):
-        return text
+        return translate(text)
 
     def initAlgorithm(self, config=None):
         del config

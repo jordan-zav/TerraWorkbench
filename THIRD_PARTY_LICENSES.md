@@ -1,6 +1,17 @@
 # Third-party software
 
-The TerraWorkbench source code is licensed under GNU GPL version 3 or later. The libraries below are separate projects used at runtime and are not included in the plugin source package. They are installed independently into the Python environment used by QGIS.
+The TerraWorkbench source code is licensed under GNU GPL version 3 or later. The
+scientific libraries below are separate runtime projects installed into the
+active QGIS user profile.
+
+## Embedded QPIP-derived components
+
+TerraWorkbench distributes modified copies of QPIP's dependency progress parser
+and installation dialog. QPIP is copyright OPENGIS.ch and contributors and is
+licensed under GNU GPL version 3. The embedded code is scoped to TerraWorkbench;
+it does not bundle the complete QPIP plugin. See
+`embedded_qpip/NOTICE.md` and `embedded_qpip/LICENSE.qpip` for provenance and
+the complete license text.
 
 All current runtime licenses are compatible with distribution of TerraWorkbench under GPLv3. Their copyright notices and complete license texts remain those supplied by each upstream package.
 
@@ -23,11 +34,18 @@ All current runtime licenses are compatible with distribution of TerraWorkbench 
 | Dask | 2026.8.0 | BSD-3-Clause |
 | ppigrf | 2.1.0 | MIT |
 | defusedxml | 0.7.1 | Python Software Foundation License |
+| Geosoft GX Developer for Python | 2024.2.x | BSD-2-Clause; Windows-only optional GDB reader |
+
+The Geosoft package supplies its own GX public runtime and is used only to read
+and export single-file Geosoft GeoDatabase data into open CSV/QGIS formats. It
+does not require Oasis montaj. TerraWorkbench pins the 2024.2 series to retain
+compatibility with the NumPy versions shipped by supported QGIS releases. The
+package's upstream copyright and BSD notice remain installed with its wheel.
 
 ## 3D inversion stack
 
-These packages are declared in canonical `requirements.txt` for automatic QPIP
-discovery. `requirements-inversion.txt` also lists the inversion-only subset for
+These packages are declared in canonical `requirements.txt` for the embedded
+manager. `requirements-inversion.txt` also lists the inversion-only subset for
 manual or isolated environments. TerraWorkbench imports them lazily so the 2D
 code paths remain isolated at runtime.
 

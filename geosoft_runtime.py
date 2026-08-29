@@ -10,8 +10,9 @@ from pathlib import Path
 @dataclass(frozen=True)
 class GeosoftRuntime:
     root: Path
-    omscore: Path
+    omscore: Path | None
     python: Path
+    standalone: bool = False
 
 
 def validate_geosoft_location(location):

@@ -5,10 +5,34 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 from pathlib import Path
+import sys
+import types
 
 import numpy as np
-from geosoft.gxpy import gdb, gx
+
+
+def import_gxpy():
+    """Import gxpy in QGIS Python, which intentionally ships without Tk."""
+    extra_path = os.environ.get("TERRAWORKBENCH_GEOSOFT_SITE", "").strip()
+    if extra_path and extra_path not in sys.path:
+        sys.path.insert(0, extra_path)
+    # GX Developer 2024.2 supports current QGIS Python but predates NumPy 2,
+    # where np.float_ was removed. Keep the alias local to this bridge process.
+    if not hasattr(np, "float_"):
+        np.float_ = np.float64
+    try:
+        import tkinter.ttk  # noqa: F401
+    except ImportError:
+        tkinter = types.ModuleType("tkinter")
+        ttk = types.ModuleType("tkinter.ttk")
+        tkinter.ttk = ttk
+        sys.modules.setdefault("tkinter", tkinter)
+        sys.modules.setdefault("tkinter.ttk", ttk)
+    from geosoft.gxpy import gdb, gx
+
+    return gdb, gx
 
 
 def arguments():
@@ -32,6 +56,7 @@ def json_safe(value):
 
 def main():
     options = arguments()
+    gdb, gx = import_gxpy()
     options.output.mkdir(parents=True, exist_ok=True)
     manifest_path = options.output / f"{options.input.stem}_inventory.json"
     csv_path = options.output / f"{options.input.stem}_all_channels.csv"
@@ -40,7 +65,10 @@ def main():
     manifest = {
         "source": str(options.input),
         "source_format": "GeoDatabase (Oasis montaj)",
-        "conversion_engine": "Geosoft gxpy licensed runtime",
+        "conversion_engine": os.environ.get(
+            "TERRAWORKBENCH_GEOSOFT_ENGINE",
+            "Geosoft GX Developer public runtime",
+        ),
         "channels": [],
         "lines": [],
         "channels_csv": str(channels_path),

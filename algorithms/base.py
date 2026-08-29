@@ -9,6 +9,7 @@ from qgis.core import (
 )
 
 from ..raster_io import read_raster
+from ..i18n import translate
 
 
 class RasterAlgorithmBase(QgsProcessingAlgorithm):
@@ -61,4 +62,4 @@ class RasterAlgorithmBase(QgsProcessingAlgorithm):
         return type(self)()
 
     def tr(self, text):
-        return text
+        return translate(text)
