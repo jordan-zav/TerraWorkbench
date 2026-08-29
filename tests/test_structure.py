@@ -3,6 +3,7 @@
 from pathlib import Path
 import ast
 import configparser
+import hashlib
 import json
 import re
 from packaging.requirements import Requirement
@@ -205,6 +206,7 @@ def test_redistributable_sample_data_is_packaged_separately():
         path = ROOT / "sample_data" / "nrcan" / entry["path"]
         assert path.is_file()
         assert path.stat().st_size == entry["bytes"]
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == entry["sha256"]
         assert f'"sample_data/nrcan/{entry["path"]}"' in packager
 
 

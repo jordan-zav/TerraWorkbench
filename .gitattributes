@@ -1,0 +1,4 @@
+# Preserve redistributed scientific source files byte-for-byte. Their manifest
+# records upstream sizes and SHA-256 values, so Git must not rewrite newlines.
+sample_data/nrcan/Hydraulic/*.GRD -text
+sample_data/nrcan/Hydraulic/*.xml -text
