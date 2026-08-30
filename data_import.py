@@ -10,6 +10,7 @@ import numpy as np
 from osgeo import gdal, osr
 from qgis.core import QgsProcessingException
 
+from .delimited_text import detect_delimited_layout, regular_coordinate_axes
 from .dependencies import import_harmonica
 
 
@@ -142,13 +143,26 @@ def list_raster_subdatasets(source):
     return subdatasets
 
 
+def list_vector_layers(source):
+    """Return vector and table layer names exposed by a GDAL container."""
+    dataset = gdal.OpenEx(str(source), gdal.OF_VECTOR | gdal.OF_READONLY)
+    if dataset is None:
+        return []
+    names = []
+    for index in range(dataset.GetLayerCount()):
+        layer = dataset.GetLayerByIndex(index)
+        if layer is not None and layer.GetName():
+            names.append(layer.GetName())
+    dataset = None
+    return names
+
+
 def import_delimited_grid(source, output):
     """Import a complete regular X/Y/value CSV or whitespace XYZ table."""
     source, output = Path(source), Path(output)
     with source.open("r", encoding="utf-8-sig", errors="replace") as source_file:
         first_line = source_file.readline()
-    delimiter = "," if "," in first_line else None
-    has_header = any(character.isalpha() for character in first_line)
+    delimiter, has_header = detect_delimited_layout(first_line)
     if has_header:
         table = np.genfromtxt(
             source,
@@ -197,15 +211,10 @@ def import_delimited_grid(source, output):
         geographic_columns = False
     valid = np.isfinite(x) & np.isfinite(y)
     x, y, z = x[valid], y[valid], z[valid]
-    east, north = np.unique(x), np.unique(y)
-    if east.size < 2 or north.size < 2 or east.size * north.size != x.size:
-        raise QgsProcessingException(
-            "The points are not a complete regular grid. Grid/interpolate the survey first; "
-            "TerraWorkbench will not silently invent values."
-        )
-    dx, dy = np.diff(east), np.diff(north)
-    if not np.allclose(dx, dx[0]) or not np.allclose(dy, dy[0]):
-        raise QgsProcessingException("The X/Y spacing is not regular.")
+    try:
+        east, north, dx, dy = regular_coordinate_axes(x, y)
+    except ValueError as error:
+        raise QgsProcessingException(str(error)) from error
     values = np.full((north.size, east.size), np.nan, dtype=np.float64)
     x_indices = np.searchsorted(east, x)
     y_indices = north.size - 1 - np.searchsorted(north, y)
@@ -260,9 +269,9 @@ def import_survey_grid(source, output, subdataset=None):
             signature = stream.read(4)
         if signature == GEOSOFT_SIGNATURE:
             raise QgsProcessingException(
-                "This is a GeoDatabase (Oasis montaj), not an Esri FileGDB. Native channel access "
-                "requires the proprietary geosoft.gxpy runtime. Export the required grid/channel "
-                "from Oasis montaj to GRD, GXF, GeoTIFF, CSV or XYZ, then import it here."
+                "This is a GeoDatabase (Oasis montaj), not an Esri FileGDB. "
+                "Open it with TerraWorkbench's dedicated GeoDatabase inventory/export "
+                "command, which uses the public GX Developer reader when available."
             )
     if source.is_file() and source.suffix.lower() == ".csv":
         return import_delimited_grid(source, output)

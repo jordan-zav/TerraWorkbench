@@ -7,6 +7,9 @@ import hashlib
 import json
 import re
 from packaging.requirements import Requirement
+import pytest
+
+from delimited_text import detect_delimited_layout, regular_coordinate_axes
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -271,10 +274,12 @@ def test_inversion_dependencies_are_declared_for_embedded_manager_and_packaged()
     base = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     optional = (ROOT / "requirements-inversion.txt").read_text(encoding="utf-8")
     packager = (ROOT / "scripts" / "package_plugin.py").read_text(encoding="utf-8")
-    assert "simpeg" in base.casefold()
-    assert "discretize" in base.casefold()
-    assert "choclo" in base.casefold()
+    assert "simpeg" not in base.casefold()
+    assert "discretize" not in base.casefold()
+    assert "choclo" not in base.casefold()
     assert "simpeg" in optional.casefold()
+    assert "discretize" in optional.casefold()
+    assert "choclo" in optional.casefold()
     assert '"requirements-inversion.txt"' in packager
 
 
@@ -292,7 +297,21 @@ def test_canonical_requirements_are_parseable_and_complete():
         "ppigrf",
         "defusedxml",
         "geosoft",
-        "simpeg",
-        "discretize",
-        "choclo",
     }
+
+
+def test_delimited_layout_accepts_scientific_notation_and_common_delimiters():
+    assert detect_delimited_layout("500000 6200000 1.23e-4\n") == (None, False)
+    assert detect_delimited_layout("500000;6200000;NaN\n") == (";", False)
+    assert detect_delimited_layout("easting,northing,tmi\n") == (",", True)
+
+
+def test_regular_grid_rejects_duplicate_or_missing_coordinate_pairs():
+    east, north, _dx, _dy = regular_coordinate_axes(
+        [0, 1, 0, 1], [0, 0, 1, 1]
+    )
+    assert east.tolist() == [0, 1]
+    assert north.tolist() == [0, 1]
+
+    with pytest.raises(ValueError, match="duplicate"):
+        regular_coordinate_axes([0, 0, 0, 1], [0, 0, 1, 0])

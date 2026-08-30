@@ -41,11 +41,21 @@ if not exist "%PROFILES_ROOT%\%PROFILE_NAME%" (
     exit /b 1
 )
 
+for /f "delims=" %%V in ('call "%QGIS_PYTHON%" "%PLUGIN_SOURCE%\scripts\qgis_python_version.py"') do set "QGIS_PYTHON_VERSION=%%V"
+if not defined QGIS_PYTHON_VERSION (
+    echo ERROR: The QGIS Python version could not be detected.
+    pause
+    exit /b 1
+)
+set "DEPENDENCY_DIR=%PROFILES_ROOT%\%PROFILE_NAME%\python\dependencies\%PLUGIN_ID%\%QGIS_PYTHON_VERSION%"
+
 if /I "%~1"=="--check" (
     echo.
     echo OK: QGIS and profile "%PROFILE_NAME%" are ready.
     echo QGIS: %QGIS_ROOT%
     echo Profile: %PROFILES_ROOT%\%PROFILE_NAME%
+    echo Python: %QGIS_PYTHON_VERSION%
+    echo Dependencies: %DEPENDENCY_DIR%
     endlocal
     exit /b 0
 )
@@ -58,8 +68,10 @@ if not errorlevel 1 (
 )
 
 set "PLUGIN_DEST=%PROFILES_ROOT%\%PROFILE_NAME%\python\plugins\%PLUGIN_ID%"
-set "VENDOR_DIR=%PLUGIN_DEST%\_vendor"
 set "PROFILE_SETTINGS=%PROFILES_ROOT%\%PROFILE_NAME%\QGIS\QGIS3.ini"
+
+rem A source-tree update must not retain removed modules or the legacy _vendor tree.
+if exist "%PLUGIN_DEST%" rmdir /S /Q "%PLUGIN_DEST%"
 if not exist "%PLUGIN_DEST%" mkdir "%PLUGIN_DEST%"
 
 echo.
@@ -73,12 +85,24 @@ if %COPY_RESULT% GEQ 8 (
 )
 
 echo [2/4] Checking the scientific Python dependencies...
-if not exist "%VENDOR_DIR%" mkdir "%VENDOR_DIR%"
-call "%QGIS_PYTHON%" -m pip install --disable-pip-version-check --upgrade --target "%VENDOR_DIR%" -r "%PLUGIN_SOURCE%\requirements.txt"
+if not exist "%DEPENDENCY_DIR%" mkdir "%DEPENDENCY_DIR%"
+call "%QGIS_PYTHON%" -m pip install --disable-pip-version-check --upgrade --target "%DEPENDENCY_DIR%" -r "%PLUGIN_SOURCE%\requirements.txt"
 if errorlevel 1 (
-    echo ERROR: Python dependencies could not be installed.
+    echo ERROR: The 2D Python dependencies could not be installed.
     pause
     exit /b 1
+)
+
+call "%QGIS_PYTHON%" "%PLUGIN_SOURCE%\scripts\qgis_supports_inversion.py"
+if not errorlevel 1 (
+    call "%QGIS_PYTHON%" -m pip install --disable-pip-version-check --upgrade --target "%DEPENDENCY_DIR%" -r "%PLUGIN_SOURCE%\requirements-inversion.txt"
+    if errorlevel 1 (
+        echo ERROR: The optional 3D inversion dependencies could not be installed.
+        pause
+        exit /b 1
+    )
+) else (
+    echo INFO: 3D inversion skipped because this QGIS uses Python older than 3.11.
 )
 
 echo [3/4] Enabling %PLUGIN_ID% in QGIS...

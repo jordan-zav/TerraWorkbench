@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+import site
 import sys
 import tempfile
 import gc
@@ -14,6 +15,12 @@ PROJECT_PARENT = Path(
 )
 if str(PROJECT_PARENT) not in sys.path:
     sys.path.insert(0, str(PROJECT_PARENT))
+
+TEST_DEPENDENCY_PATH = os.environ.get("TERRAWORKBENCH_TEST_DEPENDENCY_PATH", "")
+if TEST_DEPENDENCY_PATH:
+    site.addsitedir(TEST_DEPENDENCY_PATH)
+    if TEST_DEPENDENCY_PATH not in sys.path:
+        sys.path.insert(0, TEST_DEPENDENCY_PATH)
 
 
 def create_test_raster(path):
@@ -44,6 +51,7 @@ def main():
         QgsFeature,
         QgsGeometry,
         QgsPointXY,
+        QgsProcessingException,
         QgsProject,
         QgsRasterLayer,
         QgsVectorLayer,
@@ -58,13 +66,13 @@ def main():
     from processing.core.Processing import Processing
     import processing
     import numpy as np
-    from osgeo import gdal
+    from osgeo import gdal, ogr
     from TerraWorkbench.dependencies import (
         import_harmonica,
         import_ppigrf,
         import_xarray,
     )
-    from TerraWorkbench.data_import import import_survey_grid
+    from TerraWorkbench.data_import import import_survey_grid, list_vector_layers
     from TerraWorkbench.provider import TerraWorkbenchProvider
     from TerraWorkbench.plugin import TerraWorkbenchPlugin
     import TerraWorkbench.plugin as plugin_module
@@ -814,6 +822,47 @@ def main():
                     raise AssertionError("Regular CSV grid import failed")
                 csv_dataset = None
                 print("OK: regular CSV grid imported with geographic CRS", flush=True)
+
+                ascii_source = temporary_path / "scientific_grid.xyz"
+                ascii_source.write_text(
+                    "500000;6200000;1.0e-4\n"
+                    "500100;6200000;2.0e-4\n"
+                    "500000;6200100;3.0e-4\n"
+                    "500100;6200100;4.0e-4\n",
+                    encoding="utf-8",
+                )
+                import_survey_grid(
+                    ascii_source, temporary_path / "scientific_grid.tif"
+                )
+
+                duplicate_source = temporary_path / "duplicate_grid.csv"
+                duplicate_source.write_text(
+                    "x,y,value\n0,0,1\n0,0,2\n0,1,3\n1,0,4\n",
+                    encoding="utf-8",
+                )
+                try:
+                    import_survey_grid(
+                        duplicate_source, temporary_path / "duplicate_grid.tif"
+                    )
+                except QgsProcessingException as error:
+                    if "duplicate" not in str(error).casefold():
+                        raise
+                else:
+                    raise AssertionError("Duplicate X/Y coordinates were accepted")
+                print(
+                    "OK: scientific-notation ASCII imported and duplicate grid rejected",
+                    flush=True,
+                )
+
+                vector_container = temporary_path / "vector_container.gpkg"
+                vector_dataset = ogr.GetDriverByName("GPKG").CreateDataSource(
+                    str(vector_container)
+                )
+                vector_dataset.CreateLayer("survey_points", geom_type=ogr.wkbPoint)
+                vector_dataset = None
+                if list_vector_layers(vector_container) != ["survey_points"]:
+                    raise AssertionError("GDAL vector/table enumeration failed")
+                print("OK: vector container layers enumerated", flush=True)
             finally:
                 layer = None
                 terrain_layer = None

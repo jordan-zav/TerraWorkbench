@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import os
+import site
 import sys
 import numpy as np
 
@@ -11,6 +12,12 @@ PROJECT_PARENT = Path(
     )
 )
 sys.path.insert(0, str(PROJECT_PARENT))
+
+TEST_DEPENDENCY_PATH = os.environ.get("TERRAWORKBENCH_TEST_DEPENDENCY_PATH", "")
+if TEST_DEPENDENCY_PATH:
+    site.addsitedir(TEST_DEPENDENCY_PATH)
+    if TEST_DEPENDENCY_PATH not in sys.path:
+        sys.path.insert(0, TEST_DEPENDENCY_PATH)
 
 from TerraWorkbench.dependencies import import_simpeg_stack  # noqa: E402
 from TerraWorkbench.inversion_core import (  # noqa: E402

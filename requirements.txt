@@ -4,7 +4,3 @@ defusedxml>=0.7,<1
 # Official BSD GX Developer runtime. Windows only; provides standalone read
 # access to single-file Geosoft GeoDatabase (.gdb) without Oasis montaj.
 geosoft>=2024.2,<2025; platform_system == "Windows"
-# Complete open-source 3D inversion stack used by the embedded dependency manager.
-simpeg>=0.25,<0.26
-discretize>=0.12,<0.13
-choclo>=0.3,<0.4

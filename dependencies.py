@@ -2,6 +2,7 @@
 
 import site
 from pathlib import Path
+import sys
 
 from qgis.core import QgsProcessingException
 
@@ -54,6 +55,12 @@ def import_ppigrf():
 
 def import_simpeg_stack():
     """Import the optional 3D inversion stack without burdening 2D users."""
+    if sys.version_info < (3, 11):
+        raise QgsProcessingException(
+            "The pinned SimPEG inversion stack requires Python 3.11 or newer. "
+            "Use a QGIS build with a compatible Python runtime; the 2D "
+            "TerraWorkbench tools remain available in this installation."
+        )
     try:
         import discretize
         import simpeg
@@ -61,7 +68,7 @@ def import_simpeg_stack():
         raise QgsProcessingException(
             "The optional SimPEG inversion stack is not installed in the Python "
             "environment used by QGIS. Use TerraWorkbench's built-in dependency "
-            "manager to install requirements.txt, restart QGIS, and run the inversion again. The 2D tools do not "
+            "manager to install requirements-inversion.txt, restart QGIS, and run the inversion again. The 2D tools do not "
             "require this dependency set."
         ) from exc
     return simpeg, discretize

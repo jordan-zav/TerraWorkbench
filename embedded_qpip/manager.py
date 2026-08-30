@@ -23,6 +23,7 @@ from .install_progress import PipInstallProgressDialog
 
 
 LOG_TAG = "TerraWorkbench dependencies"
+INVERSION_MINIMUM_PYTHON = (3, 11)
 
 
 @dataclass(frozen=True)
@@ -47,10 +48,26 @@ def requirements_path():
     return Path(__file__).resolve().parents[1] / "requirements.txt"
 
 
+def inversion_requirements_path():
+    """Return the optional 3D-inversion requirements shipped with the plugin."""
+    return Path(__file__).resolve().parents[1] / "requirements-inversion.txt"
+
+
+def inversion_supported():
+    """Whether this QGIS Python can install the pinned SimPEG stack."""
+    return sys.version_info >= INVERSION_MINIMUM_PYTHON
+
+
 def dependency_directory():
-    """Return the active QGIS profile's version-specific dependency directory."""
+    """Return TerraWorkbench's isolated, version-specific dependency directory."""
     python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    return _active_profile_root() / "python" / "dependencies" / python_version
+    return (
+        _active_profile_root()
+        / "python"
+        / "dependencies"
+        / "TerraWorkbench"
+        / python_version
+    )
 
 
 def _active_profile_root():
@@ -107,17 +124,21 @@ def activate_dependency_path():
 
 
 def read_requirements():
-    """Parse active direct requirements, honoring PEP 508 environment markers."""
+    """Parse compatible direct requirements, honoring environment markers."""
     environment = default_environment()
     requirements = []
-    for raw_line in requirements_path().read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith(("#", "-")):
-            continue
-        requirement = Requirement(line)
-        if requirement.marker and not requirement.marker.evaluate(environment):
-            continue
-        requirements.append(requirement)
+    paths = [requirements_path()]
+    if inversion_supported():
+        paths.append(inversion_requirements_path())
+    for path in paths:
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith(("#", "-")):
+                continue
+            requirement = Requirement(line)
+            if requirement.marker and not requirement.marker.evaluate(environment):
+                continue
+            requirements.append(requirement)
     return tuple(requirements)
 
 
@@ -178,7 +199,7 @@ def install_requirements(parent=None, force_all=False):
         QMessageBox.information(
             parent,
             text("TerraWorkbench dependencies", "Dependencias de TerraWorkbench"),
-            text("All direct TerraWorkbench dependencies satisfy requirements.txt.", "Todas las dependencias directas de TerraWorkbench satisfacen requirements.txt."),
+            text("All compatible TerraWorkbench dependency files are satisfied.", "Todos los archivos de dependencias compatibles de TerraWorkbench están satisfechos."),
         )
         return True
 

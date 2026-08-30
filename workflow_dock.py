@@ -95,7 +95,11 @@ from .spectral import (
     prepare_fft_grid,
     radial_power_spectrum,
 )
-from .data_import import import_survey_grid, list_raster_subdatasets
+from .data_import import (
+    import_survey_grid,
+    list_raster_subdatasets,
+    list_vector_layers,
+)
 from .embedded_qpip import activate_dependency_path, dependency_directory
 from .embedded_qpip.manager import python_command
 from .geosoft_runtime import (
@@ -1701,8 +1705,19 @@ class FilterStackDock(QDockWidget):
                 "Geosoft gxpy runtime from installed Oasis montaj",
             )
         process.setProcessEnvironment(process_environment)
+        starting_message = (
+            text(
+                "Starting the public Geosoft GX Developer reader…",
+                "Iniciando el lector público Geosoft GX Developer…",
+            )
+            if runtime.standalone
+            else text(
+                "Starting the installed Oasis montaj runtime…",
+                "Iniciando el runtime instalado de Oasis montaj…",
+            )
+        )
         progress = QProgressDialog(
-            text("Starting licensed Geosoft engine…", "Iniciando motor Geosoft con licencia…"), text("Cancel", "Cancelar"), 0, 0, self
+            starting_message, text("Cancel", "Cancelar"), 0, 0, self
         )
         progress.setWindowTitle("TerraWorkbench — GeoDatabase (Oasis montaj)")
         progress.setWindowModality(qt_enum(Qt, "WindowModality", "WindowModal"))
@@ -1710,6 +1725,7 @@ class FilterStackDock(QDockWidget):
         progress.setAutoClose(False)
         self._geosoft_process = process
         self._geosoft_progress = progress
+        cancelled = {"value": False}
 
         def update_progress():
             output_text = (
@@ -1727,6 +1743,8 @@ class FilterStackDock(QDockWidget):
             process.deleteLater()
             self._geosoft_process = None
             self._geosoft_progress = None
+            if cancelled["value"]:
+                return
             if exit_code == 0:
                 loaded = self._load_geosoft_outputs(source, output)
                 QMessageBox.information(
@@ -1740,18 +1758,33 @@ class FilterStackDock(QDockWidget):
                 if extract_all and self._last_geosoft_point_layer is not None:
                     self._offer_survey_gridding(self._last_geosoft_point_layer)
             else:
+                failure_text = (
+                    text(
+                        "The public Geosoft GX Developer reader failed.",
+                        "Falló el lector público Geosoft GX Developer.",
+                    )
+                    if runtime.standalone
+                    else text(
+                        "The installed Oasis montaj runtime failed. Confirm that it is licensed for this user.",
+                        "Falló el runtime instalado de Oasis montaj. Confirme que tenga licencia para este usuario.",
+                    )
+                )
+                diagnostic = error_text or text(
+                    "No diagnostic was returned.", "No se devolvió diagnóstico."
+                )
                 QMessageBox.critical(
                     self,
                     "TerraWorkbench",
-                    text(
-                        f"The Geosoft engine failed. Confirm that Oasis montaj is licensed for this user.\n\n{error_text or 'No diagnostic was returned.'}",
-                        f"El motor Geosoft falló. Confirme que Oasis montaj tenga licencia para este usuario.\n\n{error_text or 'No se devolvió diagnóstico.'}",
-                    ),
+                    f"{failure_text}\n\n{diagnostic}",
                 )
+
+        def cancel_process():
+            cancelled["value"] = True
+            process.kill()
 
         process.readyReadStandardOutput.connect(update_progress)
         process.finished.connect(finished)
-        progress.canceled.connect(process.kill)
+        progress.canceled.connect(cancel_process)
         progress.show()
         process.start(str(runtime.python), arguments)
 
@@ -1851,7 +1884,7 @@ class FilterStackDock(QDockWidget):
         layer.setCustomProperty("TerraWorkbench/sourceFile", str(source))
         layer.setCustomProperty(
             "TerraWorkbench/conversionEngine",
-            manifest.get("conversion_engine", "Geosoft gxpy licensed runtime"),
+            manifest.get("conversion_engine", "Geosoft runtime"),
         )
         metadata = layer.metadata()
         metadata.setTitle(layer.name())
@@ -1875,16 +1908,65 @@ class FilterStackDock(QDockWidget):
             )
             return
         subdatasets = list_raster_subdatasets(source)
-        subdataset = None
-        if subdatasets:
-            descriptions = [description for _name, description in subdatasets]
-            selected, accepted = QInputDialog.getItem(
-                self, text("Select FileGDB raster", "Seleccionar ráster de FileGDB"), text("Raster dataset", "Dataset ráster"), descriptions, 0, False
+        vector_layers = list_vector_layers(source)
+        choices = []
+        targets = {}
+        if vector_layers:
+            all_label = text(
+                "[Vector] Load every feature class and table",
+                "[Vector] Cargar todas las clases de entidad y tablas",
             )
-            if not accepted:
-                return
-            subdataset = subdatasets[descriptions.index(selected)][0]
-        self._finish_import(source, subdataset)
+            choices.append(all_label)
+            targets[all_label] = ("all_vectors", None)
+            for name in vector_layers:
+                label = f"{text('[Vector]', '[Vector]')} {name}"
+                choices.append(label)
+                targets[label] = ("vector", name)
+        for name, description in subdatasets:
+            label = f"[Raster] {description or name}"
+            choices.append(label)
+            targets[label] = ("raster", name)
+        if not choices:
+            QMessageBox.warning(
+                self,
+                "TerraWorkbench",
+                text(
+                    "No readable raster, feature class or table was found in this FileGDB.",
+                    "No se encontró ningún ráster, clase de entidad o tabla legible en esta FileGDB.",
+                ),
+            )
+            return
+        selected, accepted = QInputDialog.getItem(
+            self,
+            text("Open Esri FileGDB content", "Abrir contenido de Esri FileGDB"),
+            text("Dataset", "Dataset"),
+            choices,
+            0,
+            False,
+        )
+        if not accepted:
+            return
+        kind, value = targets[selected]
+        if kind == "raster":
+            self._finish_import(source, value)
+            return
+        names = vector_layers if kind == "all_vectors" else [value]
+        loaded = 0
+        for name in names:
+            layer = QgsVectorLayer(f"{source}|layername={name}", name, "ogr")
+            if layer.isValid():
+                QgsProject.instance().addMapLayer(layer)
+                loaded += 1
+        if loaded != len(names):
+            message = text(
+                "Loaded {loaded} of {total} FileGDB vector/table layers.",
+                "Se cargaron {loaded} de {total} capas vectoriales/tablas de FileGDB.",
+            ).format(loaded=loaded, total=len(names))
+            QMessageBox.warning(
+                self,
+                "TerraWorkbench",
+                message,
+            )
 
     def _finish_import(self, source, subdataset=None):
         suggested = str(Path(source).with_suffix(".tif"))

@@ -16,6 +16,7 @@ from qgis.PyQt.QtWidgets import (
 from .embedded_qpip import (
     dependency_directory,
     dependency_status,
+    inversion_supported,
     install_requirements,
 )
 from .metadata_utils import plugin_version
@@ -33,6 +34,7 @@ DEPENDENCY_DETAILS = {
     "simpeg": ("MIT", "https://github.com/simpeg/simpeg"),
     "discretize": ("MIT", "https://github.com/simpeg/discretize"),
     "choclo": ("BSD-3-Clause", "https://github.com/fatiando/choclo"),
+    "geosoft": ("BSD-2-Clause", "https://pypi.org/project/geosoft/"),
 }
 
 
@@ -198,6 +200,15 @@ class DependencyDialog(QDialog):
                 "Todos los requisitos directos están satisfechos. Reinicie QGIS después de cualquier reparación.",
             )
         )
+        if not inversion_supported():
+            self.note.setText(
+                self.note.text()
+                + "\n"
+                + text(
+                    "3D inversion requires QGIS with Python 3.11 or newer; the 2D tools remain available.",
+                    "La inversión 3D requiere QGIS con Python 3.11 o posterior; las herramientas 2D siguen disponibles.",
+                )
+            )
 
     def install_missing(self):
         if install_requirements(self, force_all=False):

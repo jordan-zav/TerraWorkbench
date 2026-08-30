@@ -33,6 +33,7 @@ ROOT_FILES = (
     "__init__.py",
     "metadata.txt",
     "metadata_utils.py",
+    "delimited_text.py",
     "i18n.py",
     "qgis_compat.py",
     "plugin.py",

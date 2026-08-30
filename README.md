@@ -87,7 +87,7 @@ Survey grids / points / channels
 | GeoTIFF, GXF, AAIGrid and regular XYZ | GDAL | Converted to analysis-ready GeoTIFF |
 | CSV / ASCII X-Y-value grids | Native | Requires a complete regular grid; irregular points are not silently interpolated |
 | Survey point layers | Native | IDW or nearest-neighbor gridding to a projected raster |
-| Esri FileGDB raster datasets | GDAL | Supports subdataset selection |
+| Esri FileGDB rasters, feature classes and tables | GDAL/OGR | Select one raster/vector layer or load every vector/table layer |
 | Geosoft single-file `.gdb` | Standalone inventory and full export to open CSV/QGIS layers | Uses the Windows-only BSD GX Developer runtime; Oasis montaj is optional fallback only |
 
 Original survey files are never modified. A Geosoft channel database is not an
@@ -303,8 +303,9 @@ Use `--no-launch` to update the plugin without opening QGIS. Set `QGIS_ROOT`
 only when automatic discovery cannot select the intended installation.
 
 TerraWorkbench includes its own dependency manager, adapted from the GPLv3
-[QPIP](https://github.com/opengisch/qpip) progress components. It reads
-[`requirements.txt`](requirements.txt), checks versions and installs only after
+[QPIP](https://github.com/opengisch/qpip) progress components. It reads the 2D
+[`requirements.txt`](requirements.txt) and, on Python 3.11+, the optional
+[`requirements-inversion.txt`](requirements-inversion.txt), checks versions and installs only after
 explicit approval into the active QGIS profile. Each direct and transitive
 package receives an individual status/progress row. It does not register QPIP as
 a second plugin, patch QGIS plugin loading or manage dependencies for other
@@ -315,15 +316,15 @@ QGIS after installation or repair.
 
 ## Requirements
 
-- QGIS 3.28 or newer
+- QGIS 3.28 or newer for 2D workflows
 - Harmonica 0.7
 - ppigrf 2.x
-- SimPEG 0.25, discretize 0.12 and Choclo 0.3 for inversion workflows
+- QGIS Python 3.11 or newer plus SimPEG 0.25, discretize 0.12 and Choclo 0.3 for inversion workflows
 - A projected, evenly spaced raster for FFT tools
 
-The canonical [`requirements.txt`](requirements.txt) contains the complete 2D
-and 3D runtime stack for the embedded manager. [`requirements-inversion.txt`](requirements-inversion.txt)
-documents the inversion-only subset for manual environments.
+The canonical [`requirements.txt`](requirements.txt) contains the 2D runtime.
+[`requirements-inversion.txt`](requirements-inversion.txt) contains the optional
+3D stack and is activated only when the QGIS Python runtime is compatible.
 
 ## Development and verification
 
@@ -349,7 +350,7 @@ scripts and previous archives are excluded.
 
 Version **0.13.0** is an internal test build. The current verification baseline is:
 
-- 28 unit/structure tests
+- 34 unit/structure tests
 - Ruff clean
 - 67 algorithms loaded in QGIS 3.44
 - Real Processing and multi-step Filter Stack smoke tests
