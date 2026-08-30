@@ -167,6 +167,13 @@ _KNOWLEDGE_REPOSITORIES = (
             ("awesome-open-geoscience", "https://github.com/softwareunderground/awesome-open-geoscience", "Catálogo comunitario para descubrir proyectos abiertos."),
         ),
     ),
+    (
+        "Radiometría gamma",
+        (
+            ("IAEA radioelement guidelines", "https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf", "Normas de adquisición, calibración, procesamiento, incertidumbre y cartografía radiométrica."),
+            ("Geoscience Australia Radiometrics", "https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics", "Productos oficiales K, eU, eTh, dosis y composiciones ternarias."),
+        ),
+    ),
 )
 
 _REPOSITORY_DESCRIPTIONS_EN = {
@@ -190,6 +197,8 @@ _REPOSITORY_DESCRIPTIONS_EN = {
     "GDAL": "Raster/vector formats and metadata.",
     "Rasterio": "Raster reading, writing and validation on GDAL.",
     "awesome-open-geoscience": "Community catalogue of open geoscience projects.",
+    "IAEA radioelement guidelines": "Acquisition, calibration, processing, uncertainty and radiometric-mapping guidance.",
+    "Geoscience Australia Radiometrics": "Official K, eU, eTh, dose and ternary radiometric products.",
 }
 
 
@@ -562,13 +571,13 @@ class KnowledgeBaseDialog(QDialog):
         )
         self.intro.setText(
             text(
-                "Potential-field scientific library. Links open official repositories for documentation, source code and tests.",
-                "Biblioteca científica de campos potenciales. Los enlaces abren repositorios oficiales para leer documentación, código y pruebas.",
+                "Geophysical scientific library. Links open trusted official documentation, repositories and tests.",
+                "Biblioteca científica geofísica. Los enlaces abren documentación oficial confiable, repositorios y pruebas.",
             )
         )
         self.repository_browser.setHtml(self._repository_html())
         self.tabs.setTabText(0, text("Trusted repositories", "Repositorios confiables"))
-        self.tabs.setTabText(1, text("MAG / GRAV reference", "Referencia MAG / GRAV"))
+        self.tabs.setTabText(1, text("MAG / GRAV / RAD reference", "Referencia MAG / GRAV / RAD"))
         reference_name = {
             "en": "potential_fields_reference_en.md",
             "es": "geofisica_potencial_referencia.md",
@@ -604,6 +613,7 @@ class KnowledgeBaseDialog(QDialog):
                 "Suites geofísicas y QGIS": "Geophysical suites and QGIS",
                 "Inversión y modelos 3D": "Inversion and 3D models",
                 "Campo principal y formatos": "Main field and formats",
+                "Radiometría gamma": "Gamma-ray spectrometry",
             }[title]
             sections.append(f"<h3>{text(english_title, title)}</h3><ul>")
             for name, url, description in repositories:
@@ -714,6 +724,13 @@ def _algorithm_reference_links(algorithm):
         links.append(("ppigrf / IGRF-14", "https://github.com/IAGA-VMOD/ppigrf"))
     if any(term in searchable for term in ("bouguer", "normal gravity", "latitude")):
         links.append(("Boule geodetic reference", "https://github.com/fatiando/boule"))
+    if any(term in searchable for term in ("gamma", "radiometr", "dose", "euth")):
+        links.extend(
+            (
+                ("IAEA radioelement-mapping guidelines", "https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf"),
+                ("Geoscience Australia radiometrics", "https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics"),
+            )
+        )
     if not links:
         links.append(("TerraWorkbench reference ecosystem", "https://github.com/fatiando/harmonica"))
     return links
@@ -917,6 +934,18 @@ class FilterStackDock(QDockWidget):
             "Synthetic DEM (m)",
             lambda: self.load_sample_raster("synthetic_dem.tif"),
         )
+        self.sample_k_action = self.example_menu.addAction(
+            "Synthetic potassium (% K)",
+            lambda: self.load_sample_raster("synthetic_potassium.tif"),
+        )
+        self.sample_u_action = self.example_menu.addAction(
+            "Synthetic equivalent uranium (ppm eU)",
+            lambda: self.load_sample_raster("synthetic_equivalent_uranium.tif"),
+        )
+        self.sample_th_action = self.example_menu.addAction(
+            "Synthetic equivalent thorium (ppm eTh)",
+            lambda: self.load_sample_raster("synthetic_equivalent_thorium.tif"),
+        )
         self.sample_points_action = self.example_menu.addAction(
             "Synthetic survey points (CSV)",
             self.load_sample_points,
@@ -1094,6 +1123,9 @@ class FilterStackDock(QDockWidget):
         self.sample_mag_action.setText(text("Synthetic magnetic anomaly (nT)", "Anomalía magnética sintética (nT)"))
         self.sample_grav_action.setText(text("Synthetic gravity anomaly (mGal)", "Anomalía gravimétrica sintética (mGal)"))
         self.sample_dem_action.setText(text("Synthetic DEM (m)", "DEM sintético (m)"))
+        self.sample_k_action.setText(text("Synthetic potassium (% K)", "Potasio sintético (% K)"))
+        self.sample_u_action.setText(text("Synthetic equivalent uranium (ppm eU)", "Uranio equivalente sintético (ppm eU)"))
+        self.sample_th_action.setText(text("Synthetic equivalent thorium (ppm eTh)", "Torio equivalente sintético (ppm eTh)"))
         self.sample_points_action.setText(text("Synthetic survey points (CSV)", "Puntos sintéticos de levantamiento (CSV)"))
         self.nrcan_menu.setTitle(
             text("NRCan field reference grids", "Grillas reales de referencia NRCan")

@@ -1,6 +1,6 @@
 # Geofísica de Campos Potenciales — Referencia Técnica
 
-Documento de referencia para el módulo de geofísica (magnetometría, gravimetría, filtros FFT, preparación de levantamientos e inversión 3D) implementado en QGIS. Cada entrada indica fórmula, fundamento, qué resalta/calcula, aplicación en exploración mineral y limitaciones u observaciones de implementación.
+Documento de referencia para el módulo de geofísica (magnetometría, gravimetría, radiometría gamma, filtros FFT, preparación de levantamientos e inversión 3D) implementado en QGIS. Cada entrada indica fórmula, fundamento, qué resalta/calcula, aplicación en exploración mineral y limitaciones u observaciones de implementación.
 
 Cada herramienta declara explícitamente en la interfaz su dominio numérico — `[SPATIAL / FINITE DIFFERENCE]`, `[FFT / HARMONICA]`, `[FFT / MAGMAP-LIKE]`, `[MIXED GRID / FFT]`, `[PHYSICAL CORRECTION / GRID]`. Ver la taxonomía completa en §9.
 
@@ -208,7 +208,7 @@ Las derivadas y realces siguen la misma lógica que en magnetometría, aplicadas
 
 ## 4. Gravimetría — Cadena de corrección (TerraWorkbench v0.11.0)
 
-**Estado real:** implementado como 10 algoritmos nuevos y separados (más la placa de Bouguer original = 11 en total para esta cadena). El paquete registra 64 algoritmos en total. Las convenciones de placa siguen la formulación de Harmonica (`harmonica.bouguer_correction`), y la secuencia de Bouguer completa sigue **SBA + terreno − curvatura**, consistente con la reducción descrita en USGS Professional Paper 646-A. Cada algoritmo indica explícitamente si produce una **corrección** (mGal a sumar/restar) o una **anomalía** (resultado acumulado) — evita el problema de "nombre correcto, resultado ambiguo".
+**Estado real:** implementado como 10 algoritmos nuevos y separados (más la placa de Bouguer original = 11 en total para esta cadena). Las convenciones de placa siguen la formulación de Harmonica (`harmonica.bouguer_correction`), y la secuencia de Bouguer completa sigue **SBA + terreno − curvatura**, consistente con la reducción descrita en USGS Professional Paper 646-A. Cada algoritmo indica explícitamente si produce una **corrección** (mGal a sumar/restar) o una **anomalía** (resultado acumulado) — evita el problema de "nombre correcto, resultado ambiguo".
 
 > **Diferencia respecto a la versión anterior de este documento:** la fórmula de Bouguer completa NO es `SBA + terreno` a secas — hay que **restar la curvatura**: `CBA = SBA + terreno − curvatura`. Corregido abajo en §4.9. También la isostasia dejó de ser una sola herramienta "corrección y anomalía"; se implementó como **dos algoritmos separados**: profundidad de Moho (§4.10) y anomalía residual isostática (§4.11). Y la corrección de latitud se documenta junto con el concepto de *gravity disturbance*, que es una cantidad distinta de la anomalía clásica (§4.3).
 
@@ -459,7 +459,7 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 | Inversión 3D (gravedad, magnética escalar, MVI, conjunta) | Cubierto, con soporte de malla adaptativa y topografía |
 | Diferenciación espacial vs. FFT como parte visible del producto | **Nuevo en v0.12.0** — etiquetas de dominio en la UI (§9) + motor MAGMAP-like con acondicionamiento de bordes (§9.2) |
 
-**Versión y validación (v0.12.0):** 67 algoritmos registrados en total (64 previos + DX/DY/DZ FFT explícitos). 25 pruebas numéricas correctas, Ruff sin errores, validado en QGIS 3.44. Cambios locales; sin commit/push al momento de este registro.
+**Versión y validación actual (v0.14.0):** 79 algoritmos registrados, pruebas locales y Ruff correctos, y prueba integral validada en QGIS 3.44. El registro incluye herramientas radiométricas de grilla y una cadena para puntos crudos previa al gridding, además de la cobertura MAG/GRAV anterior.
 
 **Resuelto en v0.11.1–v0.12.0 (ya no son limitaciones abiertas):**
 - La continuación ascendente usa una altura configurable (§1.5) y su identidad no codifica una distancia fija.
@@ -645,3 +645,27 @@ Enlaces verificados (no de memoria). Pensados como lectura complementaria a §10
 
 - **awesome-open-geoscience** — https://github.com/softwareunderground/awesome-open-geoscience — mantenida por Software Underground; cubre desde Fatiando a Terra/SimPEG hasta datasets abiertos (ICGEM para modelos esféricos de gravedad, SEG Open Data Catalog).
 - **awesome-geophysics** — https://github.com/aradfarahani/awesome-geophysics — orientada a libros de texto y material educativo, incluye *Gravity and Magnetic Exploration* de Hinze, von Frese & Saad, citado indirectamente en varios papers de §10.3 y §10.6.
+# 11. Radiometría gamma — K, eU y eTh
+
+TerraWorkbench v0.14.0 incorpora radiometría como una familia separada de MAG y
+GRAV. No es un filtro de campo potencial: mide la radiación gamma superficial y
+sus productos dependen de la adquisición, el sistema detector y el equilibrio de
+las series de decaimiento.
+
+Los productos sobre grillas calibradas incluyen razones configurables, ternario
+K-rojo/eTh-verde/eU-azul, ternario normalizado, dosis terrestre, parámetro
+interpretativo `F = K·eU/eTh` y reporte JSON de calidad. K se expresa normalmente
+en porcentaje; eU y eTh, en ppm equivalentes. Las divisiones enmascaran
+denominadores pequeños y todas las entradas deben compartir exactamente SRC,
+extensión y malla.
+
+Para conteos crudos se ofrecen corrección no paralizable por tiempo muerto,
+sustracción explícita de fondos de aeronave/cósmico/radón, normalización
+exponencial por altura, calibración por sensibilidad y stripping mediante una
+matriz de respuesta 3×3. Los coeficientes deben proceder del informe del sistema
+y del levantamiento. No deben aplicarse nuevamente a productos publicados que ya
+fueron corregidos. La humedad, cobertura vegetal, geometría, altura, radón y
+desequilibrio secular limitan la interpretación geológica.
+
+Lecturas confiables: [IAEA, Guidelines for radioelement mapping](https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf)
+y [Geoscience Australia, Radiometrics](https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics).

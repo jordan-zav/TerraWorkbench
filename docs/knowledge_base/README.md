@@ -1,7 +1,7 @@
 # TerraWorkbench Knowledge Base
 
 Base de conocimiento técnica para construir un entorno abierto y reproducible de
-magnetometría, gravimetría, procesamiento espectral, control de levantamientos,
+magnetometría, gravimetría, radiometría gamma, procesamiento espectral, control de levantamientos,
 modelado directo e inversión dentro de QGIS.
 
 Esta carpeta no es una lista de funciones deseadas ni una afirmación de paridad

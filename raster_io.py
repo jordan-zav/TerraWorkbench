@@ -157,3 +157,44 @@ def write_geotiff(output_path, values, grid, description, output_nodata=None):
     dataset.FlushCache()
     dataset = None
     return output_path
+
+
+def write_multiband_geotiff(
+    output_path, bands, grid, descriptions, output_nodata=None, byte=False
+):
+    """Write co-registered arrays as a compressed multiband GeoTIFF."""
+    arrays = np.asarray(bands)
+    if arrays.ndim != 3 or arrays.shape[1:] != grid.values.shape:
+        raise QgsProcessingException("Output bands do not match the reference raster grid.")
+    if len(descriptions) != arrays.shape[0]:
+        raise QgsProcessingException("Every output band requires a description.")
+    rows, columns = grid.values.shape
+    data_type = gdal.GDT_Byte if byte else gdal.GDT_Float64
+    dataset = gdal.GetDriverByName("GTiff").Create(
+        output_path,
+        columns,
+        rows,
+        arrays.shape[0],
+        data_type,
+        options=["TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=2" if byte else "PREDICTOR=3"],
+    )
+    if dataset is None:
+        raise QgsProcessingException("Could not create the output multiband GeoTIFF.")
+    dataset.SetGeoTransform(grid.geotransform)
+    dataset.SetProjection(grid.projection)
+    dataset.SetMetadata(grid.metadata)
+    for index, (values, description) in enumerate(zip(arrays, descriptions), start=1):
+        band = dataset.GetRasterBand(index)
+        output_values = np.asarray(values).copy()
+        if output_nodata is not None:
+            output_values[~np.isfinite(output_values)] = output_nodata
+        band.WriteArray(
+            np.asarray(output_values, dtype=np.uint8 if byte else np.float64)
+        )
+        band.SetDescription(str(description))
+        if output_nodata is not None:
+            band.SetNoDataValue(float(output_nodata))
+        band.FlushCache()
+    dataset.FlushCache()
+    dataset = None
+    return output_path

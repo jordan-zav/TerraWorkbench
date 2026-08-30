@@ -152,3 +152,20 @@ A inversão conjunta usa acoplamento por gradiente cruzado para favorecer simila
 ## 9. Leitura aberta e confiável
 
 A aba **Repositórios confiáveis** contém links diretos para Harmonica, Verde, Boule, Choclo, GMT, xrft, SimPEG, discretize, ppigrf, QGIS e outros projetos oficiais. Consulte a documentação e as licenças originais antes de reproduzir métodos ou código.
+# Espectrometria gama — K, eU e eTh
+
+O TerraWorkbench 0.14.0 trata a radiometria como uma família geofísica separada,
+e não como um filtro de campos potenciais. Os produtos de grades calibradas
+incluem razões configuráveis, imagens ternárias K-vermelho/eTh-verde/eU-azul,
+ternário normalizado, dose terrestre, parâmetro interpretativo `F = K·eU/eTh` e
+controle de qualidade JSON.
+
+As ferramentas de contagens brutas implementam tempo morto não paralisável,
+subtração explícita dos fundos da aeronave/cósmico/radônio, normalização
+exponencial por altura, calibração de sensibilidade e stripping por matriz de
+resposta 3×3. Os coeficientes devem vir do relatório de calibração do levantamento
+e do detector; nunca são inferidos silenciosamente. Umidade, vegetação, altura,
+radônio e desequilíbrio secular limitam a interpretação geológica.
+
+Leituras confiáveis: [diretrizes IAEA](https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf)
+e [Geoscience Australia Radiometrics](https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics).

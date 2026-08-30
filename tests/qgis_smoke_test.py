@@ -178,13 +178,25 @@ def main():
             "terraworkbench:invert_magnetic_susceptibility_3d",
             "terraworkbench:invert_magnetic_vector_3d",
             "terraworkbench:invert_joint_gravity_magnetics_3d",
+            "terraworkbench:radiometry_ratio",
+            "terraworkbench:radiometry_ternary",
+            "terraworkbench:radiometry_dose_rate",
+            "terraworkbench:radiometry_f_parameter",
+            "terraworkbench:radiometry_channel_qc",
+            "terraworkbench:radiometry_despike",
+            "terraworkbench:radiometry_dead_time",
+            "terraworkbench:radiometry_background",
+            "terraworkbench:radiometry_height_attenuation",
+            "terraworkbench:radiometry_sensitivity_calibration",
+            "terraworkbench:radiometry_spectral_unmix",
+            "terraworkbench:radiometry_correct_survey_channels",
         }
         if not expected.issubset(algorithm_ids):
             raise AssertionError(
                 f"Missing algorithms: {sorted(expected - algorithm_ids)}"
             )
-        if len(algorithm_ids) != 67:
-            raise AssertionError(f"Expected 67 algorithms, found {len(algorithm_ids)}")
+        if len(algorithm_ids) != 79:
+            raise AssertionError(f"Expected 79 algorithms, found {len(algorithm_ids)}")
 
         with tempfile.TemporaryDirectory(
             prefix="terraworkbench_"
@@ -204,6 +216,8 @@ def main():
             rtp_path = temporary_path / "rtp_igrf.tif"
             gridded_path = temporary_path / "survey_grid.tif"
             gridded_filtered_path = temporary_path / "survey_grid_lowpass.tif"
+            radiometric_dose_path = temporary_path / "radiometric_dose.tif"
+            radiometric_ternary_path = temporary_path / "radiometric_ternary.tif"
             create_test_raster(input_path)
             point_layer = QgsVectorLayer(
                 "Point?crs=EPSG:4326&field=mag:double", "survey points", "memory"
@@ -292,6 +306,35 @@ def main():
                     feature.setAttributes([line_name, kind, fiducial, value])
                     line_features.append(feature)
             line_layer.dataProvider().addFeatures(line_features)
+            radiometric_points = QgsVectorLayer(
+                "Point?crs=EPSG:32718&field=total:double&field=k:double&field=u:double&field=th:double",
+                "raw radiometric points",
+                "memory",
+            )
+            radiometric_feature = QgsFeature(radiometric_points.fields())
+            radiometric_feature.setGeometry(
+                QgsGeometry.fromPointXY(QgsPointXY(500000, 9000000))
+            )
+            radiometric_feature.setAttributes([1000.0, 100.0, 50.0, 20.0])
+            radiometric_points.dataProvider().addFeature(radiometric_feature)
+            corrected_radiometry = processing.run(
+                "terraworkbench:radiometry_correct_survey_channels",
+                {
+                    "INPUT": radiometric_points,
+                    "K_WINDOW_FIELD": "k",
+                    "U_WINDOW_FIELD": "u",
+                    "TH_WINDOW_FIELD": "th",
+                    "TOTAL_COUNT_FIELD": "total",
+                    "DEAD_TIME_SECONDS": 0.0001,
+                    "OUTPUT": "memory:",
+                },
+            )["OUTPUT"]
+            corrected_feature = next(corrected_radiometry.getFeatures())
+            if (
+                not corrected_feature["tw_rad_ok"]
+                or abs(corrected_feature["tw_k_cps"] - 111.111111) > 1e-5
+            ):
+                raise AssertionError("Radiometric point correction chain failed")
             leveled = processing.run(
                 "terraworkbench:crossover_line_leveling",
                 {
@@ -404,6 +447,41 @@ def main():
                 layer = QgsRasterLayer(str(input_path), "input")
                 if not layer.isValid():
                     raise AssertionError("The synthetic input raster is invalid")
+
+                processing.run(
+                    "terraworkbench:radiometry_dose_rate",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "URANIUM": layer,
+                        "URANIUM_BAND": 1,
+                        "THORIUM": layer,
+                        "THORIUM_BAND": 1,
+                        "K_COEFFICIENT": 13.078,
+                        "U_COEFFICIENT": 5.675,
+                        "TH_COEFFICIENT": 2.494,
+                        "OUTPUT": str(radiometric_dose_path),
+                    },
+                )
+                processing.run(
+                    "terraworkbench:radiometry_ternary",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "URANIUM": layer,
+                        "URANIUM_BAND": 1,
+                        "THORIUM": layer,
+                        "THORIUM_BAND": 1,
+                        "LOWER_PERCENTILE": 2.0,
+                        "UPPER_PERCENTILE": 98.0,
+                        "NORMALIZE": True,
+                        "OUTPUT": str(radiometric_ternary_path),
+                    },
+                )
+                ternary_dataset = gdal.Open(str(radiometric_ternary_path))
+                if not radiometric_dose_path.exists() or ternary_dataset.RasterCount != 3:
+                    raise AssertionError("Radiometric Processing outputs are invalid")
+                ternary_dataset = None
 
                 processing.run(
                     "terraworkbench:bouguer_correction",
@@ -634,7 +712,7 @@ def main():
                     if spectrum_plot.grab().isNull():
                         raise AssertionError("Spectrum preview did not render")
                     spectrum_plot.deleteLater()
-                    if len(available_algorithms()) != len(algorithm_ids) - 11:
+                    if len(available_algorithms()) != len(algorithm_ids) - 19:
                         raise AssertionError(
                             "Filter Stack is missing registered algorithms"
                         )

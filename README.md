@@ -3,14 +3,14 @@
 
   # TerraWorkbench
 
-  **Open-source gravity and magnetic processing inside QGIS**
+  **Open-source magnetic, gravity and radiometric processing inside QGIS**
 
   Build repeatable survey workflows, chain FFT filters, correct magnetic field
   direction and run bounded 3D inversions without leaving the QGIS Processing
   ecosystem.
 
   [![Status: internal testing](https://img.shields.io/badge/status-internal%20testing-f59e0b)](#project-status)
-  [![Version 0.13.0](https://img.shields.io/badge/version-0.13.0-2563eb)](metadata.txt)
+  [![Version 0.14.0](https://img.shields.io/badge/version-0.14.0-2563eb)](metadata.txt)
   [![QGIS 3.28–3.x](https://img.shields.io/badge/QGIS-3.28%E2%80%933.x-589632?logo=qgis&logoColor=white)](https://qgis.org/)
   [![Python](https://img.shields.io/badge/Python-3.9%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
   [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-0f766e)](LICENSE)
@@ -29,9 +29,10 @@
     <td width="58%">
       <h3>One workbench, complete geophysical workflows</h3>
       <ul>
-        <li><strong>67 native Processing algorithms</strong> for Model Designer and batch jobs</li>
+        <li><strong>79 native Processing algorithms</strong> for Model Designer and batch jobs</li>
         <li><strong>Dockable Filter Stack</strong> with reusable JSON recipes</li>
         <li><strong>RTP, RTE and IGRF-14</strong> magnetic field-direction tools</li>
+        <li><strong>K–eU–eTh radiometry</strong>, ternary products, QC and calibrated raw-count corrections</li>
         <li><strong>Survey import, gridding, leveling and microleveling</strong></li>
         <li><strong>Gravity, susceptibility, MVI and joint 3D inversion</strong></li>
         <li><strong>Auditable outputs</strong> in GeoTIFF, CSV, JSON, NPZ and VTK</li>
@@ -60,6 +61,9 @@ Survey grids / points / channels
  RTP / RTE / IGRF ──► sequential FFT Filter Stack ──► reusable recipe
               │
               ▼
+ K / eU / eTh ──► ratios / ternary / dose / QC
+              │
+              ▼
  Gravity / susceptibility / MVI / joint inversion
               │
               ▼
@@ -75,6 +79,7 @@ Survey grids / points / channels
 | Gravity reduction | GRS80 latitude field, gravity disturbance, free-air, Bullard B, simple/complete Bouguer, DEM terrain and Airy isostatic residual |
 | Spectral processing | Butterworth, ideal, cosine roll-off, directional cosine, continuation and integration filters |
 | Field corrections | RTP, RTE, general source-to-target transform and automatic IGRF-14 parameters |
+| Gamma-ray spectrometry | K/eU/eTh ratios, RGB and normalized ternary images, dose, F parameter, QC, dead time, background, height, sensitivity and spectral stripping |
 | Survey preparation | GRD/GDAL/CSV/ASCII/FileGDB import, point gridding, crossover QC, tie-line leveling and microleveling |
 | 3D inversion | Density contrast, scalar susceptibility, Cartesian MVI and joint gravity–magnetics cross-gradient inversion |
 | Automation | QGIS Processing, batch mode, Model Designer and JSON Filter Stack recipes |
@@ -139,6 +144,32 @@ Canonical Processing IDs describe configurable operations:
 `mag_directional_horizontal_gradient`, `mag_upward_continuation` and
 `grav_upward_continuation`. Gradient azimuth and continuation distance are
 configurable parameters and are not encoded as fixed values in their IDs.
+
+</details>
+
+<details>
+<summary><strong>Gamma-ray spectrometry and radiometric products</strong></summary>
+
+TerraWorkbench separates products made from calibrated concentration grids from
+corrections applied to raw window count rates.
+
+- configurable ratios between any aligned channels, including eTh/K, eU/K and eU/eTh;
+- K-red, eTh-green, eU-blue ternary images with percentile stretch and optional normalization;
+- terrestrial absorbed dose rate from K (%), eU (ppm) and eTh (ppm), with visible coefficients;
+- interpretive `F = K × eU / eTh` product with denominator protection;
+- JSON channel QC with missing, negative and robust distribution statistics;
+- non-paralyzable detector dead-time correction;
+- explicit aircraft, cosmic and atmospheric-radon background subtraction;
+- exponential terrain-clearance normalization to a reference height;
+- count-rate sensitivity calibration;
+- three-window spectral stripping through a user-supplied response matrix.
+- a pre-gridding point-channel chain that preserves raw fields and appends corrected cps, K, eU, eTh, dose and validity.
+
+Raw corrections are not presets. Their coefficients must come from the detector
+calibration and survey processing report. Already corrected public grids should
+start at the product/QC tools rather than repeat acquisition corrections.
+All multi-channel tools require identical CRS, extent, dimensions and pixel grid.
+Line leveling, gridding and microleveling remain reusable for radiometric channels.
 
 </details>
 
@@ -348,11 +379,11 @@ scripts and previous archives are excluded.
 
 ## Project status
 
-Version **0.13.0** is an internal test build. The current verification baseline is:
+Version **0.14.0** is an internal test build. The current verification baseline is:
 
 - 34 unit/structure tests
 - Ruff clean
-- 67 algorithms loaded in QGIS 3.44
+- 79 algorithms expected in QGIS 3.44
 - Real Processing and multi-step Filter Stack smoke tests
 - Gravity, susceptibility, MVI and joint TreeMesh inversion smoke tests
 - Validated QGIS ZIP structure

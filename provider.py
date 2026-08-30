@@ -87,6 +87,20 @@ from .algorithms.inversion import (
     MagneticSusceptibilityInversionAlgorithm,
     MagneticVectorInversionAlgorithm,
 )
+from .algorithms.radiometry import (
+    RadiometryBackgroundAlgorithm,
+    RadiometryCalibrationAlgorithm,
+    RadiometryDeadTimeAlgorithm,
+    RadiometryDespikeAlgorithm,
+    RadiometryDoseRateAlgorithm,
+    RadiometryFParameterAlgorithm,
+    RadiometryHeightAlgorithm,
+    RadiometryQcAlgorithm,
+    RadiometryRatioAlgorithm,
+    RadiometrySpectralUnmixAlgorithm,
+    RadiometryTernaryAlgorithm,
+)
+from .algorithms.radiometric_survey import RadiometricSurveyCorrectionAlgorithm
 
 
 class TerraWorkbenchProvider(QgsProcessingProvider):
@@ -160,6 +174,18 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(MagneticSusceptibilityInversionAlgorithm())
         self.addAlgorithm(MagneticVectorInversionAlgorithm())
         self.addAlgorithm(JointGravityMagneticInversionAlgorithm())
+        self.addAlgorithm(RadiometryRatioAlgorithm())
+        self.addAlgorithm(RadiometryTernaryAlgorithm())
+        self.addAlgorithm(RadiometryDoseRateAlgorithm())
+        self.addAlgorithm(RadiometryFParameterAlgorithm())
+        self.addAlgorithm(RadiometryQcAlgorithm())
+        self.addAlgorithm(RadiometryDespikeAlgorithm())
+        self.addAlgorithm(RadiometryDeadTimeAlgorithm())
+        self.addAlgorithm(RadiometryBackgroundAlgorithm())
+        self.addAlgorithm(RadiometryHeightAlgorithm())
+        self.addAlgorithm(RadiometryCalibrationAlgorithm())
+        self.addAlgorithm(RadiometrySpectralUnmixAlgorithm())
+        self.addAlgorithm(RadiometricSurveyCorrectionAlgorithm())
 
     def id(self):
         return "terraworkbench"

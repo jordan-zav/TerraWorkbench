@@ -46,6 +46,7 @@ def test_required_plugin_files_exist():
         "microlevel.py",
         "inversion_core.py",
         "gravity_corrections.py",
+        "radiometry.py",
         "LICENSE",
     ):
         assert (ROOT / name).is_file()
@@ -184,6 +185,9 @@ def test_redistributable_sample_data_is_packaged_separately():
         "synthetic_magnetic_anomaly.tif",
         "synthetic_gravity_anomaly.tif",
         "synthetic_dem.tif",
+        "synthetic_potassium.tif",
+        "synthetic_equivalent_uranium.tif",
+        "synthetic_equivalent_thorium.tif",
         "synthetic_survey_points.csv",
     ):
         assert (sample_root / name).is_file()

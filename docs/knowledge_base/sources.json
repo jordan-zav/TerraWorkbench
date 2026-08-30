@@ -24,6 +24,8 @@
     {"id":"qgis","url":"https://github.com/qgis/QGIS","license":"GPL-2.0","roles":["host","processing","gui","tasks"]},
     {"id":"gempy","url":"https://github.com/gempy-project/gempy","license":"EUPL-1.2","roles":["geological-modeling","stochastic-models"]},
     {"id":"loopstructural","url":"https://github.com/Loop3D/LoopStructural","license":"MIT","roles":["structural-modeling","geological-constraints"]},
-    {"id":"awesome-open-geoscience","url":"https://github.com/softwareunderground/awesome-open-geoscience","license":"CC0-1.0","roles":["discovery","catalog"]}
+    {"id":"awesome-open-geoscience","url":"https://github.com/softwareunderground/awesome-open-geoscience","license":"CC0-1.0","roles":["discovery","catalog"]},
+    {"id":"iaea-tecdoc-1363","url":"https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf","license":"IAEA publication terms","roles":["radiometry","calibration","processing","uncertainty","mapping"]},
+    {"id":"geoscience-australia-radiometrics","url":"https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics","license":"Australian Government terms","roles":["radiometry","potassium","uranium","thorium","dose","ternary"]}
   ]
 }

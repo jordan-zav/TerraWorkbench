@@ -152,3 +152,19 @@ Joint inversion uses cross-gradient coupling to encourage structural similarity 
 ## 9. Trusted open-source reading
 
 The **Trusted repositories** tab links directly to Harmonica, Verde, Boule, Choclo, GMT, xrft, SimPEG, discretize, ppigrf, QGIS and other canonical upstream projects. Consult their documentation and licenses before reproducing methods or code.
+# Gamma-ray spectrometry — K, eU and eTh
+
+TerraWorkbench 0.14.0 treats radiometry as a separate geophysical family rather
+than a potential-field filter. Calibrated-grid products include configurable
+ratios, K-red/eTh-green/eU-blue ternary and normalized ternary images, terrestrial
+dose, the interpretive `F = K·eU/eTh` parameter, and JSON channel QC.
+
+Raw-count tools implement non-paralyzable dead time, explicit aircraft/cosmic/radon
+background subtraction, exponential height normalization, sensitivity calibration,
+and 3×3 response-matrix spectral stripping. Coefficients must come from the survey
+and detector calibration report; they are never silently inferred. Do not reapply
+raw corrections to published calibrated products. Moisture, vegetation, clearance,
+radon and secular disequilibrium limit geological interpretation.
+
+Trusted reading: [IAEA radioelement-mapping guidelines](https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf)
+and [Geoscience Australia Radiometrics](https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics).

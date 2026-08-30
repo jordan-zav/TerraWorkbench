@@ -1,4 +1,4 @@
-"""Generate small redistributable MAG/GRAV/DEM examples for TerraWorkbench."""
+"""Generate small redistributable MAG/GRAV/RAD/DEM examples for TerraWorkbench."""
 
 from __future__ import annotations
 
@@ -98,6 +98,21 @@ def main():
         + 180.0 * gaussian(local_x, local_y, 1900, 1400, 1300, 1800)
         + 35.0 * np.sin(local_x / 1100.0) * np.cos(local_y / 1350.0)
     )
+    potassium = (
+        1.2
+        + 2.8 * gaussian(local_x, local_y, -1200, 500, 1400, 1100)
+        + 0.9 * gaussian(local_x, local_y, 1800, -900, 900, 1300)
+    )
+    equivalent_uranium = (
+        0.8
+        + 3.4 * gaussian(local_x, local_y, 1500, -1000, 1000, 900)
+        + 0.7 * gaussian(local_x, local_y, -1600, 900, 1200, 1500)
+    )
+    equivalent_thorium = (
+        4.0
+        + 10.0 * gaussian(local_x, local_y, -1400, 700, 1600, 1300)
+        + 6.0 * gaussian(local_x, local_y, 1800, 1300, 1200, 1400)
+    )
 
     write_geotiff(
         OUTPUT / "synthetic_magnetic_anomaly.tif",
@@ -116,6 +131,24 @@ def main():
         dem,
         "Synthetic terrain model",
         "m",
+    )
+    write_geotiff(
+        OUTPUT / "synthetic_potassium.tif",
+        potassium,
+        "Synthetic calibrated potassium concentration",
+        "% K",
+    )
+    write_geotiff(
+        OUTPUT / "synthetic_equivalent_uranium.tif",
+        equivalent_uranium,
+        "Synthetic calibrated equivalent uranium concentration",
+        "ppm eU",
+    )
+    write_geotiff(
+        OUTPUT / "synthetic_equivalent_thorium.tif",
+        equivalent_thorium,
+        "Synthetic calibrated equivalent thorium concentration",
+        "ppm eTh",
     )
 
     with (OUTPUT / "synthetic_survey_points.csv").open(
@@ -156,6 +189,9 @@ def main():
                 "units": "mGal",
             },
             "synthetic_dem.tif": {"quantity": "elevation", "units": "m"},
+            "synthetic_potassium.tif": {"quantity": "potassium concentration", "units": "% K"},
+            "synthetic_equivalent_uranium.tif": {"quantity": "equivalent uranium concentration", "units": "ppm eU"},
+            "synthetic_equivalent_thorium.tif": {"quantity": "equivalent thorium concentration", "units": "ppm eTh"},
             "synthetic_survey_points.csv": {
                 "quantity": "sampled flight lines",
                 "columns": [

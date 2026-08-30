@@ -21,6 +21,18 @@
       "quantity": "elevation",
       "units": "m"
     },
+    "synthetic_potassium.tif": {
+      "quantity": "potassium concentration",
+      "units": "% K"
+    },
+    "synthetic_equivalent_uranium.tif": {
+      "quantity": "equivalent uranium concentration",
+      "units": "ppm eU"
+    },
+    "synthetic_equivalent_thorium.tif": {
+      "quantity": "equivalent thorium concentration",
+      "units": "ppm eTh"
+    },
     "synthetic_survey_points.csv": {
       "quantity": "sampled flight lines",
       "columns": [

@@ -14,6 +14,18 @@ idea en algoritmo existente. La cobertura implementada detallada está en la
 - Filtros espectrales configurables y Filter Stack reproducible.
 - Cadena gravimétrica desde GRS80 hasta Bouguer completa, terreno e isostasia Airy.
 - Inversión de densidad, susceptibilidad, MVI y conjunta GRAV–MAG.
+- Radiometría K–eU–eTh: razones, ternario, dosis, parámetro F, QC y correcciones
+  crudas parametrizadas de tiempo muerto, fondos, altura, sensibilidad y stripping.
+
+## Radiometría — estado y brechas
+
+El núcleo de producción sobre grillas calibradas está implementado. Las herramientas
+de conteos crudos no inventan coeficientes: exigen los valores del informe de
+calibración del levantamiento. Todavía quedan como brechas de adquisición avanzada
+la estabilización energética desde espectros completos, la estimación temporal de
+radón con detector ascendente, la calibración sobre pads/strips y la propagación
+formal de covarianzas entre ventanas. Esas tareas necesitan espectros o canales
+auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 
 ## Prioridad A — cerrar el flujo 2D de producción
 
@@ -56,4 +68,3 @@ Para filtros FFT se exige además documentar detrend, relleno, padding, taper,
 normalización, ganancia, longitud de onda, unidades del CRS y borde útil. Para
 inversiones se exige malla, topografía, incertidumbre, regularización, bounds,
 modelo inicial/referencia, convergencia y no unicidad.
-
