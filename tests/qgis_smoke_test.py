@@ -397,6 +397,9 @@ def main():
                 )
                 moving_features.append(feature)
             moving_survey.dataProvider().addFeatures(moving_features)
+            moving_survey.updateExtents()
+            if moving_survey.featureCount() != len(survey_rows):
+                raise AssertionError("Moving-survey test observations were not stored")
             corrected_mag = processing.run(
                 "terraworkbench:correct_magnetic_survey_lines",
                 {
@@ -406,7 +409,7 @@ def main():
                     "LINE_FIELD": "line",
                     "SIGNED_LAG_SECONDS": 0.0,
                     "HAMPEL_RADIUS": 0,
-                    "OUTPUT": "memory:",
+                    "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
                 },
             )["OUTPUT"]
             if any(not feature["tw_mag_ok"] for feature in corrected_mag.getFeatures()):
@@ -420,7 +423,7 @@ def main():
                     "LINE_FIELD": "line",
                     "DRIFT_RATE": 2.0,
                     "EOTVOS_MODE": 2,
-                    "OUTPUT": "memory:",
+                    "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
                 },
             )["OUTPUT"]
             corrected_grav_features = list(corrected_grav.getFeatures())
