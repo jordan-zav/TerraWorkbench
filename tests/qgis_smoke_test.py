@@ -423,11 +423,14 @@ def main():
                     "OUTPUT": "memory:",
                 },
             )["OUTPUT"]
-            if any(not feature["tw_grav_ok"] for feature in corrected_grav.getFeatures()):
+            corrected_grav_features = list(corrected_grav.getFeatures())
+            if any(
+                not feature["tw_grav_ok"] for feature in corrected_grav_features
+            ):
                 raise AssertionError("Moving-gravity correction produced invalid points")
             drift_values = sorted(
                 float(feature["tw_drift"])
-                for feature in corrected_grav.getFeatures()
+                for feature in corrected_grav_features
             )
             if (
                 len(drift_values) != 4
