@@ -282,7 +282,7 @@ def main():
                 {
                     "INPUT": point_layer,
                     "VALUE_FIELD": "mag",
-                    "TARGET_CRS": "EPSG:32718",
+                    "TARGET_CRS": QgsCoordinateReferenceSystem("EPSG:32718"),
                     "METHOD": 0,
                     "CELL_SIZE": 2500.0,
                     "POWER": 2.0,
@@ -409,7 +409,7 @@ def main():
                     "LINE_FIELD": "line",
                     "SIGNED_LAG_SECONDS": 0.0,
                     "HAMPEL_RADIUS": 0,
-                    "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
+                    "OUTPUT": str(temporary_path / "corrected_magnetic.gpkg"),
                 },
             )["OUTPUT"]
             if any(not feature["tw_mag_ok"] for feature in corrected_mag.getFeatures()):
@@ -423,7 +423,7 @@ def main():
                     "LINE_FIELD": "line",
                     "DRIFT_RATE": 2.0,
                     "EOTVOS_MODE": 2,
-                    "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
+                    "OUTPUT": str(temporary_path / "corrected_gravity.gpkg"),
                 },
             )["OUTPUT"]
             corrected_grav_features = list(corrected_grav.getFeatures())
