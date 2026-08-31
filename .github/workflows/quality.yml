@@ -78,19 +78,4 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           QGIS_PREFIX_PATH: /usr
           PYTHONPATH: /usr/share/qgis/python:/usr/share/qgis/python/plugins
-          TERRAWORKBENCH_QGIS_SMOKE_SENTINEL: ${{ runner.temp }}/terraworkbench-qgis-smoke-ok
-        shell: bash
-        run: |
-          set +e
-          .qgis-venv/bin/python tests/qgis_smoke_test.py
-          status=$?
-          set -e
-
-          if [ "$status" -eq 0 ]; then
-            exit 0
-          fi
-          if [ "$status" -eq 139 ] && [ -f "$TERRAWORKBENCH_QGIS_SMOKE_SENTINEL" ]; then
-            echo "::warning::QGIS 3.34 crashed during global shutdown after every smoke assertion passed."
-            exit 0
-          fi
-          exit "$status"
+        run: .qgis-venv/bin/python tests/qgis_smoke_test.py

@@ -164,7 +164,6 @@ def main():
 
     provider = None
     algorithm_ids = set()
-    smoke_completed = False
     try:
         Processing.initialize()
         provider = TerraWorkbenchProvider()
@@ -1261,22 +1260,17 @@ def main():
             "OK: plugin lifecycle registered and removed the right-side dock",
             flush=True,
         )
-        smoke_completed = True
+        print(
+            f"OK: {len(algorithm_ids)} algorithms loaded; direct tools and a "
+            "two-step Filter Stack ran",
+            flush=True,
+        )
     finally:
         if provider is not None:
             QgsApplication.processingRegistry().removeProvider(provider)
         QgsProject.instance().clear()
         application.processEvents()
         gc.collect()
-        if smoke_completed:
-            sentinel = os.environ.get("TERRAWORKBENCH_QGIS_SMOKE_SENTINEL")
-            if sentinel:
-                Path(sentinel).touch()
-            print(
-                f"OK: {len(algorithm_ids)} algorithms loaded; direct tools and a "
-                "two-step Filter Stack ran",
-                flush=True,
-            )
         application.exitQgis()
 
 
