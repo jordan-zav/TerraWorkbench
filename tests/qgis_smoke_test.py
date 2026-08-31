@@ -412,6 +412,12 @@ def main():
                     "OUTPUT": str(temporary_path / "corrected_magnetic.gpkg"),
                 },
             )["OUTPUT"]
+            if isinstance(corrected_mag, str):
+                corrected_mag = QgsVectorLayer(
+                    corrected_mag, "corrected magnetic survey", "ogr"
+                )
+            if not corrected_mag.isValid():
+                raise AssertionError("Corrected magnetic output could not be opened")
             if any(not feature["tw_mag_ok"] for feature in corrected_mag.getFeatures()):
                 raise AssertionError("Magnetic line correction produced invalid points")
             corrected_grav = processing.run(
@@ -426,6 +432,12 @@ def main():
                     "OUTPUT": str(temporary_path / "corrected_gravity.gpkg"),
                 },
             )["OUTPUT"]
+            if isinstance(corrected_grav, str):
+                corrected_grav = QgsVectorLayer(
+                    corrected_grav, "corrected gravity survey", "ogr"
+                )
+            if not corrected_grav.isValid():
+                raise AssertionError("Corrected gravity output could not be opened")
             corrected_grav_features = list(corrected_grav.getFeatures())
             if any(
                 not feature["tw_grav_ok"] for feature in corrected_grav_features
