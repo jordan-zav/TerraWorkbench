@@ -425,14 +425,14 @@ def main():
             )["OUTPUT"]
             if any(not feature["tw_grav_ok"] for feature in corrected_grav.getFeatures()):
                 raise AssertionError("Moving-gravity correction produced invalid points")
-            drift_by_line = {
-                feature["line"]: feature["tw_drift"]
+            drift_values = sorted(
+                float(feature["tw_drift"])
                 for feature in corrected_grav.getFeatures()
-                if feature["time"] in (0.0, 3600.0)
-            }
+            )
             if (
-                abs(drift_by_line["L1"]) > 1e-12
-                or abs(drift_by_line["L2"] - 2.0) > 1e-12
+                len(drift_values) != 4
+                or abs(drift_values[0]) > 1e-12
+                or abs(drift_values[2] - 2.0) > 1e-12
             ):
                 raise AssertionError("Gravity drift restarted at a line boundary")
             leveled = processing.run(
