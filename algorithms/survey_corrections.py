@@ -236,8 +236,13 @@ class MagneticSurveyCorrectionAlgorithm(SurveyCorrectionBase):
             for index, feature_id in enumerate(ids.astype(int)):
                 valid = bool(np.isfinite(corrected[index]))
                 corrections[feature_id] = (
-                    base_term[index], shifted[index], heading[index], head_term[index],
-                    corrected[index], bool(spikes[index]), valid,
+                    float(base_term[index]),
+                    float(shifted[index]),
+                    float(heading[index]),
+                    float(head_term[index]),
+                    float(corrected[index]),
+                    bool(spikes[index]),
+                    valid,
                 )
             spike_count += int(spikes.sum())
 
@@ -260,7 +265,11 @@ class MagneticSurveyCorrectionAlgorithm(SurveyCorrectionBase):
             if feature.hasGeometry():
                 output.setGeometry(feature.geometry())
             output.setAttributes(feature.attributes() + list(values))
-            sink.addFeature(output, QgsFeatureSink.FastInsert)
+            if not sink.addFeature(output, QgsFeatureSink.FastInsert):
+                detail = sink.lastError() if hasattr(sink, "lastError") else ""
+                raise QgsProcessingException(
+                    "Could not write a corrected magnetic feature. " + detail
+                )
         feedback.pushInfo(f"Corrected {len(corrections)} observations; replaced {spike_count} spikes.")
         if cosine != 0.0 or sine != 0.0:
             feedback.pushInfo(
@@ -366,7 +375,11 @@ class GravitySurveyCorrectionAlgorithm(SurveyCorrectionBase):
                     if valid else None
                 )
                 corrections[feature_id] = (
-                    drift[index], tide, eotvos[index], corrected, bool(valid)
+                    float(drift[index]),
+                    float(tide),
+                    float(eotvos[index]),
+                    None if corrected is None else float(corrected),
+                    bool(valid),
                 )
         feedback.pushInfo(
             f"Drift uses one survey-wide reference time ({drift_reference:g}); "
@@ -390,7 +403,11 @@ class GravitySurveyCorrectionAlgorithm(SurveyCorrectionBase):
             if feature.hasGeometry():
                 output.setGeometry(feature.geometry())
             output.setAttributes(feature.attributes() + list(values))
-            sink.addFeature(output, QgsFeatureSink.FastInsert)
+            if not sink.addFeature(output, QgsFeatureSink.FastInsert):
+                detail = sink.lastError() if hasattr(sink, "lastError") else ""
+                raise QgsProcessingException(
+                    "Could not write a corrected gravity feature. " + detail
+                )
         return {self.OUTPUT: sink_id}
 
     def shortHelpString(self):
