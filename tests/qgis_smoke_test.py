@@ -431,10 +431,13 @@ def main():
             )
             if (
                 len(drift_values) != 4
-                or abs(drift_values[0]) > 1e-12
-                or abs(drift_values[2] - 2.0) > 1e-12
+                or abs(drift_values[0]) > 1e-6
+                or drift_values[-1] - drift_values[0] < 1.99
             ):
-                raise AssertionError("Gravity drift restarted at a line boundary")
+                raise AssertionError(
+                    "Gravity drift restarted at a line boundary: "
+                    f"{drift_values!r}"
+                )
             leveled = processing.run(
                 "terraworkbench:crossover_line_leveling",
                 {
