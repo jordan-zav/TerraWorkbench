@@ -342,7 +342,9 @@ class TerrainCorrectionAlgorithm(GravityCorrectionBase):
         self.addParameter(QgsProcessingParameterNumber(self.MAX_CELLS, self.tr("Safety limit: DEM cells"), type=PROCESSING_NUMBER_INTEGER, defaultValue=10000, minValue=4, maxValue=100000))
 
     def processAlgorithm(self, parameters, context, feedback):
-        grid = self.input_grid(parameters, context, require_projected=True)
+        grid = self.input_grid(
+            parameters, context, require_projected=True, require_metric=True
+        )
         if nodata_mask(grid).any():
             raise QgsProcessingException("Terrain correction requires a complete DEM without NoData. Fill or crop gaps first.")
         cell_count = int(grid.values.size)
@@ -476,7 +478,9 @@ class AiryIsostaticAnomalyAlgorithm(AiryMohoAlgorithm):
         self.addParameter(QgsProcessingParameterNumber(self.MAX_CELLS, self.tr("Safety limit: model cells"), type=PROCESSING_NUMBER_INTEGER, defaultValue=10000, minValue=4, maxValue=100000))
 
     def processAlgorithm(self, parameters, context, feedback):
-        bouguer = self.input_grid(parameters, context, require_projected=True)
+        bouguer = self.input_grid(
+            parameters, context, require_projected=True, require_metric=True
+        )
         elevation = self.elevation_grid(parameters, context)
         self.require_matching(bouguer, elevation, "Elevation raster")
         if nodata_mask(bouguer).any() or nodata_mask(elevation).any():

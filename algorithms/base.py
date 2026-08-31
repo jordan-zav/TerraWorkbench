@@ -10,6 +10,7 @@ from qgis.core import (
 
 from ..raster_io import read_raster
 from ..i18n import translate
+from ..crs_utils import require_metre_projected_crs
 
 
 class RasterAlgorithmBase(QgsProcessingAlgorithm):
@@ -37,7 +38,9 @@ class RasterAlgorithmBase(QgsProcessingAlgorithm):
             )
         )
 
-    def input_grid(self, parameters, context, require_projected=False):
+    def input_grid(
+        self, parameters, context, require_projected=False, require_metric=False
+    ):
         layer = self.parameterAsRasterLayer(parameters, self.INPUT, context)
         if layer is None or not layer.isValid():
             raise QgsProcessingException("A valid input raster is required.")
@@ -46,6 +49,13 @@ class RasterAlgorithmBase(QgsProcessingAlgorithm):
                 "This transformation requires a projected CRS. Reproject the raster "
                 "to a suitable metric CRS before processing."
             )
+        if require_metric:
+            try:
+                require_metre_projected_crs(
+                    layer.crs().toWkt(), "This physical transformation"
+                )
+            except ValueError as error:
+                raise QgsProcessingException(str(error)) from error
         band = self.parameterAsInt(parameters, self.BAND, context)
         return read_raster(layer, band)
 

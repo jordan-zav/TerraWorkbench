@@ -130,17 +130,20 @@ class DependencyDialog(QDialog):
             "font-weight: 600; padding: 6px 12px;"
         )
         self.reinstall_button = QPushButton(self)
+        self.inversion_button = QPushButton(self)
         self.folder_button = QPushButton(self)
         self.upstream_button = QPushButton(self)
         for button in (
             self.install_button,
             self.reinstall_button,
+            self.inversion_button,
             self.folder_button,
             self.upstream_button,
         ):
             buttons.addButton(button, DIALOG_ACTION_ROLE)
         self.install_button.clicked.connect(self.install_missing)
         self.reinstall_button.clicked.connect(self.reinstall_all)
+        self.inversion_button.clicked.connect(self.install_inversion)
         self.folder_button.clicked.connect(self.open_dependency_folder)
         self.upstream_button.clicked.connect(
             lambda: QDesktopServices.openUrl(QUrl(QPIP_URL))
@@ -167,7 +170,12 @@ class DependencyDialog(QDialog):
         self.install_button.setText(
             text("Install missing / repair", "Instalar faltantes / reparar")
         )
-        self.reinstall_button.setText(text("Reinstall all", "Reinstalar todo"))
+        self.reinstall_button.setText(
+            text("Reinstall core", "Reinstalar núcleo")
+        )
+        self.inversion_button.setText(
+            text("Install optional 3D inversion", "Instalar inversión 3D opcional")
+        )
         self.folder_button.setText(
             text("Open dependency folder", "Abrir carpeta de dependencias")
         )
@@ -176,8 +184,15 @@ class DependencyDialog(QDialog):
             self.close_button.setText(text("Close", "Cerrar"))
 
     def refresh(self):
-        self.status = dependency_status()
-        missing = [item for item in self.status if not item.satisfied]
+        core_status = dependency_status()
+        self.status = dependency_status(include_inversion=inversion_supported())
+        missing = [item for item in core_status if not item.satisfied]
+        core_names = {item.requirement.name.casefold() for item in core_status}
+        inversion_missing = [
+            item
+            for item in self.status
+            if item.requirement.name.casefold() not in core_names and not item.satisfied
+        ]
         self.browser.setHtml(
             f"<p>{text('This manager is built into TerraWorkbench from modified QPIP progress components. It manages only TerraWorkbench requirements and installs into the active QGIS user profile after explicit approval.', 'Este administrador está integrado en TerraWorkbench a partir de componentes de progreso modificados de QPIP. Solo administra los requisitos de TerraWorkbench y los instala en el perfil activo de QGIS después de una aprobación explícita.')}</p>"
             "<table cellspacing='0' cellpadding='7' width='100%' "
@@ -189,6 +204,9 @@ class DependencyDialog(QDialog):
             f"<code>{dependency_directory()}</code></p>"
         )
         self.install_button.setEnabled(bool(missing))
+        self.inversion_button.setEnabled(
+            inversion_supported() and bool(inversion_missing)
+        )
         self.note.setText(
             text(
                 "Missing or conflicting dependencies remain.",
@@ -200,6 +218,15 @@ class DependencyDialog(QDialog):
                 "Todos los requisitos directos están satisfechos. Reinicie QGIS después de cualquier reparación.",
             )
         )
+        if inversion_missing:
+            self.note.setText(
+                self.note.text()
+                + "\n"
+                + text(
+                    "The optional 3D inversion stack is not installed; all 2D workflows remain ready.",
+                    "La pila opcional de inversión 3D no está instalada; todos los flujos 2D siguen disponibles.",
+                )
+            )
         if not inversion_supported():
             self.note.setText(
                 self.note.text()
@@ -216,6 +243,12 @@ class DependencyDialog(QDialog):
 
     def reinstall_all(self):
         if install_requirements(self, force_all=True):
+            self.refresh()
+
+    def install_inversion(self):
+        if install_requirements(
+            self, force_all=False, include_inversion=True, inversion_only=True
+        ):
             self.refresh()
 
     @staticmethod

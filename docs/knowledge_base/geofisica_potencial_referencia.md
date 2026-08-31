@@ -459,7 +459,7 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 | Inversión 3D (gravedad, magnética escalar, MVI, conjunta) | Cubierto, con soporte de malla adaptativa y topografía |
 | Diferenciación espacial vs. FFT como parte visible del producto | **Nuevo en v0.12.0** — etiquetas de dominio en la UI (§9) + motor MAGMAP-like con acondicionamiento de bordes (§9.2) |
 
-**Versión y validación actual (v0.14.0):** 83 algoritmos registrados, 46 pruebas locales y Ruff correctos, y prueba integral validada en QGIS 3.44. El registro incluye radiometría de grilla/puntos, correcciones MAG y GRAV móviles previas al gridding, continuación mediante fuentes equivalentes, pseudogravedad magnética y regularización escalar Lp/IRLS.
+**Versión y validación actual (v0.14.0):** 83 algoritmos registrados, 47 pruebas locales y Ruff correctos, ejecución real de los 62 algoritmos compatibles con Filter Stack y prueba integral validada en QGIS 3.44. El registro incluye radiometría de grilla/puntos, correcciones MAG y GRAV móviles previas al gridding, continuación mediante fuentes equivalentes, pseudogravedad magnética y regularización escalar Lp/IRLS.
 
 **Resuelto en v0.11.1–v0.12.0 (ya no son limitaciones abiertas):**
 - La continuación ascendente usa una altura configurable (§1.5) y su identidad no codifica una distancia fija.
@@ -469,10 +469,12 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 - El motor espectral propio ya no es una FFT desnuda — incorpora detrend, padding reflejado y taper cosenoidal antes de filtrar (§9.2).
 - La pseudogravedad magnética está disponible como integración vertical espectral escalable y exige como entrada un campo reducido al polo o al ecuador.
 - Las inversiones escalares de densidad y susceptibilidad permiten norma Lp, iteraciones IRLS y modelo de referencia explícito.
+- La deriva móvil usa una época común de levantamiento; heading, Eötvös, RTP/RTE e inversión convierten norte geográfico a ejes de grilla mediante convergencia meridiana.
+- Terreno, isostasia e inversión rechazan CRS cuyas coordenadas proyectadas no estén en metros.
+- Fuentes equivalentes limitan tanto celdas como tamaño estimado del Jacobiano e informan RMSE holdout determinista.
 
 **Limitaciones abiertas:**
 - **Corrección de aire libre extendida** (§4.4) — la forma dependiente de latitud + término cuadrático no existe como opción independiente; solo está implementada la aproximación lineal Δg_FA = 0.3086·h (con coeficiente configurable).
-- **Combinación de operadores en una sola FFT** dentro del Filter Stack (H_final = H₁·H₂·H₃, al estilo MAGMAP) — no confirmado si ya está resuelto en v0.12.0; verificar contra `spectral.py` (ver nota en §9.2).
 - **Operadores especializados de MAGMAP** aún ausentes: susceptibilidad/densidad aparente, filtro de Wiener, conversión entre componentes del campo, y otros (lista completa en §9.2).
 
 **Nota sobre fórmulas:** Las de §4.2–4.11 siguen las convenciones estándar de geodesia física (Somigliana/GRS80, Nagy para prismas, Bullard A/B/C, Airy-Heiskanen), y la secuencia de Bouguer completa fue confirmada como `SBA + terreno − curvatura` (Harmonica + USGS PP 646-A). Para el resto de módulos, si el código usa una convención de signos, densidad de referencia o radio de terreno distinto, verificar contra el registro exacto antes de dar por definitiva la equivalencia fórmula-a-fórmula.
@@ -520,7 +522,7 @@ Grilla
 
 Esto sigue la arquitectura general de MAGMAP (preprocesamiento → FFT → operadores → inversa → posprocesamiento) descrita por [Seequent — MAGMAP Filtering](https://help.seequent.com/Oasismontaj/2026.1/Content/gxhelp/m/geosoft_gx_fft2d_magmapfiltering.htm), identificada explícitamente como **"MAGMAP-like"** (no como copia exacta) — distinción honesta que evita sobre-vender equivalencia con el motor comercial de Seequent.
 
-**Aún no cubierto — combinación H_final = H₁·H₂·H₃ en una sola FFT** para múltiples filtros encadenados en el Filter Stack (a la fecha de este registro no se confirma si v0.12.0 ya combina operadores dentro de una misma pasada o si el acondicionamiento MAGMAP-like se aplica por filtro individual dentro del stack — verificar contra `spectral.py` si esto es crítico para el flujo de trabajo).
+**Combinación resuelta:** cuando todos los pasos son espectrales y comparten detrend, padding y taper, Filter Stack calcula una sola FFT directa y acumula `H_final = H₁·H₂·…`. Si los dominios o preprocesamientos no son compatibles, conserva la ejecución secuencial explícita.
 
 **Operadores de MAGMAP que TerraWorkbench aún no tiene (estado actualizado en v0.14.0):**
 - Susceptibilidad aparente

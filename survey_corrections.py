@@ -123,6 +123,18 @@ def azimuth_from_velocity(east_velocity, north_velocity):
     )
 
 
+def rotate_grid_velocity_to_true(east_velocity, north_velocity, convergence_degrees):
+    """Resolve grid-axis velocity into true-east and true-north components."""
+    east, north = np.broadcast_arrays(
+        np.asarray(east_velocity, dtype=np.float64),
+        np.asarray(north_velocity, dtype=np.float64),
+    )
+    angle = np.deg2rad(float(convergence_degrees))
+    true_east = east * np.cos(angle) - north * np.sin(angle)
+    true_north = east * np.sin(angle) + north * np.cos(angle)
+    return true_east, true_north
+
+
 def eotvos_correction(
     latitude_degrees,
     east_velocity,

@@ -24,6 +24,7 @@ from qgis.core import (
 )
 
 from ..i18n import translate
+from ..crs_utils import grid_convergence_degrees
 from ..qgis_compat import FIELD_TYPE_BOOL, FIELD_TYPE_DOUBLE, PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
 from ..survey_corrections import (
     azimuth_from_velocity,
@@ -33,6 +34,7 @@ from ..survey_corrections import (
     interpolate_base_variation,
     lag_shift,
     linear_drift,
+    rotate_grid_velocity_to_true,
     segment_velocity,
 )
 
@@ -198,6 +200,15 @@ class MagneticSurveyCorrectionAlgorithm(SurveyCorrectionBase):
         threshold = self.parameterAsDouble(parameters, self.HAMPEL_THRESHOLD, context)
         if (cosine != 0.0 or sine != 0.0) and source.sourceCrs().isGeographic():
             raise QgsProcessingException("Heading correction requires a projected survey CRS.")
+        convergence = 0.0
+        if cosine != 0.0 or sine != 0.0:
+            center = source.sourceExtent().center()
+            try:
+                convergence = grid_convergence_degrees(
+                    source.sourceCrs().toWkt(), center.x(), center.y()
+                )
+            except ValueError as error:
+                raise QgsProcessingException(str(error)) from error
 
         corrections = {}
         spike_count = 0
@@ -212,7 +223,10 @@ class MagneticSurveyCorrectionAlgorithm(SurveyCorrectionBase):
             east_velocity, north_velocity = segment_velocity(
                 east.astype(float), north.astype(float), time.astype(float)
             )
-            heading = azimuth_from_velocity(east_velocity, north_velocity)
+            true_east, true_north = rotate_grid_velocity_to_true(
+                east_velocity, north_velocity, convergence
+            )
+            heading = azimuth_from_velocity(true_east, true_north)
             head_term = heading_correction(heading, cosine, sine)
             if base_time is not None:
                 base_term = interpolate_base_variation(time.astype(float), base_time, base_values)
@@ -248,6 +262,11 @@ class MagneticSurveyCorrectionAlgorithm(SurveyCorrectionBase):
             output.setAttributes(feature.attributes() + list(values))
             sink.addFeature(output, QgsFeatureSink.FastInsert)
         feedback.pushInfo(f"Corrected {len(corrections)} observations; replaced {spike_count} spikes.")
+        if cosine != 0.0 or sine != 0.0:
+            feedback.pushInfo(
+                f"Heading directions converted from grid axes to true north using "
+                f"{convergence:.6f} degrees convergence at the survey centre."
+            )
         return {self.OUTPUT: sink_id}
 
     def shortHelpString(self):
@@ -311,18 +330,32 @@ class GravitySurveyCorrectionAlgorithm(SurveyCorrectionBase):
         )
         corrections = {}
         feature_by_id = {feature.id(): feature for feature in features}
+        all_times = [row[0] for rows in groups.values() for row in rows]
+        drift_reference = float(np.min(all_times))
+        center = source.sourceExtent().center()
+        try:
+            convergence = grid_convergence_degrees(
+                source.sourceCrs().toWkt(), center.x(), center.y()
+            )
+        except ValueError as error:
+            raise QgsProcessingException(str(error)) from error
         for rows in groups.values():
             rows.sort(key=lambda row: row[0])
             time, ids, east, north, observed = map(np.asarray, zip(*rows))
             east = east.astype(float) * unit_factor
             north = north.astype(float) * unit_factor
             east_velocity, north_velocity = segment_velocity(east, north, time.astype(float))
+            east_velocity, north_velocity = rotate_grid_velocity_to_true(
+                east_velocity, north_velocity, convergence
+            )
             latitude = []
             for row in rows:
                 point = to_geographic.transform(float(row[2]), float(row[3]))
                 latitude.append(point.y())
             eotvos = eotvos_correction(latitude, east_velocity, north_velocity)
-            drift = linear_drift(time.astype(float), drift_rate)
+            drift = linear_drift(
+                time.astype(float), drift_rate, reference_time=drift_reference
+            )
             for index, feature_id in enumerate(ids.astype(int)):
                 feature = feature_by_id[feature_id]
                 tide = _number(feature, tide_field) if tide_field else 0.0
@@ -335,6 +368,10 @@ class GravitySurveyCorrectionAlgorithm(SurveyCorrectionBase):
                 corrections[feature_id] = (
                     drift[index], tide, eotvos[index], corrected, bool(valid)
                 )
+        feedback.pushInfo(
+            f"Drift uses one survey-wide reference time ({drift_reference:g}); "
+            f"velocities use true east/north ({convergence:.6f} degrees grid convergence)."
+        )
         names = (
             ("tw_drift", FIELD_TYPE_DOUBLE), ("tw_tide", FIELD_TYPE_DOUBLE),
             ("tw_eotvos", FIELD_TYPE_DOUBLE), ("tw_gravity", FIELD_TYPE_DOUBLE),

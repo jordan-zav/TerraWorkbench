@@ -68,6 +68,7 @@ def main():
             result.predicted.shape != observed.shape
             or not full_model(result)
             or not progress
+            or not result.history
         ):
             raise AssertionError(f"Invalid {kind} inversion outputs")
         print(f"OK: {kind} inversion ({result.model.size} parameters)", flush=True)
@@ -88,9 +89,32 @@ def main():
         irls_iterations=1,
         reference_value=0.05,
     )
-    if focused.predicted.shape != observed.shape or not full_model(focused):
+    if (
+        focused.predicted.shape != observed.shape
+        or not full_model(focused)
+        or not focused.history
+    ):
         raise AssertionError("Invalid L1/IRLS gravity inversion outputs")
     print("OK: scalar L1/IRLS/reference-model controls", flush=True)
+    try:
+        run_potential_field_inversion(
+            "gravity",
+            xyz,
+            observed,
+            sigma,
+            cell_xy=100,
+            cell_z=100,
+            depth=200,
+            padding=0,
+            max_cells=1000,
+            iterations=1,
+            regularization_norm=1.0,
+            irls_iterations=0,
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Sparse regularization was accepted without IRLS")
     joint = run_joint_cross_gradient_inversion(
         xyz,
         observed / 10.0,
@@ -108,7 +132,11 @@ def main():
         mesh_type="tree",
         refinement_levels=2,
     )
-    if joint.predicted_gravity.shape != observed.shape or not joint_full_models(joint):
+    if (
+        joint.predicted_gravity.shape != observed.shape
+        or not joint_full_models(joint)
+        or not joint.history
+    ):
         raise AssertionError("Invalid joint inversion outputs")
     print(
         f"OK: joint cross-gradient inversion ({joint.mesh.nC} TreeMesh cells)",

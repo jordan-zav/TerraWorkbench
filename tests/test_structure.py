@@ -47,6 +47,7 @@ def test_required_plugin_files_exist():
         "inversion_core.py",
         "gravity_corrections.py",
         "radiometry.py",
+        "crs_utils.py",
         "survey_corrections.py",
         "LICENSE",
     ):

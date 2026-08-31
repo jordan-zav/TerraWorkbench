@@ -13,6 +13,7 @@ from .spectral_filters import SpectralFilterBase
 from ..dependencies import import_ppigrf
 from ..qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
 from ..spectral import magnetic_field_transform
+from ..crs_utils import grid_convergence_degrees, raster_center
 
 
 class MagneticDirectionTransformBase(SpectralFilterBase):
@@ -159,6 +160,13 @@ class MagneticDirectionTransformBase(SpectralFilterBase):
         pass
 
     def prepare(self, grid, parameters, context, feedback):
+        center_x, center_y = raster_center(grid)
+        try:
+            self._grid_convergence = grid_convergence_degrees(
+                grid.projection, center_x, center_y
+            )
+        except ValueError as error:
+            raise QgsProcessingException(str(error)) from error
         mode = self.parameterAsInt(parameters, self.FIELD_MODE, context)
         if mode == 0:
             self._field_inclination = self.parameterAsDouble(
@@ -169,7 +177,8 @@ class MagneticDirectionTransformBase(SpectralFilterBase):
             )
             feedback.pushInfo(
                 f"Manual field: inclination={self._field_inclination:.3f} degrees, "
-                f"declination={self._field_declination:.3f} degrees."
+                f"geographic declination={self._field_declination:.3f} degrees, "
+                f"grid convergence={self._grid_convergence:.3f} degrees."
             )
             return
         metadata_date = grid.metadata.get("SURVEY_START", "")
@@ -234,7 +243,10 @@ class MagneticDirectionTransformBase(SpectralFilterBase):
         return longitude, latitude
 
     def source_angles(self):
-        return self._field_inclination, self._field_declination
+        return (
+            self._field_inclination,
+            self._field_declination + self._grid_convergence,
+        )
 
     def magnetization_angles(self, parameters, context):
         inc = self.parameterAsDouble(
@@ -251,7 +263,7 @@ class MagneticDirectionTransformBase(SpectralFilterBase):
             raise QgsProcessingException(
                 "Provide both remanent magnetization angles or neither."
             )
-        return inc, dec
+        return inc, dec + self._grid_convergence
 
     def target_angles(self, parameters, context):
         raise NotImplementedError
@@ -259,6 +271,7 @@ class MagneticDirectionTransformBase(SpectralFilterBase):
     def transfer(self, k_east, k_north, radial, parameters, context):
         source_inc, source_dec = self.source_angles()
         target_inc, target_dec = self.target_angles(parameters, context)
+        target_dec += self._grid_convergence
         mag_inc, mag_dec = self.magnetization_angles(parameters, context)
         return magnetic_field_transform(
             k_east,

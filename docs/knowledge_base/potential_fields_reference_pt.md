@@ -134,9 +134,17 @@ O controle de cruzamentos e o nivelamento por linhas de amarração identificam 
 
 ## 7. Inversão tridimensional
 
-O TerraWorkbench fornece inversões SimPEG de densidade gravimétrica, suscetibilidade magnética, vetor magnético (MVI) e conjunta gravidade–magnetometria. Os fluxos TensorMesh e TreeMesh adaptativa expõem tamanho de célula, profundidade, padding, topografia, incertezas, limites, iterações e limites de segurança.
+O TerraWorkbench fornece inversões SimPEG de densidade gravimétrica, suscetibilidade magnética, vetor magnético (MVI) e conjunta gravidade–magnetometria. Os fluxos TensorMesh e TreeMesh adaptativa expõem tamanho de célula, profundidade, padding, topografia, incertezas, limites, iterações e limites de segurança. Os fluxos escalares também expõem norma Lp, número explícito de iterações IRLS e modelo de referência limitado, registrando o histórico de iteração, ajuste dos dados, objetivo do modelo e beta.
+
+A modelagem física exige coordenadas projetadas em metros. A declinação do campo é informada em relação ao norte geográfico e convertida para os eixos da grade pela convergência meridiana. Uma norma menor que 2 é rejeitada se IRLS não estiver habilitado.
 
 A inversão conjunta usa acoplamento por gradiente cruzado para favorecer similaridade estrutural sem impor uma razão fixa densidade–suscetibilidade. Execute testes de sensibilidade do peso de acoplamento e da malha. Os resultados são não únicos e devem ser avaliados contra geologia, geometria de aquisição e resíduos.
+
+### Correções de levantamento e fontes equivalentes
+
+A correção magnética móvel aplica lag com sinal, interpolação da estação base, correção harmônica de heading e despike Hampel antes do nivelamento. A gravidade móvel usa uma única época de deriva para todo o levantamento, campo externo explícito de maré e correção de Eötvös calculada. Velocidades de grade e direções magnéticas geográficas são rotacionadas pela convergência meridiana local.
+
+Fontes equivalentes impõem limites de células e do Jacobiano estimado observações-por-fontes. O holdout espacial determinístico informa RMSE e RMSE normalizado antes do ajuste final com todos os dados. A pseudogravidade magnética é a integração vertical de uma grade RTP/RTE com fase corrigida e permanece interpretativa sem uma escala física defensável.
 
 ## 8. Lista mínima de verificação
 

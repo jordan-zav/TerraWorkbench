@@ -133,8 +133,9 @@ result into QGIS with recovered coordinate-system metadata.
 - Complete land Bouguer anomaly: `observed - GRS80 + free-air - plate + terrain - Bullard B`
 - Airy Moho-depth model and finite-prism isostatic residual anomaly
 
-Observed gravity must already be calibrated and corrected for instrument drift and
-Earth tides. Elevations must be geometric heights referenced to the ellipsoid and
+Observed gravity must be calibrated. Moving-platform points can use the explicit
+survey-wide drift, external-tide and Eötvös correction tool before gridding; an
+already reduced grid must not be corrected twice. Elevations must be geometric heights referenced to the ellipsoid and
 aligned rasters must share the same CRS, extent and pixel grid. Terrain and Airy
 forward modelling scale approximately with the square of the number of cells, so
 the tools enforce a configurable safety limit and should use a defensible regional
@@ -227,6 +228,7 @@ MAGMAP preprocessing.
 - Directional cosine pass and reject with configurable strike azimuth and degree
 - Stabilized downward continuation with Butterworth taper and maximum-gain cap
 - Horizontal integration in easting and northing, and vertical integration
+- Magnetic pseudogravity from a phase-corrected RTP/RTE grid, with explicit interpretive scaling
 
 The dockable Filter Stack feeds each output into the next filter. Steps can be
 edited, reordered, duplicated and saved as JSON recipes. Results may remain
@@ -271,7 +273,10 @@ TerraWorkbench provides bounded SimPEG workflows for:
 Workflows accept projected observations, uncertainties, receiver elevation and
 optional topography. They support uniform TensorMesh or observation/topography-
 refined TreeMesh, Choclo integral kernels, disk-backed sensitivities, active-cell
-limits and cancellation between iterations.
+limits and cancellation between iterations. Scalar density and susceptibility
+inversions expose Lp regularization, IRLS iterations and a bounded reference model.
+Coordinates must use a projected CRS in metres. Geographic magnetic declination is
+converted to the model's grid axes using meridian convergence.
 
 Outputs include VTK models, NPZ arrays, JSON QC and observed/predicted/residual
 CSV tables. Inversion is non-unique: cell size, depth, uncertainties, bounds,
@@ -336,13 +341,16 @@ only when automatic discovery cannot select the intended installation.
 
 TerraWorkbench includes its own dependency manager, adapted from the GPLv3
 [QPIP](https://github.com/opengisch/qpip) progress components. It reads the 2D
-[`requirements.txt`](requirements.txt) and, on Python 3.11+, the optional
-[`requirements-inversion.txt`](requirements-inversion.txt), checks versions and installs only after
-explicit approval into the active QGIS profile. Each direct and transitive
+[`requirements.txt`](requirements.txt); a separate 3D button installs
+[`requirements-inversion.txt`](requirements-inversion.txt) only when requested on
+Python 3.11 or newer. It checks versions and installs only after explicit approval
+into a TerraWorkbench-specific directory in the active QGIS profile. QGIS' own
+Python packages keep precedence to reduce compiled-library conflicts. Each direct and transitive
 package receives an individual status/progress row. It does not register QPIP as
 a second plugin, patch QGIS plugin loading or manage dependencies for other
 plugins. On the first activation of a newly installed version, this dependency
-manager opens before the Filter Stack and Processing provider. If requirements
+manager opens before the Filter Stack and Processing provider. Missing optional 3D
+packages never block or repeatedly prompt a 2D-only user. If core requirements
 remain missing or conflicting, it opens again on the next activation. Restart
 QGIS after installation or repair.
 
@@ -382,16 +390,16 @@ scripts and previous archives are excluded.
 
 Version **0.14.0** is an internal test build. The current verification baseline is:
 
-- 46 unit/structure tests
+- 47 unit/structure tests
 - Ruff clean
 - 83 algorithms expected in QGIS 3.44
-- Real Processing and multi-step Filter Stack smoke tests
+- Real Processing of all 62 Filter Stack-compatible algorithms and multi-step stack smoke tests
 - Gravity, susceptibility, MVI and joint TreeMesh inversion smoke tests
 - Validated QGIS ZIP structure
 
-Before the first public QGIS release, the project still needs clean-profile
-dependency installation testing, official plugin validation and broader
-scientific comparison against known reference grids.
+Before the first public QGIS release, the project still needs official plugin
+repository validation, the pending NRCan publication notification and broader
+scientific comparison against independent reference grids.
 
 ## License and third-party software
 

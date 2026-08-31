@@ -9,6 +9,7 @@ from survey_corrections import (
     interpolate_base_variation,
     lag_shift,
     linear_drift,
+    rotate_grid_velocity_to_true,
     segment_velocity,
 )
 
@@ -46,3 +47,15 @@ def test_velocity_azimuth_eotvos_and_drift_have_expected_units():
     expected = (2 * 7.2921150e-5 * 10 + 100 / 6_371_008.8) * 1e5
     assert eotvos_correction(0.0, east, north)[1] == pytest.approx(expected)
     assert np.allclose(linear_drift([0, 1800, 3600], 2.0), [0.0, 1.0, 2.0])
+
+
+def test_grid_velocity_is_rotated_to_true_axes_before_heading_and_eotvos():
+    # A true-north vector has a +10 degree azimuth in grid coordinates when
+    # true north lies 10 degrees clockwise from grid north.
+    grid_east = np.sin(np.deg2rad(10.0))
+    grid_north = np.cos(np.deg2rad(10.0))
+    true_east, true_north = rotate_grid_velocity_to_true(
+        grid_east, grid_north, 10.0
+    )
+    assert true_east == pytest.approx(0.0, abs=1e-12)
+    assert true_north == pytest.approx(1.0)

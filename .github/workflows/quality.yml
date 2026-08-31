@@ -52,3 +52,30 @@ jobs:
 
       - name: Ensure validation did not modify tracked files
         run: git diff --exit-code
+
+  qgis-smoke:
+    name: Headless QGIS Processing smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Install QGIS runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends qgis python3-qgis python3-venv
+
+      - name: Create host-compatible scientific environment
+        run: |
+          /usr/bin/python3 -m venv --system-site-packages .qgis-venv
+          .qgis-venv/bin/python -m pip install --upgrade pip
+          .qgis-venv/bin/python -m pip install -r requirements.txt
+
+      - name: Run TerraWorkbench in headless QGIS
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QGIS_PREFIX_PATH: /usr
+          PYTHONPATH: /usr/share/qgis/python:/usr/share/qgis/python/plugins
+        run: .qgis-venv/bin/python tests/qgis_smoke_test.py

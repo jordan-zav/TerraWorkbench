@@ -48,9 +48,11 @@ def main():
 
     from qgis.core import (
         QgsApplication,
+        QgsCoordinateReferenceSystem,
         QgsFeature,
         QgsGeometry,
         QgsPointXY,
+        QgsProcessing,
         QgsProcessingException,
         QgsProject,
         QgsRasterLayer,
@@ -72,6 +74,10 @@ def main():
         import_ppigrf,
         import_xarray,
     )
+    from TerraWorkbench.crs_utils import (
+        grid_convergence_degrees,
+        require_metre_projected_crs,
+    )
     from TerraWorkbench.data_import import import_survey_grid, list_vector_layers
     from TerraWorkbench.provider import TerraWorkbenchProvider
     from TerraWorkbench.plugin import TerraWorkbenchPlugin
@@ -81,12 +87,16 @@ def main():
         PipInstallProgressDialog,
     )
     from TerraWorkbench.embedded_qpip.pip_progress import ProgressUpdate
-    from TerraWorkbench.embedded_qpip.manager import _python_command
+    from TerraWorkbench.embedded_qpip.manager import (
+        _python_command,
+        read_requirements,
+    )
     from TerraWorkbench.i18n import LANGUAGE_KEY, set_language
     from TerraWorkbench.workflow_dock import (
         FilterStackDock,
         PipelineStep,
         SpectrumPlot,
+        algorithm_defaults,
         available_algorithms,
         run_filter_stack,
     )
@@ -94,6 +104,31 @@ def main():
     import_harmonica()
     import_ppigrf()
     import_xarray()
+
+    core_requirement_names = {
+        requirement.name.casefold() for requirement in read_requirements()
+    }
+    all_requirement_names = {
+        requirement.name.casefold()
+        for requirement in read_requirements(include_inversion=True)
+    }
+    if "simpeg" in core_requirement_names or "simpeg" not in all_requirement_names:
+        raise AssertionError("Core and optional inversion requirements are not separated")
+
+    metric_crs = QgsCoordinateReferenceSystem("EPSG:32718")
+    require_metre_projected_crs(metric_crs.toWkt(), "test")
+    convergence = grid_convergence_degrees(
+        metric_crs.toWkt(), 500000.0, 9000000.0
+    )
+    if not abs(convergence) < 0.01:
+        raise AssertionError("Grid convergence at the UTM central meridian is invalid")
+    nonmetric_crs = QgsCoordinateReferenceSystem("EPSG:2227")
+    try:
+        require_metre_projected_crs(nonmetric_crs.toWkt(), "test")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("A projected CRS in feet was accepted as metric")
 
     dependency_dialog = DependencyDialog()
     progress_dialog = PipInstallProgressDialog(
@@ -346,12 +381,20 @@ def main():
                 "memory",
             )
             moving_features = []
-            for index in range(3):
+            survey_rows = (
+                ("L1", 0.0, 500000.0),
+                ("L1", 1.0, 500010.0),
+                ("L2", 3600.0, 500020.0),
+                ("L2", 3601.0, 500030.0),
+            )
+            for index, (line_name, time_value, easting) in enumerate(survey_rows):
                 feature = QgsFeature(moving_survey.fields())
                 feature.setGeometry(
-                    QgsGeometry.fromPointXY(QgsPointXY(500000 + index * 10, 9000000))
+                    QgsGeometry.fromPointXY(QgsPointXY(easting, 9000000))
                 )
-                feature.setAttributes(["L1", float(index), 100.0 + index, 10.0 + index])
+                feature.setAttributes(
+                    [line_name, time_value, 100.0 + index, 10.0 + index]
+                )
                 moving_features.append(feature)
             moving_survey.dataProvider().addFeatures(moving_features)
             corrected_mag = processing.run(
@@ -375,13 +418,23 @@ def main():
                     "VALUE_FIELD": "grav",
                     "TIME_FIELD": "time",
                     "LINE_FIELD": "line",
-                    "DRIFT_RATE": 0.0,
+                    "DRIFT_RATE": 2.0,
                     "EOTVOS_MODE": 2,
                     "OUTPUT": "memory:",
                 },
             )["OUTPUT"]
             if any(not feature["tw_grav_ok"] for feature in corrected_grav.getFeatures()):
                 raise AssertionError("Moving-gravity correction produced invalid points")
+            drift_by_line = {
+                feature["line"]: feature["tw_drift"]
+                for feature in corrected_grav.getFeatures()
+                if feature["time"] in (0.0, 3600.0)
+            }
+            if (
+                abs(drift_by_line["L1"]) > 1e-12
+                or abs(drift_by_line["L2"] - 2.0) > 1e-12
+            ):
+                raise AssertionError("Gravity drift restarted at a line boundary")
             leveled = processing.run(
                 "terraworkbench:crossover_line_leveling",
                 {
@@ -689,6 +742,31 @@ def main():
                         "Filter stack did not return the expected outputs"
                     )
                 print("OK: two-step Processing chain completed", flush=True)
+
+                exercised_stack_algorithms = 0
+                for stack_algorithm in available_algorithms():
+                    result = processing.run(
+                        stack_algorithm.id(),
+                        {
+                            **algorithm_defaults(stack_algorithm),
+                            "INPUT": layer,
+                            "BAND": 1,
+                            "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
+                        },
+                    )
+                    if not result.get("OUTPUT"):
+                        raise AssertionError(
+                            f"No output from {stack_algorithm.id()}"
+                        )
+                    exercised_stack_algorithms += 1
+                if exercised_stack_algorithms != len(algorithm_ids) - 21:
+                    raise AssertionError(
+                        "Not every Filter Stack-compatible algorithm was executed"
+                    )
+                print(
+                    f"OK: executed {exercised_stack_algorithms} stack-compatible algorithms",
+                    flush=True,
+                )
 
                 dock = FilterStackDock()
                 dock.show()

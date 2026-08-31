@@ -23,6 +23,7 @@ from qgis.core import (
 
 from ..dependencies import import_simpeg_stack
 from ..i18n import translate
+from ..crs_utils import grid_convergence_degrees, require_metre_projected_crs
 from ..inversion_core import (
     full_model,
     joint_full_models,
@@ -275,10 +276,16 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
         source = self.parameterAsSource(parameters, self.INPUT, context)
         if source is None:
             raise QgsProcessingException("A valid point observation layer is required.")
-        if source.sourceCrs().isGeographic():
-            raise QgsProcessingException(
-                "3D inversion requires projected metric coordinates. Reproject observations to a local UTM CRS first."
+        try:
+            require_metre_projected_crs(
+                source.sourceCrs().toWkt(), "3D inversion"
             )
+            source_center = source.sourceExtent().center()
+            grid_convergence = grid_convergence_degrees(
+                source.sourceCrs().toWkt(), source_center.x(), source_center.y()
+            )
+        except ValueError as error:
+            raise QgsProcessingException(str(error)) from error
         data_field = self.parameterAsString(parameters, self.DATA_FIELD, context)
         sigma_field = self.parameterAsString(
             parameters, self.UNCERTAINTY_FIELD, context
@@ -376,11 +383,14 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
                 )
                 if self.KIND != "gravity"
                 else 60.0,
-                field_declination=self.parameterAsDouble(
-                    parameters, self.FIELD_DECLINATION, context
-                )
-                if self.KIND != "gravity"
-                else 0.0,
+                field_declination=(
+                    self.parameterAsDouble(
+                        parameters, self.FIELD_DECLINATION, context
+                    )
+                    + grid_convergence
+                    if self.KIND != "gravity"
+                    else 0.0
+                ),
                 sensitivity_path=sensitivity_path,
                 topography=np.asarray(topography) if topography else None,
                 mesh_type="tree"
@@ -453,6 +463,9 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
             "iterations_requested": self.parameterAsInt(
                 parameters, self.ITERATIONS, context
             ),
+            "iterations_completed": len(result.history),
+            "convergence_history": result.history,
+            "grid_convergence_degrees": grid_convergence,
             "bounds": [
                 self.parameterAsDouble(parameters, self.LOWER, context),
                 self.parameterAsDouble(parameters, self.UPPER, context),
@@ -762,17 +775,22 @@ class JointGravityMagneticInversionAlgorithm(QgsProcessingAlgorithm):
             raise QgsProcessingException(
                 "Both gravity and magnetic point layers are required."
             )
-        if (
-            gravity_source.sourceCrs().isGeographic()
-            or magnetic_source.sourceCrs().isGeographic()
-        ):
-            raise QgsProcessingException(
-                "Joint inversion requires projected metric coordinates."
-            )
         if gravity_source.sourceCrs() != magnetic_source.sourceCrs():
             raise QgsProcessingException(
                 "Gravity and magnetic layers must use the same projected CRS."
             )
+        try:
+            require_metre_projected_crs(
+                gravity_source.sourceCrs().toWkt(), "Joint inversion"
+            )
+            source_center = gravity_source.sourceExtent().center()
+            grid_convergence = grid_convergence_degrees(
+                gravity_source.sourceCrs().toWkt(),
+                source_center.x(),
+                source_center.y(),
+            )
+        except ValueError as error:
+            raise QgsProcessingException(str(error)) from error
         gravity_xyz, gravity_values, gravity_sigma = _extract_joint_observations(
             gravity_source,
             self.parameterAsString(parameters, self.GRAVITY_DATA, context),
@@ -846,7 +864,7 @@ class JointGravityMagneticInversionAlgorithm(QgsProcessingAlgorithm):
                 ),
                 field_declination=self.parameterAsDouble(
                     parameters, self.FIELD_DECLINATION, context
-                ),
+                ) + grid_convergence,
                 topography=np.asarray(topography) if topography else None,
                 mesh_type="tree"
                 if self.parameterAsInt(parameters, self.MESH_TYPE, context) == 1
@@ -942,6 +960,9 @@ class JointGravityMagneticInversionAlgorithm(QgsProcessingAlgorithm):
             "cross_gradient_weight": self.parameterAsDouble(
                 parameters, self.COUPLING, context
             ),
+            "iterations_completed": len(result.history),
+            "convergence_history": result.history,
+            "grid_convergence_degrees": grid_convergence,
         }
         (output / "joint_inversion_summary.json").write_text(
             json.dumps(summary, indent=2), encoding="utf-8"

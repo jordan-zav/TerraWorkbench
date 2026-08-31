@@ -36,6 +36,7 @@ ROOT_FILES = (
     "delimited_text.py",
     "i18n.py",
     "qgis_compat.py",
+    "crs_utils.py",
     "plugin.py",
     "provider.py",
     "raster_io.py",
@@ -127,6 +128,37 @@ def update_version(version: str) -> None:
         raise RuntimeError("metadata.txt must contain exactly one version field")
     with METADATA_PATH.open("w", encoding="utf-8", newline="\n") as metadata_file:
         metadata_file.write(updated)
+    replacements = (
+        (
+            ROOT / "README.md",
+            (
+                (r"Version [0-9A-Za-z.+-]+", f"Version {version}"),
+                (r"version-[0-9A-Za-z.+-]+-2563eb", f"version-{version}-2563eb"),
+                (
+                    r"Version \*\*[0-9A-Za-z.+-]+\*\* is an internal test build",
+                    f"Version **{version}** is an internal test build",
+                ),
+            ),
+        ),
+        (
+            ROOT / "docs" / "knowledge_base" / "geofisica_potencial_referencia.md",
+            (
+                (
+                    r"Versión y validación actual \(v[0-9A-Za-z.+-]+\)",
+                    f"Versión y validación actual (v{version})",
+                ),
+            ),
+        ),
+    )
+    for path, patterns in replacements:
+        value = path.read_text(encoding="utf-8")
+        for pattern, replacement in patterns:
+            value, count = re.subn(pattern, replacement, value, count=1)
+            if count != 1:
+                raise RuntimeError(
+                    f"Could not synchronize version marker in {path.relative_to(ROOT)}"
+                )
+        path.write_text(value, encoding="utf-8", newline="\n")
 
 
 def package_files() -> list[Path]:
@@ -166,6 +198,13 @@ def validate_source() -> list[str]:
         errors.append(
             "qgisMaximumVersion must remain 3.99 until QGIS 4 runtime tests exist"
         )
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    if f"Version {version}" not in readme or f"version-{version}-2563eb" not in readme or (
+        f"Version **{version}** is an internal test build" not in readme
+    ):
+        errors.append("README version markers do not match metadata.txt")
+    if not general.get("changelog", "").lstrip().startswith(version):
+        errors.append("metadata changelog must start with the current version")
 
     for source in package_files():
         if not source.is_file():

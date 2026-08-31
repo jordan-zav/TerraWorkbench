@@ -107,12 +107,15 @@ def _active_profile_root():
 
 
 def activate_dependency_path():
-    """Expose TerraWorkbench-managed packages to the current QGIS process."""
+    """Expose managed packages without overriding QGIS' own Python runtime."""
     target = dependency_directory()
     if target.is_dir():
         site.addsitedir(str(target))
         if str(target) not in sys.path:
-            sys.path.insert(0, str(target))
+            # Host-first ordering avoids replacing QGIS' compiled NumPy/SciPy stack
+            # for every plugin in the process. A conflicting host dependency is
+            # reported instead of being silently shadowed.
+            sys.path.append(str(target))
         bin_path = target / "bin"
         path_entries = os.environ.get("PATH", "").split(os.pathsep)
         if str(bin_path) not in path_entries:
@@ -123,12 +126,12 @@ def activate_dependency_path():
     return target
 
 
-def read_requirements():
-    """Parse compatible direct requirements, honoring environment markers."""
+def read_requirements(include_inversion=False):
+    """Parse core requirements and, only when requested, the optional 3D stack."""
     environment = default_environment()
     requirements = []
     paths = [requirements_path()]
-    if inversion_supported():
+    if include_inversion and inversion_supported():
         paths.append(inversion_requirements_path())
     for path in paths:
         for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -142,11 +145,11 @@ def read_requirements():
     return tuple(requirements)
 
 
-def dependency_status():
+def dependency_status(include_inversion=False):
     """Return version-aware status for direct TerraWorkbench requirements."""
     activate_dependency_path()
     status = []
-    for requirement in read_requirements():
+    for requirement in read_requirements(include_inversion=include_inversion):
         try:
             distribution = metadata.distribution(requirement.name)
             version = distribution.version
@@ -187,13 +190,32 @@ def _log(message):
     QgsMessageLog.logMessage(str(message), LOG_TAG, level=Qgis.MessageLevel.Info)
 
 
-def install_requirements(parent=None, force_all=False):
+def install_requirements(
+    parent=None, force_all=False, include_inversion=False, inversion_only=False
+):
     """Install missing/conflicting or all direct requirements after user approval."""
-    status = dependency_status()
+    if inversion_only and not inversion_supported():
+        QMessageBox.warning(
+            parent,
+            text("TerraWorkbench dependencies", "Dependencias de TerraWorkbench"),
+            text(
+                "3D inversion requires QGIS with Python 3.11 or newer.",
+                "La inversión 3D requiere QGIS con Python 3.11 o posterior.",
+            ),
+        )
+        return False
+    status = dependency_status(include_inversion=include_inversion or inversion_only)
+    inversion_names = {
+        requirement.name.casefold()
+        for requirement in read_requirements(include_inversion=True)
+    } - {
+        requirement.name.casefold() for requirement in read_requirements()
+    }
     selected = [
         str(item.requirement)
         for item in status
-        if force_all or not item.satisfied
+        if (not inversion_only or item.requirement.name.casefold() in inversion_names)
+        and (force_all or not item.satisfied)
     ]
     if not selected:
         QMessageBox.information(
@@ -224,6 +246,8 @@ def install_requirements(parent=None, force_all=False):
         "--target",
         str(target),
         "--upgrade",
+        "--upgrade-strategy",
+        "only-if-needed",
         "--disable-pip-version-check",
         "--progress-bar",
         "raw",

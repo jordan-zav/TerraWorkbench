@@ -202,7 +202,7 @@ class DirectionalHorizontalGradientAlgorithm(MagneticFilterBase):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.AZIMUTH,
-                self.tr("Azimuth clockwise from North (degrees)"),
+                self.tr("Azimuth clockwise from grid north (degrees)"),
                 type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=45.0,
                 minValue=0.0,

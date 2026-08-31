@@ -38,7 +38,7 @@ class MicrolevelingAlgorithm(RasterAlgorithmBase):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.AZIMUTH,
-                self.tr("Traverse-line azimuth (degrees clockwise from north)"),
+                self.tr("Traverse-line azimuth (degrees clockwise from grid north)"),
                 type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=0.0,
                 minValue=0.0,

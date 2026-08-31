@@ -457,7 +457,7 @@ class DirectionalCosineBase(SpectralFilterBase):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.AZIMUTH,
-                self.tr("Geological strike azimuth, clockwise from North (degrees)"),
+                self.tr("Geological strike azimuth, clockwise from grid north (degrees)"),
                 type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=45.0,
                 minValue=0.0,

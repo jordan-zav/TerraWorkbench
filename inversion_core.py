@@ -14,6 +14,7 @@ class InversionResult:
     model: np.ndarray
     predicted: np.ndarray
     kind: str
+    history: list
 
 
 @dataclass
@@ -24,6 +25,7 @@ class JointInversionResult:
     susceptibility: np.ndarray
     predicted_gravity: np.ndarray
     predicted_magnetics: np.ndarray
+    history: list
 
 
 def _next_power_of_two(value):
@@ -158,6 +160,21 @@ def run_potential_field_inversion(
         raise ValueError("Coordinates and observations must be finite.")
     if np.any(~np.isfinite(standard_deviation)) or np.any(standard_deviation <= 0.0):
         raise ValueError("All standard deviations must be finite and positive.")
+    if standard_deviation.shape != observed.shape:
+        raise ValueError("Standard deviations and observations must have the same shape.")
+    if int(iterations) < 1:
+        raise ValueError("At least one inversion iteration is required.")
+    regularization_norm = float(regularization_norm)
+    irls_iterations = int(irls_iterations)
+    reference_value = float(reference_value)
+    if not 0.0 <= regularization_norm <= 2.0:
+        raise ValueError("Regularization norm p must be between 0 and 2.")
+    if irls_iterations < 0:
+        raise ValueError("IRLS iterations cannot be negative.")
+    if regularization_norm < 2.0 and irls_iterations == 0:
+        raise ValueError(
+            "A regularization norm below 2 requires at least one IRLS iteration."
+        )
     mesh, active = _mesh_from_data(
         xyz,
         cell_xy,
@@ -169,6 +186,8 @@ def run_potential_field_inversion(
         refinement_levels=refinement_levels,
     )
     n_active = int(np.count_nonzero(active))
+    if n_active == 0:
+        raise ValueError("The mesh contains no active cells below topography.")
     if n_active > int(max_cells):
         raise ValueError(
             f"The requested mesh has {n_active:,} active cells; increase cell size or reduce depth (limit {int(max_cells):,})."
@@ -194,14 +213,14 @@ def run_potential_field_inversion(
         )
         regularization_term = regularization.Sparse(
             mesh, active_cells=active, mapping=model_map,
-            norms=[float(regularization_norm)] * 4,
-            reference_model=np.full(n_active, float(reference_value)),
-        ) if int(irls_iterations) > 0 or float(regularization_norm) < 2.0 else regularization.WeightedLeastSquares(
+            norms=[regularization_norm] * 4,
+            reference_model=np.full(n_active, reference_value),
+        ) if irls_iterations > 0 else regularization.WeightedLeastSquares(
             mesh, active_cells=active, mapping=model_map,
-            reference_model=np.full(n_active, float(reference_value)),
+            reference_model=np.full(n_active, reference_value),
         )
-        start = np.zeros(n_active)
         default_lower, default_upper = -1.5, 1.5
+        start_default = 0.0
     else:
         receiver = magnetics.receivers.Point(xyz, components="tmi")
         source = magnetics.sources.UniformBackgroundField(
@@ -218,14 +237,14 @@ def run_potential_field_inversion(
             )
             regularization_term = regularization.Sparse(
                 mesh, active_cells=active, mapping=model_map,
-                norms=[float(regularization_norm)] * 4,
-                reference_model=np.full(n_active, float(reference_value)),
-            ) if int(irls_iterations) > 0 or float(regularization_norm) < 2.0 else regularization.WeightedLeastSquares(
+                norms=[regularization_norm] * 4,
+                reference_model=np.full(n_active, reference_value),
+            ) if irls_iterations > 0 else regularization.WeightedLeastSquares(
                 mesh, active_cells=active, mapping=model_map,
-                reference_model=np.full(n_active, float(reference_value)),
+                reference_model=np.full(n_active, reference_value),
             )
-            start = np.full(n_active, 1e-4)
             default_lower, default_upper = 0.0, 1.0
+            start_default = 1e-4
         elif kind == "mvi":
             model_map = maps.IdentityMap(nP=3 * n_active)
             simulation = magnetics.simulation.Simulation3DIntegral(
@@ -239,14 +258,24 @@ def run_potential_field_inversion(
         else:
             raise ValueError(f"Unknown inversion kind: {kind}")
 
+    resolved_lower = default_lower if lower is None else float(lower)
+    resolved_upper = default_upper if upper is None else float(upper)
+    if not resolved_lower < resolved_upper:
+        raise ValueError("The lower model bound must be smaller than the upper bound.")
+    if kind != "mvi":
+        if not resolved_lower <= reference_value <= resolved_upper:
+            raise ValueError("The scalar reference model must lie inside the bounds.")
+        start_value = reference_value if reference_value != 0.0 else start_default
+        start = np.full(n_active, start_value)
+
     data_object = data.Data(
         survey, dobs=observed, standard_deviation=standard_deviation
     )
     misfit = data_misfit.L2DataMisfit(data=data_object, simulation=simulation)
     optimizer = optimization.ProjectedGNCG(
         maxIter=int(iterations),
-        lower=default_lower if lower is None else float(lower),
-        upper=default_upper if upper is None else float(upper),
+        lower=resolved_lower,
+        upper=resolved_upper,
         maxIterLS=20,
         cg_maxiter=20,
         cg_rtol=1e-3,
@@ -258,31 +287,41 @@ def run_potential_field_inversion(
         directives.UpdatePreconditioner(),
         directives.TargetMisfit(chifact=1.0),
     ]
-    if kind != "mvi" and int(irls_iterations) > 0:
+    if kind != "mvi" and irls_iterations > 0:
         directive_list.insert(
             2,
             directives.UpdateIRLS(
-                max_irls_iterations=int(irls_iterations),
+                max_irls_iterations=irls_iterations,
                 chifact_start=1.0,
                 chifact_target=1.0,
             ),
         )
-    if cancel_callback is not None or progress_callback is not None:
+    history = []
 
-        class ProgressDirective(directives.InversionDirective):
-            def endIter(self):
-                iteration = int(getattr(self.opt, "iter", 0))
-                if progress_callback is not None:
-                    progress_callback(iteration)
-                if cancel_callback is not None and cancel_callback():
-                    raise RuntimeError("Inversion canceled by user.")
+    class DiagnosticsDirective(directives.InversionDirective):
+        def endIter(self):
+            iteration = int(getattr(self.opt, "iter", 0))
+            history.append(
+                {
+                    "iteration": iteration,
+                    "phi_d": float(self.invProb.phi_d),
+                    "phi_m": float(self.invProb.phi_m),
+                    "beta": float(self.invProb.beta),
+                }
+            )
+            if progress_callback is not None:
+                progress_callback(iteration)
+            if cancel_callback is not None and cancel_callback():
+                raise RuntimeError("Inversion canceled by user.")
 
-        directive_list.append(ProgressDirective())
+    directive_list.append(DiagnosticsDirective())
     recovered = inversion.BaseInversion(problem, directiveList=directive_list).run(
         start
     )
     predicted = np.asarray(simulation.dpred(recovered), dtype=float)
-    return InversionResult(mesh, active, np.asarray(recovered), predicted, kind)
+    return InversionResult(
+        mesh, active, np.asarray(recovered), predicted, kind, history
+    )
 
 
 def run_joint_cross_gradient_inversion(
@@ -331,9 +370,37 @@ def run_joint_cross_gradient_inversion(
     magnetic_data = np.asarray(magnetic_data, dtype=float)
     gravity_std = np.asarray(gravity_std, dtype=float)
     magnetic_std = np.asarray(magnetic_std, dtype=float)
+    for label, coordinates, values, uncertainties in (
+        ("gravity", gravity_xyz, gravity_data, gravity_std),
+        ("magnetic", magnetic_xyz, magnetic_data, magnetic_std),
+    ):
+        if (
+            coordinates.ndim != 2
+            or coordinates.shape[1] != 3
+            or coordinates.shape[0] != values.size
+            or uncertainties.shape != values.shape
+        ):
+            raise ValueError(f"Incompatible {label} observation array shapes.")
+        if (
+            not np.isfinite(coordinates).all()
+            or not np.isfinite(values).all()
+            or not np.isfinite(uncertainties).all()
+            or np.any(uncertainties <= 0.0)
+        ):
+            raise ValueError(
+                f"{label.capitalize()} coordinates, data and positive uncertainties must be finite."
+            )
     if min(gravity_data.size, magnetic_data.size) < 5:
         raise ValueError(
             "At least five gravity and five magnetic observations are required."
+        )
+    if int(iterations) < 1:
+        raise ValueError("At least one joint inversion iteration is required.")
+    if not density_bounds[0] < density_bounds[1]:
+        raise ValueError("Density lower bound must be smaller than its upper bound.")
+    if not susceptibility_bounds[0] < susceptibility_bounds[1]:
+        raise ValueError(
+            "Susceptibility lower bound must be smaller than its upper bound."
         )
     combined_xyz = np.vstack([gravity_xyz, magnetic_xyz])
     mesh, active = _mesh_from_data(
@@ -347,6 +414,8 @@ def run_joint_cross_gradient_inversion(
         refinement_levels=refinement_levels,
     )
     n_active = int(np.count_nonzero(active))
+    if n_active == 0:
+        raise ValueError("The joint mesh contains no active cells below topography.")
     if n_active > int(max_cells):
         raise ValueError(
             f"The requested mesh has {n_active:,} active cells; limit is {int(max_cells):,}."
@@ -431,17 +500,24 @@ def run_joint_cross_gradient_inversion(
         directives.PairedBetaSchedule(cooling_factor=5, cooling_rate=1),
         directives.UpdatePreconditioner(),
     ]
-    if cancel_callback is not None or progress_callback is not None:
+    history = []
 
-        class JointProgressDirective(directives.InversionDirective):
-            def endIter(self):
-                iteration = int(getattr(self.opt, "iter", 0))
-                if progress_callback is not None:
-                    progress_callback(iteration)
-                if cancel_callback is not None and cancel_callback():
-                    raise RuntimeError("Joint inversion canceled by user.")
+    class JointProgressDirective(directives.InversionDirective):
+        def endIter(self):
+            iteration = int(getattr(self.opt, "iter", 0))
+            history.append(
+                {
+                    "iteration": iteration,
+                    "phi_d": float(self.invProb.phi_d),
+                    "phi_m": float(self.invProb.phi_m),
+                }
+            )
+            if progress_callback is not None:
+                progress_callback(iteration)
+            if cancel_callback is not None and cancel_callback():
+                raise RuntimeError("Joint inversion canceled by user.")
 
-        directive_list.append(JointProgressDirective())
+    directive_list.append(JointProgressDirective())
     recovered = inversion.BaseInversion(problem, directiveList=directive_list).run(
         start
     )
@@ -452,6 +528,7 @@ def run_joint_cross_gradient_inversion(
         susceptibility=np.asarray(wires.susceptibility * recovered),
         predicted_gravity=np.asarray(simulation_gravity.dpred(recovered)),
         predicted_magnetics=np.asarray(simulation_magnetic.dpred(recovered)),
+        history=history,
     )
 
 

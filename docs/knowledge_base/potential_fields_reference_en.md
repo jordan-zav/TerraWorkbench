@@ -134,9 +134,17 @@ Crossover QC and tie-line leveling identify line intersections, reject robust ou
 
 ## 7. Three-dimensional inversion
 
-TerraWorkbench provides SimPEG-based gravity density, magnetic susceptibility, magnetic vector (MVI) and joint gravity–magnetic inversion. TensorMesh and adaptive TreeMesh workflows expose cell size, depth, padding, topography, uncertainties, bounds, iteration limits and safety limits.
+TerraWorkbench provides SimPEG-based gravity density, magnetic susceptibility, magnetic vector (MVI) and joint gravity–magnetic inversion. TensorMesh and adaptive TreeMesh workflows expose cell size, depth, padding, topography, uncertainties, bounds, iteration limits and safety limits. Scalar workflows also expose Lp norm, explicit IRLS count and a bounded reference model, and record iteration, data misfit, model objective and beta history.
+
+Physical modelling requires projected coordinates in metres. Field declination is entered relative to geographic north and converted to the projected grid axes through meridian convergence. A norm below 2 is rejected unless IRLS is enabled.
 
 Joint inversion uses cross-gradient coupling to encourage structural similarity without forcing a fixed density–susceptibility relationship. Run coupling-weight and mesh sensitivity studies. Inversion results are non-unique and must be evaluated against geology, acquisition geometry and residuals.
+
+### Survey corrections and equivalent sources
+
+Moving magnetic correction applies signed lag, base-station interpolation, first-harmonic heading correction and Hampel despiking before leveling. Moving gravity uses one survey-wide drift epoch, an explicit external tide field and calculated Eötvös correction. Grid velocities and geographic magnetic directions are rotated using local meridian convergence.
+
+Equivalent sources enforce both a cell guard and an estimated observation-by-source Jacobian guard. Deterministic spatial holdout reports RMSE and normalized RMSE before the final full-data fit. Magnetic pseudogravity is a vertical integration of a phase-corrected RTP/RTE grid and remains interpretive unless a defensible physical scale is supplied.
 
 ## 8. Minimum interpretation checklist
 

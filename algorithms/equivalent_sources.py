@@ -17,6 +17,8 @@ class EquivalentSourceContinuationAlgorithm(RasterAlgorithmBase):
     TARGET_HEIGHT = "TARGET_HEIGHT"
     BLOCK_SIZE = "BLOCK_SIZE"
     MAX_CELLS = "MAX_CELLS"
+    MAX_MATRIX_ELEMENTS = "MAX_MATRIX_ELEMENTS"
+    HOLDOUT_PERCENT = "HOLDOUT_PERCENT"
     processing_domain = "EQUIVALENT SOURCES / PHYSICAL MODEL"
 
     def name(self):
@@ -52,7 +54,18 @@ class EquivalentSourceContinuationAlgorithm(RasterAlgorithmBase):
         ))
         self.addParameter(QgsProcessingParameterNumber(
             self.MAX_CELLS, self.tr("Safety limit: fitted grid cells"),
-            type=PROCESSING_NUMBER_INTEGER, defaultValue=20000, minValue=4,
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=10000, minValue=4,
+        ))
+        self.addParameter(QgsProcessingParameterNumber(
+            self.MAX_MATRIX_ELEMENTS,
+            self.tr("Safety limit: Jacobian elements (observations × sources)"),
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=25000000, minValue=16,
+        ))
+        self.addParameter(QgsProcessingParameterNumber(
+            self.HOLDOUT_PERCENT,
+            self.tr("Spatial holdout validation (%; 0 = disabled)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=10.0, minValue=0.0,
+            maxValue=50.0,
         ))
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -73,15 +86,90 @@ class EquivalentSourceContinuationAlgorithm(RasterAlgorithmBase):
         coordinates = (easting.ravel(), northing.ravel(), upward)
         damping = self.parameterAsDouble(parameters, self.DAMPING, context)
         block_size = self.parameterAsDouble(parameters, self.BLOCK_SIZE, context)
-        harmonica = import_harmonica()
-        model = harmonica.EquivalentSources(
-            damping=None if damping == 0.0 else damping,
-            depth=self.parameterAsDouble(parameters, self.SOURCE_DEPTH, context),
-            block_size=None if block_size == 0.0 else block_size,
-            parallel=True,
+        if block_size == 0.0:
+            estimated_sources = cells
+        else:
+            source_columns = max(
+                1, int(np.ceil(np.ptp(easting) / block_size)) + 1
+            )
+            source_rows = max(
+                1, int(np.ceil(np.ptp(northing) / block_size)) + 1
+            )
+            estimated_sources = min(cells, source_columns * source_rows)
+        matrix_elements = cells * estimated_sources
+        matrix_limit = self.parameterAsInt(
+            parameters, self.MAX_MATRIX_ELEMENTS, context
         )
-        feedback.pushInfo(f"Fitting {cells:,} observations with equivalent sources.")
-        model.fit(coordinates, np.asarray(data.values, dtype=float).ravel())
+        if matrix_elements > matrix_limit:
+            gibibytes = matrix_elements * 8.0 / (1024.0**3)
+            raise QgsProcessingException(
+                f"Estimated Jacobian has {matrix_elements:,} elements "
+                f"(~{gibibytes:.2f} GiB before working copies), exceeding the "
+                f"{matrix_limit:,}-element guard. Increase source block size or "
+                "resample the grid."
+            )
+        harmonica = import_harmonica()
+        depth = self.parameterAsDouble(parameters, self.SOURCE_DEPTH, context)
+
+        def new_model():
+            return harmonica.EquivalentSources(
+                damping=None if damping == 0.0 else damping,
+                depth=depth,
+                block_size=None if block_size == 0.0 else block_size,
+                parallel=True,
+            )
+
+        observations = np.asarray(data.values, dtype=float).ravel()
+        holdout_percent = self.parameterAsDouble(
+            parameters, self.HOLDOUT_PERCENT, context
+        )
+        if holdout_percent > 0.0:
+            random = np.random.default_rng(0)
+            holdout_count = max(1, int(round(cells * holdout_percent / 100.0)))
+            holdout = np.sort(random.choice(cells, holdout_count, replace=False))
+            training = np.ones(cells, dtype=bool)
+            training[holdout] = False
+            if int(training.sum()) < 4:
+                raise QgsProcessingException(
+                    "Holdout validation leaves fewer than four training cells."
+                )
+            validation_model = new_model()
+            validation_model.fit(
+                tuple(component[training] for component in coordinates),
+                observations[training],
+            )
+            validation_prediction = validation_model.predict(
+                tuple(component[holdout] for component in coordinates)
+            )
+            residual = observations[holdout] - validation_prediction
+            holdout_rmse = float(np.sqrt(np.mean(residual**2)))
+            holdout_scale = float(np.std(observations[holdout]))
+            holdout_nrmse = (
+                holdout_rmse / holdout_scale if holdout_scale > 0.0 else None
+            )
+            feedback.pushInfo(
+                f"Deterministic holdout ({holdout_count:,} cells): RMSE="
+                f"{holdout_rmse:.6g}; normalized RMSE="
+                f"{holdout_nrmse:.6g}." if holdout_nrmse is not None else
+                f"Deterministic holdout ({holdout_count:,} cells): RMSE="
+                f"{holdout_rmse:.6g}; normalized RMSE unavailable (zero variance)."
+            )
+            grid.metadata = dict(grid.metadata)
+            grid.metadata.update(
+                {
+                    "TW_EQS_HOLDOUT_PERCENT": str(holdout_percent),
+                    "TW_EQS_HOLDOUT_RMSE": str(holdout_rmse),
+                    "TW_EQS_HOLDOUT_NRMSE": ""
+                    if holdout_nrmse is None
+                    else str(holdout_nrmse),
+                }
+            )
+        model = new_model()
+        feedback.pushInfo(
+            f"Fitting {cells:,} observations with approximately "
+            f"{estimated_sources:,} equivalent sources."
+        )
+        model.fit(coordinates, observations)
         feedback.setProgress(65)
         target_upward = np.full(
             upward.shape,

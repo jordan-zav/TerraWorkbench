@@ -15,6 +15,8 @@ idea en algoritmo existente. La cobertura implementada detallada está en la
 - Cadena gravimétrica desde GRS80 hasta Bouguer completa, terreno e isostasia Airy.
 - Inversión de densidad, susceptibilidad, MVI y conjunta GRAV–MAG.
 - Inversión escalar con regularización Lp, IRLS y modelo de referencia configurable.
+- Conversión explícita entre norte verdadero y norte de grilla, CRS físicos en metros
+  e historial de convergencia de inversión.
 - Radiometría K–eU–eTh: razones, ternario, dosis, parámetro F, QC y correcciones
   crudas parametrizadas de tiempo muerto, fondos, altura, sensibilidad y stripping.
 
@@ -33,8 +35,8 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 | Familia | Brecha candidata | Referencias iniciales | Validación mínima |
 | --- | --- | --- | --- |
 | Nivelación MAG | implementada: base station, lag firmado, heading armónico y despike Hampel; falta nivelación estadística de líneas | PyGMI, literatura de levantamientos | líneas sintéticas + survey con base conocida |
-| Nivelación GRAV | implementada: deriva lineal, marea externa y Eötvös calculado; falta modelo de marea interno | Boule, ICGEM/USGS y literatura geodésica | circuito cerrado y benchmark publicado |
-| Gridding físico | fuentes equivalentes implementadas; falta validación holdout automatizada y superficies topográficas variables | Harmonica, Verde | holdout espacial y campo sintético armónico |
+| Nivelación GRAV | implementada: deriva lineal con época global, marea externa y Eötvös sobre ejes verdaderos; falta modelo de marea interno | Boule, ICGEM/USGS y literatura geodésica | circuito cerrado y benchmark publicado |
+| Gridding físico | fuentes equivalentes con guardia de Jacobiano y holdout; faltan superficies topográficas variables | Harmonica, Verde | holdout espacial y campo sintético armónico |
 | MAG transform | pseudogravedad implementada; faltan susceptibilidad aparente y conversión de componentes | SGTool, GMT, Blakely | prisma/dipolo con solución directa |
 | Profundidad | Euler por ventanas e inversión Euler moderna | Harmonica, euler-inversion | familias de SI, ruido y fuentes interferentes |
 | Espectro | espectro radial y estimación de profundidad con incertidumbre | GMT y bibliografía | dos capas sintéticas y análisis de sensibilidad |
@@ -44,7 +46,7 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 
 | Familia | Brecha candidata | Referencias iniciales | Validación mínima |
 | --- | --- | --- | --- |
-| Regularización | Lp, IRLS y modelo de referencia implementados para inversión escalar; falta diagnóstico sistemático de sensibilidad | SimPEG | cubo sintético, curva de convergencia y sensibilidad a beta |
+| Regularización | Lp, IRLS, referencia acotada e historial implementados para inversión escalar; falta diagnóstico sistemático de sensibilidad | SimPEG | cubo sintético, curva de convergencia y sensibilidad a beta |
 | Petrofísica | bounds espaciales, modelos de referencia y unidades explícitas | SimPEG, PyGIMLi | recuperación bajo varios priors |
 | Incertidumbre | resolución, sensibilidad, DOI y conjuntos de modelos | SimPEG, literatura | no presentar una sola inversión como verdad |
 | Joint inversion | alternativas a cross-gradient y pesos normalizados | SimPEG, PyGIMLi | casos compatible e incompatible |
@@ -56,7 +58,7 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 - biblioteca de datasets sintéticos pequeños con resultados esperados;
 - recetas versionadas de flujos completos y migración de esquemas JSON;
 - reporte HTML/PDF de parámetros, dependencias, CRS, unidades y advertencias;
-- comparación automatizada TerraWorkbench/Harmonica/GMT/SimPEG;
+- comparación automatizada TerraWorkbench/Harmonica/GMT/SimPEG (CI QGIS ya ejecuta el catálogo compatible con Filter Stack);
 - caché y ejecución en background con cancelación segura en QGIS;
 - perfiles “rápido”, “conservador” y “publicación”, sin ocultar parámetros;
 - traducción consistente español/inglés de algoritmos y ayuda contextual.

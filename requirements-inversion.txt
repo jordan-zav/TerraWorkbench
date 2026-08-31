@@ -1,5 +1,5 @@
 # 3D inversion-only subset for manual or isolated environments.
-# The same packages are also declared in the canonical requirements.txt.
+# Installed only when the user explicitly enables the optional 3D workflow.
 simpeg>=0.25,<0.26
 discretize>=0.12,<0.13
 choclo>=0.3,<0.4
