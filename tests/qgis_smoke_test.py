@@ -164,6 +164,7 @@ def main():
 
     provider = None
     algorithm_ids = set()
+    smoke_completed = False
     try:
         Processing.initialize()
         provider = TerraWorkbenchProvider()
@@ -409,7 +410,7 @@ def main():
                     "LINE_FIELD": "line",
                     "SIGNED_LAG_SECONDS": 0.0,
                     "HAMPEL_RADIUS": 0,
-                    "OUTPUT": str(temporary_path / "corrected_magnetic.gpkg"),
+                    "OUTPUT": "memory:",
                 },
             )["OUTPUT"]
             if isinstance(corrected_mag, str):
@@ -429,7 +430,7 @@ def main():
                     "LINE_FIELD": "line",
                     "DRIFT_RATE": 2.0,
                     "EOTVOS_MODE": 2,
-                    "OUTPUT": str(temporary_path / "corrected_gravity.gpkg"),
+                    "OUTPUT": "memory:",
                 },
             )["OUTPUT"]
             if isinstance(corrected_grav, str):
@@ -1104,10 +1105,41 @@ def main():
                     raise AssertionError("GDAL vector/table enumeration failed")
                 print("OK: vector container layers enumerated", flush=True)
             finally:
+                for file_layer_name in (
+                    "corrected_mag",
+                    "corrected_grav",
+                    "inversion_layer",
+                ):
+                    file_layer = locals().get(file_layer_name)
+                    if isinstance(file_layer, QgsVectorLayer):
+                        file_layer.setDataSource(
+                            "Point?crs=EPSG:4326", "released", "memory"
+                        )
+                for raster_layer_name in (
+                    "gridded_layer",
+                    "layer",
+                    "terrain_layer",
+                    "complete_layer",
+                ):
+                    raster_layer = locals().get(raster_layer_name)
+                    if isinstance(raster_layer, QgsRasterLayer):
+                        raster_layer.setDataSource("", "released", "gdal")
+                point_layer = None
+                gridded_layer = None
+                line_layer = None
+                radiometric_points = None
+                corrected_radiometry = None
+                moving_survey = None
+                corrected_mag = None
+                corrected_grav = None
+                corrected_grav_features = None
+                leveled = None
+                inversion_layer = None
                 layer = None
                 terrain_layer = None
                 complete_layer = None
                 gc.collect()
+                application.processEvents()
 
         QgsApplication.processingRegistry().removeProvider(provider)
         provider = None
@@ -1229,14 +1261,23 @@ def main():
             "OK: plugin lifecycle registered and removed the right-side dock",
             flush=True,
         )
+        smoke_completed = True
     finally:
         if provider is not None:
             QgsApplication.processingRegistry().removeProvider(provider)
+        QgsProject.instance().clear()
+        application.processEvents()
+        gc.collect()
+        if smoke_completed:
+            sentinel = os.environ.get("TERRAWORKBENCH_QGIS_SMOKE_SENTINEL")
+            if sentinel:
+                Path(sentinel).touch()
+            print(
+                f"OK: {len(algorithm_ids)} algorithms loaded; direct tools and a "
+                "two-step Filter Stack ran",
+                flush=True,
+            )
         application.exitQgis()
-    print(
-        f"OK: {len(algorithm_ids)} algorithms loaded; direct tools and a two-step "
-        "Filter Stack ran"
-    )
 
 
 if __name__ == "__main__":
