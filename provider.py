@@ -72,6 +72,7 @@ from .algorithms.spectral_filters import (
     IdealBandPassAlgorithm,
     IdealBandRejectAlgorithm,
     VerticalIntegrationAlgorithm,
+    MagneticPseudogravityAlgorithm,
 )
 from .algorithms.magnetic_transforms import (
     FieldDirectionTransformAlgorithm,
@@ -101,6 +102,11 @@ from .algorithms.radiometry import (
     RadiometryTernaryAlgorithm,
 )
 from .algorithms.radiometric_survey import RadiometricSurveyCorrectionAlgorithm
+from .algorithms.survey_corrections import (
+    GravitySurveyCorrectionAlgorithm,
+    MagneticSurveyCorrectionAlgorithm,
+)
+from .algorithms.equivalent_sources import EquivalentSourceContinuationAlgorithm
 
 
 class TerraWorkbenchProvider(QgsProcessingProvider):
@@ -164,6 +170,7 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(HorizontalIntegrationEastingAlgorithm())
         self.addAlgorithm(HorizontalIntegrationNorthingAlgorithm())
         self.addAlgorithm(VerticalIntegrationAlgorithm())
+        self.addAlgorithm(MagneticPseudogravityAlgorithm())
         self.addAlgorithm(ReductionToPoleIgrfAlgorithm())
         self.addAlgorithm(ReductionToEquatorAlgorithm())
         self.addAlgorithm(FieldDirectionTransformAlgorithm())
@@ -186,6 +193,9 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(RadiometryCalibrationAlgorithm())
         self.addAlgorithm(RadiometrySpectralUnmixAlgorithm())
         self.addAlgorithm(RadiometricSurveyCorrectionAlgorithm())
+        self.addAlgorithm(MagneticSurveyCorrectionAlgorithm())
+        self.addAlgorithm(GravitySurveyCorrectionAlgorithm())
+        self.addAlgorithm(EquivalentSourceContinuationAlgorithm())
 
     def id(self):
         return "terraworkbench"

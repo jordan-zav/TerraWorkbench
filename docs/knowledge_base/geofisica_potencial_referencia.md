@@ -459,7 +459,7 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 | Inversión 3D (gravedad, magnética escalar, MVI, conjunta) | Cubierto, con soporte de malla adaptativa y topografía |
 | Diferenciación espacial vs. FFT como parte visible del producto | **Nuevo en v0.12.0** — etiquetas de dominio en la UI (§9) + motor MAGMAP-like con acondicionamiento de bordes (§9.2) |
 
-**Versión y validación actual (v0.14.0):** 79 algoritmos registrados, pruebas locales y Ruff correctos, y prueba integral validada en QGIS 3.44. El registro incluye herramientas radiométricas de grilla y una cadena para puntos crudos previa al gridding, además de la cobertura MAG/GRAV anterior.
+**Versión y validación actual (v0.14.0):** 83 algoritmos registrados, 46 pruebas locales y Ruff correctos, y prueba integral validada en QGIS 3.44. El registro incluye radiometría de grilla/puntos, correcciones MAG y GRAV móviles previas al gridding, continuación mediante fuentes equivalentes, pseudogravedad magnética y regularización escalar Lp/IRLS.
 
 **Resuelto en v0.11.1–v0.12.0 (ya no son limitaciones abiertas):**
 - La continuación ascendente usa una altura configurable (§1.5) y su identidad no codifica una distancia fija.
@@ -467,11 +467,13 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 - El selector de algoritmos que ocupaba toda la pantalla fue reemplazado por una ventana compacta a la izquierda del dock.
 - El dominio numérico de cada herramienta (espacial/FFT/mixto/físico) ya no vive solo en este documento — es una etiqueta visible en la UI (§9).
 - El motor espectral propio ya no es una FFT desnuda — incorpora detrend, padding reflejado y taper cosenoidal antes de filtrar (§9.2).
+- La pseudogravedad magnética está disponible como integración vertical espectral escalable y exige como entrada un campo reducido al polo o al ecuador.
+- Las inversiones escalares de densidad y susceptibilidad permiten norma Lp, iteraciones IRLS y modelo de referencia explícito.
 
 **Limitaciones abiertas:**
 - **Corrección de aire libre extendida** (§4.4) — la forma dependiente de latitud + término cuadrático no existe como opción independiente; solo está implementada la aproximación lineal Δg_FA = 0.3086·h (con coeficiente configurable).
 - **Combinación de operadores en una sola FFT** dentro del Filter Stack (H_final = H₁·H₂·H₃, al estilo MAGMAP) — no confirmado si ya está resuelto en v0.12.0; verificar contra `spectral.py` (ver nota en §9.2).
-- **Operadores especializados de MAGMAP** aún ausentes: pseudogravedad, susceptibilidad/densidad aparente, filtro de Wiener, conversión entre componentes del campo, y otros (lista completa en §9.2).
+- **Operadores especializados de MAGMAP** aún ausentes: susceptibilidad/densidad aparente, filtro de Wiener, conversión entre componentes del campo, y otros (lista completa en §9.2).
 
 **Nota sobre fórmulas:** Las de §4.2–4.11 siguen las convenciones estándar de geodesia física (Somigliana/GRS80, Nagy para prismas, Bullard A/B/C, Airy-Heiskanen), y la secuencia de Bouguer completa fue confirmada como `SBA + terreno − curvatura` (Harmonica + USGS PP 646-A). Para el resto de módulos, si el código usa una convención de signos, densidad de referencia o radio de terreno distinto, verificar contra el registro exacto antes de dar por definitiva la equivalencia fórmula-a-fórmula.
 
@@ -520,15 +522,14 @@ Esto sigue la arquitectura general de MAGMAP (preprocesamiento → FFT → opera
 
 **Aún no cubierto — combinación H_final = H₁·H₂·H₃ en una sola FFT** para múltiples filtros encadenados en el Filter Stack (a la fecha de este registro no se confirma si v0.12.0 ya combina operadores dentro de una misma pasada o si el acondicionamiento MAGMAP-like se aplica por filtro individual dentro del stack — verificar contra `spectral.py` si esto es crítico para el flujo de trabajo).
 
-**Operadores de MAGMAP que TerraWorkbench aún no tiene (confirmado explícitamente en el registro de v0.12.0):**
-- Pseudogravedad
+**Operadores de MAGMAP que TerraWorkbench aún no tiene (estado actualizado en v0.14.0):**
 - Susceptibilidad aparente
 - Densidad aparente
 - Filtro de Wiener
 - Conversión entre componentes del campo
 - Otros operadores especializados (lista extendida de referencia, MAGMAP tiene 29 operadores en total): RTP diferencial, transformación desde el polo, Gravity Earth filter, filtro radial general definido por el usuario, variantes adicionales de ideal/notch, separaciones regional/residual adicionales, decorrugación MAGMAP completa.
 
-**Conclusión (v0.12.0):** TerraWorkbench ahora declara el dominio numérico de cada herramienta como parte visible del producto (peso geofísico real, no solo un botón que finge equivalencia entre métodos distintos), y el motor espectral propio incorpora el acondicionamiento de bordes que le faltaba frente a MAGMAP. La brecha restante frente a MAGMAP es de **cobertura de operadores especializados** (pseudogravedad, susceptibilidad/densidad aparente, Wiener, conversión de componentes), no de arquitectura de dominio.
+**Conclusión (actualizada en v0.14.0):** TerraWorkbench declara el dominio numérico de cada herramienta como parte visible del producto, el motor espectral propio incorpora acondicionamiento de bordes y la pseudogravedad ya está cubierta. La brecha restante frente a MAGMAP es de **cobertura de operadores especializados** (susceptibilidad/densidad aparente, Wiener y conversión de componentes), no de arquitectura de dominio.
 
 ---
 

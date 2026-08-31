@@ -45,6 +45,7 @@ ROOT_FILES = (
     "inversion_core.py",
     "gravity_corrections.py",
     "radiometry.py",
+    "survey_corrections.py",
     "dependencies.py",
     "dependency_dialog.py",
     "settings_dialog.py",

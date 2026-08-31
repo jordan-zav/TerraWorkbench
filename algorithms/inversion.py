@@ -53,6 +53,9 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
     FIELD_INCLINATION = "FIELD_INCLINATION"
     FIELD_DECLINATION = "FIELD_DECLINATION"
     DISK_SENSITIVITIES = "DISK_SENSITIVITIES"
+    REGULARIZATION_NORM = "REGULARIZATION_NORM"
+    IRLS_ITERATIONS = "IRLS_ITERATIONS"
+    REFERENCE_VALUE = "REFERENCE_VALUE"
     OUTPUT = "OUTPUT"
     KIND = ""
 
@@ -185,6 +188,22 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
                 maxValue=100,
             )
         )
+        if self.KIND != "mvi":
+            self.addParameter(QgsProcessingParameterNumber(
+                self.REGULARIZATION_NORM,
+                self.tr("Regularization norm p (2 = smooth; lower = compact)"),
+                type=PROCESSING_NUMBER_DOUBLE, defaultValue=2.0, minValue=0.0, maxValue=2.0,
+            ))
+            self.addParameter(QgsProcessingParameterNumber(
+                self.IRLS_ITERATIONS,
+                self.tr("Maximum IRLS iterations (0 = weighted least squares)"),
+                type=PROCESSING_NUMBER_INTEGER, defaultValue=0, minValue=0, maxValue=50,
+            ))
+            self.addParameter(QgsProcessingParameterNumber(
+                self.REFERENCE_VALUE,
+                self.tr("Scalar reference-model value"),
+                type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0,
+            ))
         defaults = {
             "gravity": (-1.5, 1.5),
             "susceptibility": (0.0, 1.0),
@@ -381,6 +400,9 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
                         ),
                     )
                 ),
+                regularization_norm=self.parameterAsDouble(parameters, self.REGULARIZATION_NORM, context) if self.KIND != "mvi" else 2.0,
+                irls_iterations=self.parameterAsInt(parameters, self.IRLS_ITERATIONS, context) if self.KIND != "mvi" else 0,
+                reference_value=self.parameterAsDouble(parameters, self.REFERENCE_VALUE, context) if self.KIND != "mvi" else 0.0,
             )
         except Exception as error:
             raise QgsProcessingException(f"SimPEG inversion failed: {error}") from error
@@ -435,6 +457,9 @@ class PotentialFieldInversionBase(QgsProcessingAlgorithm):
                 self.parameterAsDouble(parameters, self.LOWER, context),
                 self.parameterAsDouble(parameters, self.UPPER, context),
             ],
+            "regularization_norm": self.parameterAsDouble(parameters, self.REGULARIZATION_NORM, context) if self.KIND != "mvi" else 2.0,
+            "irls_iterations": self.parameterAsInt(parameters, self.IRLS_ITERATIONS, context) if self.KIND != "mvi" else 0,
+            "reference_value": self.parameterAsDouble(parameters, self.REFERENCE_VALUE, context) if self.KIND != "mvi" else 0.0,
         }
         (output / "inversion_summary.json").write_text(
             json.dumps(summary, indent=2), encoding="utf-8"

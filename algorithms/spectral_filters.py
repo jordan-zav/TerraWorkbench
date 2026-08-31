@@ -615,3 +615,35 @@ class VerticalIntegrationAlgorithm(SpectralFilterBase):
 
     def transfer(self, k_east, k_north, radial, parameters, context):
         return vertical_integration_transfer(radial)
+
+
+class MagneticPseudogravityAlgorithm(SpectralFilterBase):
+    """Expose vertical integration as an explicitly constrained MAG product."""
+
+    SCALE = "SCALE"
+    output_description = "Scaled magnetic pseudogravity"
+    processing_domain = "FFT / MAGNETIC PSEUDOGRAVITY"
+
+    def name(self):
+        return "magnetic_pseudogravity"
+
+    def displayName(self):
+        return self.tr("Magnetic pseudogravity — vertical integration of RTP/RTE")
+
+    def group(self):
+        return self.tr("MAG field-direction transforms")
+
+    def groupId(self):
+        return "magnetic_field_direction"
+
+    def add_filter_parameters(self):
+        self.addParameter(QgsProcessingParameterNumber(
+            self.SCALE, self.tr("Output scale factor (interpretive units)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=1.0,
+        ))
+
+    def transfer(self, k_east, k_north, radial, parameters, context):
+        return self.parameterAsDouble(parameters, self.SCALE, context) * vertical_integration_transfer(radial)
+
+    def shortHelpString(self):
+        return self.tr("Vertically integrates a magnetic grid in wavenumber space using 1/k. Apply it only after RTP or RTE so the anomaly is phase-corrected. The optional scale is interpretive unless a defensible magnetization-density relationship and unit conversion are supplied; the result is not measured gravity.")

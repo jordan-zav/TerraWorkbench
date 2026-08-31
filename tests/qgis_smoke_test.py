@@ -190,13 +190,17 @@ def main():
             "terraworkbench:radiometry_sensitivity_calibration",
             "terraworkbench:radiometry_spectral_unmix",
             "terraworkbench:radiometry_correct_survey_channels",
+            "terraworkbench:correct_magnetic_survey_lines",
+            "terraworkbench:correct_moving_gravity_survey",
+            "terraworkbench:equivalent_source_continuation",
+            "terraworkbench:magnetic_pseudogravity",
         }
         if not expected.issubset(algorithm_ids):
             raise AssertionError(
                 f"Missing algorithms: {sorted(expected - algorithm_ids)}"
             )
-        if len(algorithm_ids) != 79:
-            raise AssertionError(f"Expected 79 algorithms, found {len(algorithm_ids)}")
+        if len(algorithm_ids) != 83:
+            raise AssertionError(f"Expected 83 algorithms, found {len(algorithm_ids)}")
 
         with tempfile.TemporaryDirectory(
             prefix="terraworkbench_"
@@ -218,6 +222,7 @@ def main():
             gridded_filtered_path = temporary_path / "survey_grid_lowpass.tif"
             radiometric_dose_path = temporary_path / "radiometric_dose.tif"
             radiometric_ternary_path = temporary_path / "radiometric_ternary.tif"
+            equivalent_source_path = temporary_path / "equivalent_source.tif"
             create_test_raster(input_path)
             point_layer = QgsVectorLayer(
                 "Point?crs=EPSG:4326&field=mag:double", "survey points", "memory"
@@ -335,6 +340,48 @@ def main():
                 or abs(corrected_feature["tw_k_cps"] - 111.111111) > 1e-5
             ):
                 raise AssertionError("Radiometric point correction chain failed")
+            moving_survey = QgsVectorLayer(
+                "Point?crs=EPSG:32718&field=line:string&field=time:double&field=mag:double&field=grav:double",
+                "moving geophysical survey",
+                "memory",
+            )
+            moving_features = []
+            for index in range(3):
+                feature = QgsFeature(moving_survey.fields())
+                feature.setGeometry(
+                    QgsGeometry.fromPointXY(QgsPointXY(500000 + index * 10, 9000000))
+                )
+                feature.setAttributes(["L1", float(index), 100.0 + index, 10.0 + index])
+                moving_features.append(feature)
+            moving_survey.dataProvider().addFeatures(moving_features)
+            corrected_mag = processing.run(
+                "terraworkbench:correct_magnetic_survey_lines",
+                {
+                    "INPUT": moving_survey,
+                    "VALUE_FIELD": "mag",
+                    "TIME_FIELD": "time",
+                    "LINE_FIELD": "line",
+                    "SIGNED_LAG_SECONDS": 0.0,
+                    "HAMPEL_RADIUS": 0,
+                    "OUTPUT": "memory:",
+                },
+            )["OUTPUT"]
+            if any(not feature["tw_mag_ok"] for feature in corrected_mag.getFeatures()):
+                raise AssertionError("Magnetic line correction produced invalid points")
+            corrected_grav = processing.run(
+                "terraworkbench:correct_moving_gravity_survey",
+                {
+                    "INPUT": moving_survey,
+                    "VALUE_FIELD": "grav",
+                    "TIME_FIELD": "time",
+                    "LINE_FIELD": "line",
+                    "DRIFT_RATE": 0.0,
+                    "EOTVOS_MODE": 2,
+                    "OUTPUT": "memory:",
+                },
+            )["OUTPUT"]
+            if any(not feature["tw_grav_ok"] for feature in corrected_grav.getFeatures()):
+                raise AssertionError("Moving-gravity correction produced invalid points")
             leveled = processing.run(
                 "terraworkbench:crossover_line_leveling",
                 {
@@ -447,6 +494,22 @@ def main():
                 layer = QgsRasterLayer(str(input_path), "input")
                 if not layer.isValid():
                     raise AssertionError("The synthetic input raster is invalid")
+
+                processing.run(
+                    "terraworkbench:equivalent_source_continuation",
+                    {
+                        "INPUT": layer,
+                        "BAND": 1,
+                        "SOURCE_DEPTH": 200.0,
+                        "DAMPING": 1.0,
+                        "TARGET_HEIGHT": 50.0,
+                        "BLOCK_SIZE": 0.0,
+                        "MAX_CELLS": 100,
+                        "OUTPUT": str(equivalent_source_path),
+                    },
+                )
+                if not equivalent_source_path.exists():
+                    raise AssertionError("Equivalent-source output was not created")
 
                 processing.run(
                     "terraworkbench:radiometry_dose_rate",
@@ -712,7 +775,7 @@ def main():
                     if spectrum_plot.grab().isNull():
                         raise AssertionError("Spectrum preview did not render")
                     spectrum_plot.deleteLater()
-                    if len(available_algorithms()) != len(algorithm_ids) - 19:
+                    if len(available_algorithms()) != len(algorithm_ids) - 21:
                         raise AssertionError(
                             "Filter Stack is missing registered algorithms"
                         )

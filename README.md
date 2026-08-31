@@ -29,7 +29,7 @@
     <td width="58%">
       <h3>One workbench, complete geophysical workflows</h3>
       <ul>
-        <li><strong>79 native Processing algorithms</strong> for Model Designer and batch jobs</li>
+        <li><strong>83 native Processing algorithms</strong> for Model Designer and batch jobs</li>
         <li><strong>Dockable Filter Stack</strong> with reusable JSON recipes</li>
         <li><strong>RTP, RTE and IGRF-14</strong> magnetic field-direction tools</li>
         <li><strong>K–eU–eTh radiometry</strong>, ternary products, QC and calibrated raw-count corrections</li>
@@ -81,6 +81,7 @@ Survey grids / points / channels
 | Field corrections | RTP, RTE, general source-to-target transform and automatic IGRF-14 parameters |
 | Gamma-ray spectrometry | K/eU/eTh ratios, RGB and normalized ternary images, dose, F parameter, QC, dead time, background, height, sensitivity and spectral stripping |
 | Survey preparation | GRD/GDAL/CSV/ASCII/FileGDB import, point gridding, crossover QC, tie-line leveling and microleveling |
+| Physical interpolation | Harmonica equivalent-source fitting and prediction at configurable relative height |
 | 3D inversion | Density contrast, scalar susceptibility, Cartesian MVI and joint gravity–magnetics cross-gradient inversion |
 | Automation | QGIS Processing, batch mode, Model Designer and JSON Filter Stack recipes |
 
@@ -381,9 +382,9 @@ scripts and previous archives are excluded.
 
 Version **0.14.0** is an internal test build. The current verification baseline is:
 
-- 34 unit/structure tests
+- 46 unit/structure tests
 - Ruff clean
-- 79 algorithms expected in QGIS 3.44
+- 83 algorithms expected in QGIS 3.44
 - Real Processing and multi-step Filter Stack smoke tests
 - Gravity, susceptibility, MVI and joint TreeMesh inversion smoke tests
 - Validated QGIS ZIP structure

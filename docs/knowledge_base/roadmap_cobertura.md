@@ -14,6 +14,7 @@ idea en algoritmo existente. La cobertura implementada detallada está en la
 - Filtros espectrales configurables y Filter Stack reproducible.
 - Cadena gravimétrica desde GRS80 hasta Bouguer completa, terreno e isostasia Airy.
 - Inversión de densidad, susceptibilidad, MVI y conjunta GRAV–MAG.
+- Inversión escalar con regularización Lp, IRLS y modelo de referencia configurable.
 - Radiometría K–eU–eTh: razones, ternario, dosis, parámetro F, QC y correcciones
   crudas parametrizadas de tiempo muerto, fondos, altura, sensibilidad y stripping.
 
@@ -31,10 +32,10 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 
 | Familia | Brecha candidata | Referencias iniciales | Validación mínima |
 | --- | --- | --- | --- |
-| Nivelación MAG | corrección diurna/base station, lag, heading y despike | PyGMI, literatura de levantamientos | líneas sintéticas + survey con base conocida |
-| Nivelación GRAV | deriva instrumental, mareas, Eötvös y control de estaciones | Boule, ICGEM/USGS y literatura geodésica | circuito cerrado y benchmark publicado |
-| Gridding físico | fuentes equivalentes y reducción a superficie común | Harmonica, Verde | holdout espacial y campo sintético armónico |
-| MAG transform | pseudogravedad, componente vertical y conversión de componentes | SGTool, GMT, Blakely | prisma/dipolo con solución directa |
+| Nivelación MAG | implementada: base station, lag firmado, heading armónico y despike Hampel; falta nivelación estadística de líneas | PyGMI, literatura de levantamientos | líneas sintéticas + survey con base conocida |
+| Nivelación GRAV | implementada: deriva lineal, marea externa y Eötvös calculado; falta modelo de marea interno | Boule, ICGEM/USGS y literatura geodésica | circuito cerrado y benchmark publicado |
+| Gridding físico | fuentes equivalentes implementadas; falta validación holdout automatizada y superficies topográficas variables | Harmonica, Verde | holdout espacial y campo sintético armónico |
+| MAG transform | pseudogravedad implementada; faltan susceptibilidad aparente y conversión de componentes | SGTool, GMT, Blakely | prisma/dipolo con solución directa |
 | Profundidad | Euler por ventanas e inversión Euler moderna | Harmonica, euler-inversion | familias de SI, ruido y fuentes interferentes |
 | Espectro | espectro radial y estimación de profundidad con incertidumbre | GMT y bibliografía | dos capas sintéticas y análisis de sensibilidad |
 | FFT avanzado | Wiener/depth filter, operador radial general y decorrugación espectral | GMT, MAGMAP público, papers | respuesta impulsional + comparación espectral |
@@ -43,7 +44,7 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 
 | Familia | Brecha candidata | Referencias iniciales | Validación mínima |
 | --- | --- | --- | --- |
-| Regularización | IRLS y normas Lp para modelos compactos/enfocados | SimPEG | cubo sintético, curva de convergencia y sensibilidad a beta |
+| Regularización | Lp, IRLS y modelo de referencia implementados para inversión escalar; falta diagnóstico sistemático de sensibilidad | SimPEG | cubo sintético, curva de convergencia y sensibilidad a beta |
 | Petrofísica | bounds espaciales, modelos de referencia y unidades explícitas | SimPEG, PyGIMLi | recuperación bajo varios priors |
 | Incertidumbre | resolución, sensibilidad, DOI y conjuntos de modelos | SimPEG, literatura | no presentar una sola inversión como verdad |
 | Joint inversion | alternativas a cross-gradient y pesos normalizados | SimPEG, PyGIMLi | casos compatible e incompatible |

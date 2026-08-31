@@ -130,6 +130,9 @@ def run_potential_field_inversion(
     refinement_levels=2,
     cancel_callback=None,
     progress_callback=None,
+    regularization_norm=2.0,
+    irls_iterations=0,
+    reference_value=0.0,
 ):
     """Run compact TensorMesh gravity, susceptibility, or Cartesian MVI."""
     from simpeg import (
@@ -189,8 +192,13 @@ def run_potential_field_inversion(
         simulation = gravity.simulation.Simulation3DIntegral(
             survey=survey, rhoMap=model_map, **common
         )
-        regularization_term = regularization.WeightedLeastSquares(
-            mesh, active_cells=active, mapping=model_map
+        regularization_term = regularization.Sparse(
+            mesh, active_cells=active, mapping=model_map,
+            norms=[float(regularization_norm)] * 4,
+            reference_model=np.full(n_active, float(reference_value)),
+        ) if int(irls_iterations) > 0 or float(regularization_norm) < 2.0 else regularization.WeightedLeastSquares(
+            mesh, active_cells=active, mapping=model_map,
+            reference_model=np.full(n_active, float(reference_value)),
         )
         start = np.zeros(n_active)
         default_lower, default_upper = -1.5, 1.5
@@ -208,8 +216,13 @@ def run_potential_field_inversion(
             simulation = magnetics.simulation.Simulation3DIntegral(
                 survey=survey, chiMap=model_map, model_type="scalar", **common
             )
-            regularization_term = regularization.WeightedLeastSquares(
-                mesh, active_cells=active, mapping=model_map
+            regularization_term = regularization.Sparse(
+                mesh, active_cells=active, mapping=model_map,
+                norms=[float(regularization_norm)] * 4,
+                reference_model=np.full(n_active, float(reference_value)),
+            ) if int(irls_iterations) > 0 or float(regularization_norm) < 2.0 else regularization.WeightedLeastSquares(
+                mesh, active_cells=active, mapping=model_map,
+                reference_model=np.full(n_active, float(reference_value)),
             )
             start = np.full(n_active, 1e-4)
             default_lower, default_upper = 0.0, 1.0
@@ -245,6 +258,15 @@ def run_potential_field_inversion(
         directives.UpdatePreconditioner(),
         directives.TargetMisfit(chifact=1.0),
     ]
+    if kind != "mvi" and int(irls_iterations) > 0:
+        directive_list.insert(
+            2,
+            directives.UpdateIRLS(
+                max_irls_iterations=int(irls_iterations),
+                chifact_start=1.0,
+                chifact_target=1.0,
+            ),
+        )
     if cancel_callback is not None or progress_callback is not None:
 
         class ProgressDirective(directives.InversionDirective):

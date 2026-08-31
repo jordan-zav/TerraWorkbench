@@ -71,6 +71,26 @@ def main():
         ):
             raise AssertionError(f"Invalid {kind} inversion outputs")
         print(f"OK: {kind} inversion ({result.model.size} parameters)", flush=True)
+    focused = run_potential_field_inversion(
+        "gravity",
+        xyz,
+        observed,
+        sigma,
+        cell_xy=100,
+        cell_z=100,
+        depth=200,
+        padding=0,
+        max_cells=1000,
+        iterations=1,
+        mesh_type="tensor",
+        refinement_levels=2,
+        regularization_norm=1.0,
+        irls_iterations=1,
+        reference_value=0.05,
+    )
+    if focused.predicted.shape != observed.shape or not full_model(focused):
+        raise AssertionError("Invalid L1/IRLS gravity inversion outputs")
+    print("OK: scalar L1/IRLS/reference-model controls", flush=True)
     joint = run_joint_cross_gradient_inversion(
         xyz,
         observed / 10.0,
