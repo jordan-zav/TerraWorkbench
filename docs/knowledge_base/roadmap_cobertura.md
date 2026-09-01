@@ -8,6 +8,10 @@ idea en algoritmo existente. La cobertura implementada detallada está en la
 
 - Importación abierta de grillas y puntos, recuperación de metadatos y puente
   opcional para bases Geosoft.
+- QC de vuelo por intervalo, espaciamiento, velocidad, rumbo verdadero, altura y
+  tasa del canal; lag automático con curva de correlación; QC de estación base;
+  espaciamiento entre líneas/líneas faltantes; drape contra DEM; comparación de
+  líneas repetidas y remoción IGRF-14 por punto.
 - Gridding, crossovers, nivelación traverse/tie y microleveling direccional.
 - Realces MAG/GRAV espaciales, FFT y mixtos con dominio declarado.
 - RTP, RTE, transformación direccional e IGRF-14.
@@ -34,7 +38,7 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 
 | Familia | Brecha candidata | Referencias iniciales | Validación mínima |
 | --- | --- | --- | --- |
-| Nivelación MAG | implementada: base station, lag firmado, heading armónico y despike Hampel; falta nivelación estadística de líneas | PyGMI, literatura de levantamientos | líneas sintéticas + survey con base conocida |
+| Nivelación MAG | implementada: corrección base, lag firmado y estimación automática, heading armónico, despike Hampel, IGRF por punto, QC de estación base/vuelo/repetición/espaciamiento/drape y nivelación robusta constante, lineal o cuadrática; falta ajuste conjunto de líneas sin red tie defendible | PyGMI, literatura de levantamientos | líneas sintéticas + survey con base conocida |
 | Nivelación GRAV | implementada: deriva lineal con época global, marea externa y Eötvös sobre ejes verdaderos; falta modelo de marea interno | Boule, ICGEM/USGS y literatura geodésica | circuito cerrado y benchmark publicado |
 | Gridding físico | fuentes equivalentes con guardia de Jacobiano y holdout; faltan superficies topográficas variables | Harmonica, Verde | holdout espacial y campo sintético armónico |
 | MAG transform | pseudogravedad implementada; faltan susceptibilidad aparente y conversión de componentes | SGTool, GMT, Blakely | prisma/dipolo con solución directa |

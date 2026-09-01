@@ -130,7 +130,19 @@ TerraWorkbench imports GDAL-supported grids, CSV/ASCII data and Esri FileGDB con
 
 Point gridding supports projected output CRS selection, cell size, interpolation method, neighbour count and search radius. A zero search radius fills the complete rectangle for FFT processing but extrapolates into unsupported areas.
 
-Crossover QC and tie-line leveling identify line intersections, reject robust outliers and solve line corrections. Directional microleveling addresses residual line corrugation; it does not replace lag, diurnal, heading or tie-line corrections.
+Crossover QC and tie-line leveling identify line intersections, reject robust outliers and solve constant, linear or damped quadratic line corrections. Directional microleveling addresses residual line corrugation; it does not replace lag, diurnal, heading or tie-line corrections.
+
+Flight QC preserves every observation while flagging sample interval, spacing,
+speed, true-north heading, turns, terrain clearance and channel-rate failures.
+Per-point IGRF-14 removal evaluates the main field at WGS84 position, survey date
+and ellipsoidal altitude. Repeat-line QC reports spatial-match residuals and can
+apply an explicit robust median offset without overwriting the source channel.
+Automatic lag estimation returns the full lag-correlation curve and corrected
+timestamps. Base-station QC flags gaps, robust spikes, excessive rate and drift,
+including midnight rollover, but does not infer magnetic storms without external
+indices. Inter-line QC identifies anomalous spacing/likely missing lines, while
+drape QC samples a DEM and checks terrain clearance. DEM and platform altitude
+must use the same vertical datum.
 
 ## 7. Three-dimensional inversion
 

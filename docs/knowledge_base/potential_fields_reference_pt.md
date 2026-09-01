@@ -130,7 +130,19 @@ O TerraWorkbench importa grades aceitas pelo GDAL, dados CSV/ASCII e conteúdo E
 
 A interpolação de pontos expõe SRC projetado de saída, tamanho da célula, método, número de vizinhos e raio de busca. Raio zero preenche o retângulo completo para FFT, mas extrapola em áreas sem suporte.
 
-O controle de cruzamentos e o nivelamento por linhas de amarração identificam interseções, rejeitam valores atípicos robustos e resolvem correções por linha. O micronivelamento direcional trata corrugação residual; não substitui correções de lag, variação diurna, heading ou linhas de amarração.
+O controle de cruzamentos e o nivelamento por linhas de amarração identificam interseções, rejeitam valores atípicos robustos e resolvem correções constantes, lineares ou quadráticas amortecidas por linha. O micronivelamento direcional trata corrugação residual; não substitui correções de lag, variação diurna, heading ou linhas de amarração.
+
+O QC de voo preserva todas as observações enquanto sinaliza falhas de intervalo,
+espaçamento, velocidade, rumo verdadeiro, curvas, altura e taxa do canal. A
+remoção IGRF-14 por ponto avalia o campo principal na posição WGS84, data e
+altitude elipsoidal. O QC de linhas repetidas informa resíduos de correspondência
+espacial e pode aplicar um offset mediano robusto sem sobrescrever o canal fonte.
+A estimativa automática de lag devolve toda a curva lag-correlação e tempos
+corrigidos. O QC da estação base sinaliza lacunas, picos robustos, taxa excessiva
+e deriva, inclusive passagem da meia-noite, mas não infere tempestades sem índices
+externos. O QC entre linhas identifica espaçamento anômalo/linhas provavelmente
+ausentes, enquanto o QC de drape amostra um DEM e verifica altura sobre o terreno.
+DEM e altitude da plataforma devem usar o mesmo datum vertical.
 
 ## 7. Inversão tridimensional
 

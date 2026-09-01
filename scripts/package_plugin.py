@@ -47,6 +47,7 @@ ROOT_FILES = (
     "gravity_corrections.py",
     "radiometry.py",
     "survey_corrections.py",
+    "preprocessing.py",
     "dependencies.py",
     "dependency_dialog.py",
     "settings_dialog.py",

@@ -22,7 +22,13 @@ from qgis.core import (
     QgsProcessingParameterString,
     QgsWkbTypes,
 )
-from ..line_processing import residual_statistics, robust_line_corrections
+from ..line_processing import (
+    evaluate_polynomial_correction,
+    polynomial_residual_statistics,
+    residual_statistics,
+    robust_line_corrections,
+    robust_polynomial_line_corrections,
+)
 from ..i18n import translate
 from ..qgis_compat import (
     FIELD_TYPE_BOOL,
@@ -30,6 +36,7 @@ from ..qgis_compat import (
     FIELD_TYPE_INTEGER,
     FIELD_TYPE_STRING,
     PROCESSING_NUMBER_DOUBLE,
+    PROCESSING_NUMBER_INTEGER,
 )
 
 
@@ -60,6 +67,8 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
     ORDER_FIELD = "ORDER_FIELD"
     TIE_VALUES = "TIE_VALUES"
     OUTLIER_SIGMA = "OUTLIER_SIGMA"
+    CORRECTION_ORDER = "CORRECTION_ORDER"
+    HIGH_ORDER_DAMPING = "HIGH_ORDER_DAMPING"
     CORRECTED = "CORRECTED"
     CROSSOVERS = "CROSSOVERS"
     CORRECTIONS = "CORRECTIONS"
@@ -138,6 +147,25 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
             )
         )
         self.addParameter(
+            QgsProcessingParameterNumber(
+                self.CORRECTION_ORDER,
+                self.tr("Along-line correction order: 0 constant, 1 linear, 2 quadratic"),
+                type=PROCESSING_NUMBER_INTEGER,
+                defaultValue=0,
+                minValue=0,
+                maxValue=2,
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.HIGH_ORDER_DAMPING,
+                self.tr("Linear/quadratic coefficient damping"),
+                type=PROCESSING_NUMBER_DOUBLE,
+                defaultValue=0.01,
+                minValue=0.0,
+            )
+        )
+        self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.CORRECTED, self.tr("Leveled survey points")
             )
@@ -209,8 +237,10 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
                     "geometry": geometry,
                     "distance": distances,
                     "values": np.asarray(values),
+                    "length": float(geometry.length()),
                 }
             )
+        line_by_name = {line["name"]: line for line in lines}
         traverses = [line for line in lines if not line["tie"]]
         ties = [line for line in lines if line["tie"]]
         if not traverses or not ties:
@@ -235,14 +265,57 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
                         continue
                     vt = float(np.interp(dt, traverse["distance"], traverse["values"]))
                     vi = float(np.interp(di, tie["distance"], tie["values"]))
-                    rows.append((traverse["name"], tie["name"], vt - vi, point, vt, vi))
+                    position_traverse = (
+                        2.0 * dt / traverse["length"] - 1.0
+                        if traverse["length"] > 0.0
+                        else 0.0
+                    )
+                    position_tie = (
+                        2.0 * di / tie["length"] - 1.0
+                        if tie["length"] > 0.0
+                        else 0.0
+                    )
+                    rows.append(
+                        (
+                            traverse["name"],
+                            tie["name"],
+                            vt - vi,
+                            point,
+                            vt,
+                            vi,
+                            position_traverse,
+                            position_tie,
+                        )
+                    )
         if not rows:
             raise QgsProcessingException("No traverse/tie intersections were found.")
+        order = self.parameterAsInt(parameters, self.CORRECTION_ORDER, context)
+        outlier_sigma = self.parameterAsDouble(parameters, self.OUTLIER_SIGMA, context)
         compact = [(row[0], row[1], row[2]) for row in rows]
-        corrections, keep = robust_line_corrections(
-            compact, self.parameterAsDouble(parameters, self.OUTLIER_SIGMA, context)
-        )
-        stats = residual_statistics(compact, corrections, keep)
+        polynomial_rows = [
+            (row[0], row[1], row[2], row[6], row[7]) for row in rows
+        ]
+        if order == 0:
+            constant_corrections, keep = robust_line_corrections(
+                compact, outlier_sigma
+            )
+            corrections = {
+                name: np.asarray([value], dtype=float)
+                for name, value in constant_corrections.items()
+            }
+            stats = residual_statistics(compact, constant_corrections, keep)
+        else:
+            corrections, keep = robust_polynomial_line_corrections(
+                polynomial_rows,
+                order=order,
+                outlier_sigma=outlier_sigma,
+                damping=self.parameterAsDouble(
+                    parameters, self.HIGH_ORDER_DAMPING, context
+                ),
+            )
+            stats = polynomial_residual_statistics(
+                polynomial_rows, corrections, keep
+            )
         if not corrections:
             raise QgsProcessingException(
                 "No crossover solution remained after robust rejection."
@@ -280,7 +353,10 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
         )
         correction_fields = QgsFields()
         correction_fields.append(QgsField("line", FIELD_TYPE_STRING))
-        correction_fields.append(QgsField("correction", FIELD_TYPE_DOUBLE))
+        correction_fields.append(QgsField("constant", FIELD_TYPE_DOUBLE))
+        correction_fields.append(QgsField("linear", FIELD_TYPE_DOUBLE))
+        correction_fields.append(QgsField("quadratic", FIELD_TYPE_DOUBLE))
+        correction_fields.append(QgsField("order", FIELD_TYPE_INTEGER))
         correction_fields.append(QgsField("crossovers", FIELD_TYPE_INTEGER))
         correction_sink, correction_id = self.parameterAsSink(
             parameters,
@@ -293,7 +369,21 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
         if not corrected_sink or not cross_sink or not correction_sink:
             raise QgsProcessingException("Could not create one or more output layers.")
         for name, feature in originals:
-            correction = corrections.get(name, 0.0)
+            coefficients = corrections.get(name, np.zeros(order + 1, dtype=float))
+            line = line_by_name.get(name)
+            distance = (
+                line["geometry"].lineLocatePoint(feature.geometry())
+                if line is not None
+                else -1.0
+            )
+            position = (
+                2.0 * distance / line["length"] - 1.0
+                if line is not None and line["length"] > 0.0 and distance >= 0.0
+                else 0.0
+            )
+            correction = float(
+                evaluate_polynomial_correction(coefficients, position)
+            )
             value = float(feature[value_field])
             attributes = feature.attributes()
             output_feature = QgsFeature(corrected_fields)
@@ -302,7 +392,7 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
             corrected_sink.addFeature(output_feature, QgsFeatureSink.FastInsert)
         counts = {name: 0 for name in corrections}
         for accepted, row in zip(keep, rows):
-            traverse, tie, residual, point, vt, vi = row
+            traverse, tie, residual, point, vt, vi, position_traverse, position_tie = row
             if accepted:
                 counts[traverse] += 1
                 counts[tie] += 1
@@ -316,15 +406,30 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
                     vi,
                     residual,
                     residual
-                    + corrections.get(traverse, 0.0)
-                    - corrections.get(tie, 0.0),
+                    + float(
+                        evaluate_polynomial_correction(
+                            corrections.get(traverse, np.zeros(order + 1)),
+                            position_traverse,
+                        )
+                    )
+                    - float(
+                        evaluate_polynomial_correction(
+                            corrections.get(tie, np.zeros(order + 1)), position_tie
+                        )
+                    ),
                     bool(accepted),
                 ]
             )
             cross_sink.addFeature(feature, QgsFeatureSink.FastInsert)
-        for name, correction in sorted(corrections.items()):
+        for name, coefficients in sorted(corrections.items()):
             feature = QgsFeature(correction_fields)
-            feature.setAttributes([name, correction, counts[name]])
+            padded = np.pad(
+                np.asarray(coefficients, dtype=float),
+                (0, max(0, 3 - len(coefficients))),
+            )
+            feature.setAttributes(
+                [name, float(padded[0]), float(padded[1]), float(padded[2]), order, counts[name]]
+            )
             correction_sink.addFeature(feature, QgsFeatureSink.FastInsert)
         feedback.pushInfo(
             f"Accepted crossovers: {stats['count']}; RMS {stats['rms_before']:.4g} -> {stats['rms_after']:.4g} field units."
@@ -337,5 +442,5 @@ class CrossoverLevelingAlgorithm(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return self.tr(
-            "Finds traverse/tie intersections, interpolates observations at each crossover, rejects robust MAD outliers, and solves zero-mean least-squares constant corrections for every connected line. The output preserves raw values and adds tw_line_corr and tw_corrected. Apply lag and diurnal corrections before this step; inspect RMS and crossover maps before gridding."
+            "Finds traverse/tie intersections, interpolates observations at each crossover, rejects robust MAD outliers, and solves zero-mean constant, linear or damped quadratic corrections for every connected line. Polynomial positions are normalized independently along each line; damping limits unsupported end-of-line swings. The output preserves raw values and adds tw_line_corr and tw_corrected. Apply lag, base-station and IGRF corrections before this step; inspect RMS, coefficients and crossover maps before gridding."
         )

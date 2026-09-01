@@ -107,6 +107,15 @@ from .algorithms.survey_corrections import (
     MagneticSurveyCorrectionAlgorithm,
 )
 from .algorithms.equivalent_sources import EquivalentSourceContinuationAlgorithm
+from .algorithms.preprocessing import (
+    AutomaticLagAlgorithm,
+    BaseStationQcAlgorithm,
+    DrapeDemQcAlgorithm,
+    FlightLineQcAlgorithm,
+    InterlineSpacingQcAlgorithm,
+    MagneticIgrfRemovalAlgorithm,
+    RepeatLineQcAlgorithm,
+)
 
 
 class TerraWorkbenchProvider(QgsProcessingProvider):
@@ -195,6 +204,13 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(RadiometricSurveyCorrectionAlgorithm())
         self.addAlgorithm(MagneticSurveyCorrectionAlgorithm())
         self.addAlgorithm(GravitySurveyCorrectionAlgorithm())
+        self.addAlgorithm(MagneticIgrfRemovalAlgorithm())
+        self.addAlgorithm(FlightLineQcAlgorithm())
+        self.addAlgorithm(RepeatLineQcAlgorithm())
+        self.addAlgorithm(AutomaticLagAlgorithm())
+        self.addAlgorithm(BaseStationQcAlgorithm())
+        self.addAlgorithm(InterlineSpacingQcAlgorithm())
+        self.addAlgorithm(DrapeDemQcAlgorithm())
         self.addAlgorithm(EquivalentSourceContinuationAlgorithm())
 
     def id(self):

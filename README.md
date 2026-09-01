@@ -10,7 +10,7 @@
   ecosystem.
 
   [![Status: internal testing](https://img.shields.io/badge/status-internal%20testing-f59e0b)](#project-status)
-  [![Version 0.14.0](https://img.shields.io/badge/version-0.14.0-2563eb)](metadata.txt)
+  [![Version 0.15.0](https://img.shields.io/badge/version-0.15.0-2563eb)](metadata.txt)
   [![QGIS 3.28–3.x](https://img.shields.io/badge/QGIS-3.28%E2%80%933.x-589632?logo=qgis&logoColor=white)](https://qgis.org/)
   [![Python](https://img.shields.io/badge/Python-3.9%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
   [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-0f766e)](LICENSE)
@@ -80,7 +80,7 @@ Survey grids / points / channels
 | Spectral processing | Butterworth, ideal, cosine roll-off, directional cosine, continuation and integration filters |
 | Field corrections | RTP, RTE, general source-to-target transform and automatic IGRF-14 parameters |
 | Gamma-ray spectrometry | K/eU/eTh ratios, RGB and normalized ternary images, dose, F parameter, QC, dead time, background, height, sensitivity and spectral stripping |
-| Survey preparation | GRD/GDAL/CSV/ASCII/FileGDB import, point gridding, crossover QC, tie-line leveling and microleveling |
+| Survey preparation | GRD/GDAL/CSV/ASCII/FileGDB import, flight QC, base/lag/heading, per-point IGRF removal, repeat-line QC, polynomial crossover leveling, gridding and microleveling |
 | Physical interpolation | Harmonica equivalent-source fitting and prediction at configurable relative height |
 | 3D inversion | Density contrast, scalar susceptibility, Cartesian MVI and joint gravity–magnetics cross-gradient inversion |
 | Automation | QGIS Processing, batch mode, Model Designer and JSON Filter Stack recipes |
@@ -245,9 +245,23 @@ NoData or non-finite cells.
 
 **Crossover QC and tie-line leveling** operates on QGIS point layers. It builds
 traverse and tie trajectories, interpolates measurements at crossings, rejects
-robust MAD outliers and solves a zero-mean least-squares constant for each
-connected line. Outputs preserve raw values and include corrected points,
+robust MAD outliers and solves zero-mean constant, linear or damped quadratic
+corrections for each connected line. Outputs preserve raw values and include corrected points,
 crossover residuals, line corrections and RMS before/after.
+
+**Magnetic preprocessing** can audit sample interval, spacing, speed, true-north
+heading, turns, terrain clearance and channel rate without deleting data. It
+removes IGRF-14 total intensity independently at every valid point after
+base/lag/heading correction, and compares repeated lines by indexed spatial matches with
+an optional robust median offset. Raw fields remain unchanged and every result
+includes explicit correction, residual and validity fields.
+
+Advanced acquisition QC estimates channel lag with a complete correlation curve,
+audits magnetic base-station gaps/spikes/rate/drift (including midnight rollover),
+detects anomalous inter-line spacing and likely missing lines, and samples a DEM
+to verify drape/terrain clearance. Storm classification is deliberately excluded
+unless an external geomagnetic index is supplied; DEM and platform heights must
+share a vertical datum.
 
 **Survey point gridding** supports a projected output CRS, density-based or
 explicit cell size, IDW or nearest-neighbor interpolation, neighbor limits and
@@ -388,11 +402,11 @@ scripts and previous archives are excluded.
 
 ## Project status
 
-Version **0.14.0** is an internal test build. The current verification baseline is:
+Version **0.15.0** is an internal test build. The current verification baseline is:
 
-- 47 unit/structure tests
+- 53 unit/structure tests
 - Ruff clean
-- 83 algorithms expected in QGIS 3.44
+- 90 algorithms expected in QGIS 3.44
 - Real Processing of all 62 Filter Stack-compatible algorithms and multi-step stack smoke tests
 - Gravity, susceptibility, MVI and joint TreeMesh inversion smoke tests
 - Validated QGIS ZIP structure

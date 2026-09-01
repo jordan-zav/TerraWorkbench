@@ -1,5 +1,6 @@
-"""Run two TerraWorkbench algorithms in a real headless QGIS environment."""
+"""Exercise the TerraWorkbench catalogue in a real headless QGIS environment."""
 
+from datetime import datetime
 import os
 from pathlib import Path
 import site
@@ -227,6 +228,13 @@ def main():
             "terraworkbench:radiometry_correct_survey_channels",
             "terraworkbench:correct_magnetic_survey_lines",
             "terraworkbench:correct_moving_gravity_survey",
+            "terraworkbench:remove_igrf_main_field",
+            "terraworkbench:flight_line_quality_control",
+            "terraworkbench:repeat_line_quality_control",
+            "terraworkbench:automatic_channel_lag",
+            "terraworkbench:base_station_quality_control",
+            "terraworkbench:interline_spacing_quality_control",
+            "terraworkbench:drape_dem_quality_control",
             "terraworkbench:equivalent_source_continuation",
             "terraworkbench:magnetic_pseudogravity",
         }
@@ -234,8 +242,8 @@ def main():
             raise AssertionError(
                 f"Missing algorithms: {sorted(expected - algorithm_ids)}"
             )
-        if len(algorithm_ids) != 83:
-            raise AssertionError(f"Expected 83 algorithms, found {len(algorithm_ids)}")
+        if len(algorithm_ids) != 90:
+            raise AssertionError(f"Expected 90 algorithms, found {len(algorithm_ids)}")
 
         with tempfile.TemporaryDirectory(
             prefix="terraworkbench_"
@@ -277,6 +285,40 @@ def main():
                 feature.setAttributes([value])
                 point_features.append(feature)
             point_layer.dataProvider().addFeatures(point_features)
+            igrf_points = processing.run(
+                "terraworkbench:remove_igrf_main_field",
+                {
+                    "INPUT": point_layer,
+                    "VALUE_FIELD": "mag",
+                    "ALTITUDE_METRES": 0.0,
+                    "YEAR": 2025,
+                    "MONTH": 1,
+                    "DAY": 1,
+                    "OUTPUT": "memory:",
+                },
+            )["OUTPUT"]
+            if isinstance(igrf_points, str):
+                igrf_points = QgsVectorLayer(igrf_points, "IGRF points", "ogr")
+            igrf_features = list(igrf_points.getFeatures())
+            if len(igrf_features) != 5 or any(
+                not feature["tw_igrf_ok"]
+                or not np.isfinite(float(feature["tw_mag_anom"]))
+                for feature in igrf_features
+            ):
+                raise AssertionError("Per-point IGRF-14 removal failed")
+            expected_components = import_ppigrf().igrf(
+                -77.10, -12.10, 0.0, datetime(2025, 1, 1)
+            )
+            expected_total = float(
+                np.sqrt(
+                    sum(
+                        float(np.asarray(component).reshape(-1)[0]) ** 2
+                        for component in expected_components
+                    )
+                )
+            )
+            if abs(float(igrf_features[0]["tw_igrf_f"]) - expected_total) > 1e-6:
+                raise AssertionError("IGRF total-intensity convention failed")
             processing.run(
                 "terraworkbench:grid_survey_points",
                 {
@@ -376,7 +418,7 @@ def main():
             ):
                 raise AssertionError("Radiometric point correction chain failed")
             moving_survey = QgsVectorLayer(
-                "Point?crs=EPSG:32718&field=line:string&field=time:double&field=mag:double&field=grav:double",
+                "Point?crs=EPSG:32718&field=line:string&field=repeat:string&field=time:double&field=mag:double&field=grav:double",
                 "moving geophysical survey",
                 "memory",
             )
@@ -393,13 +435,179 @@ def main():
                     QgsGeometry.fromPointXY(QgsPointXY(easting, 9000000))
                 )
                 feature.setAttributes(
-                    [line_name, time_value, 100.0 + index, 10.0 + index]
+                    [line_name, "R1", time_value, 100.0 + index, 10.0 + index]
                 )
                 moving_features.append(feature)
             moving_survey.dataProvider().addFeatures(moving_features)
             moving_survey.updateExtents()
             if moving_survey.featureCount() != len(survey_rows):
                 raise AssertionError("Moving-survey test observations were not stored")
+            flight_qc = processing.run(
+                "terraworkbench:flight_line_quality_control",
+                {
+                    "INPUT": moving_survey,
+                    "TIME_FIELD": "time",
+                    "LINE_FIELD": "line",
+                    "VALUE_FIELD": "mag",
+                    "MAX_TIME_GAP": 2.0,
+                    "MAX_SPACING": 20.0,
+                    "MIN_SPEED": 0.0,
+                    "MAX_SPEED": 20.0,
+                    "MAX_TURN": 45.0,
+                    "MIN_CLEARANCE": 0.0,
+                    "MAX_CLEARANCE": 0.0,
+                    "MAX_VALUE_RATE": 2.0,
+                    "OUTPUT": "memory:",
+                    "SUMMARY": "memory:",
+                },
+            )
+            flight_qc_points = flight_qc["OUTPUT"]
+            flight_qc_summary = flight_qc["SUMMARY"]
+            if isinstance(flight_qc_points, str):
+                flight_qc_points = QgsVectorLayer(
+                    flight_qc_points, "flight QC points", "ogr"
+                )
+            if isinstance(flight_qc_summary, str):
+                flight_qc_summary = QgsVectorLayer(
+                    flight_qc_summary, "flight QC summary", "ogr"
+                )
+            if (
+                flight_qc_points.featureCount() != 4
+                or flight_qc_summary.featureCount() != 2
+            ):
+                raise AssertionError("Flight-line QC outputs failed")
+            repeat_qc = processing.run(
+                "terraworkbench:repeat_line_quality_control",
+                {
+                    "INPUT": moving_survey,
+                    "VALUE_FIELD": "mag",
+                    "LINE_FIELD": "line",
+                    "REPEAT_GROUP_FIELD": "repeat",
+                    "MAX_DISTANCE": 25.0,
+                    "APPLY_CORRECTION": True,
+                    "OUTPUT": "memory:",
+                    "SUMMARY": "memory:",
+                },
+            )
+            repeat_qc_points = repeat_qc["OUTPUT"]
+            repeat_qc_summary = repeat_qc["SUMMARY"]
+            if isinstance(repeat_qc_points, str):
+                repeat_qc_points = QgsVectorLayer(
+                    repeat_qc_points, "repeat QC points", "ogr"
+                )
+            if isinstance(repeat_qc_summary, str):
+                repeat_qc_summary = QgsVectorLayer(
+                    repeat_qc_summary, "repeat QC summary", "ogr"
+                )
+            if (
+                repeat_qc_points.featureCount() != 4
+                or repeat_qc_summary.featureCount() != 2
+            ):
+                raise AssertionError("Repeat-line QC outputs failed")
+            lag_layer = QgsVectorLayer(
+                "Point?crs=EPSG:32718&field=time:double&field=response:double&field=reference:double",
+                "lag estimation samples",
+                "memory",
+            )
+            lag_features = []
+            for index, time_value in enumerate(np.arange(0.0, 20.0, 0.25)):
+                feature = QgsFeature(lag_layer.fields())
+                feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(500000 + index, 9000000)))
+                reference_value = np.sin(time_value * 0.73) + 0.2 * np.cos(time_value * 1.91)
+                response_value = np.sin((time_value - 1.5) * 0.73) + 0.2 * np.cos((time_value - 1.5) * 1.91)
+                feature.setAttributes([time_value, response_value, reference_value])
+                lag_features.append(feature)
+            lag_layer.dataProvider().addFeatures(lag_features)
+            lag_result = processing.run(
+                "terraworkbench:automatic_channel_lag",
+                {
+                    "INPUT": lag_layer,
+                    "TIME_FIELD": "time",
+                    "RESPONSE_FIELD": "response",
+                    "REFERENCE_FIELD": "reference",
+                    "MAXIMUM_LAG": 3.0,
+                    "LAG_STEP": 0.25,
+                    "USE_DERIVATIVE": False,
+                    "OUTPUT": "memory:",
+                    "CURVE": "memory:",
+                },
+            )
+            lag_output = lag_result["OUTPUT"]
+            if abs(float(next(lag_output.getFeatures())["tw_lag_s"]) - 1.5) > 1e-9:
+                raise AssertionError("Automatic lag estimation failed")
+            base_result = processing.run(
+                "terraworkbench:base_station_quality_control",
+                {
+                    "INPUT": lag_layer,
+                    "TIME_FIELD": "time",
+                    "VALUE_FIELD": "reference",
+                    "UNWRAP": True,
+                    "MAX_GAP": 1.0,
+                    "SPIKE_WINDOW": 3,
+                    "SPIKE_SIGMA": 5.0,
+                    "MAX_RATE": 0.0,
+                    "MAX_DRIFT": 0.0,
+                    "OUTPUT": "memory:",
+                    "SUMMARY": "memory:",
+                },
+            )
+            if base_result["OUTPUT"].featureCount() != len(lag_features):
+                raise AssertionError("Base-station QC output failed")
+            spacing_layer = QgsVectorLayer(
+                "Point?crs=EPSG:32718&field=line:string",
+                "parallel lines",
+                "memory",
+            )
+            spacing_features = []
+            for line_name, easting in (("L1", 500000.0), ("L2", 500100.0), ("L4", 500300.0)):
+                for northing in (8999900.0, 9000000.0, 9000100.0):
+                    feature = QgsFeature(spacing_layer.fields())
+                    feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(easting, northing)))
+                    feature.setAttributes([line_name])
+                    spacing_features.append(feature)
+            spacing_layer.dataProvider().addFeatures(spacing_features)
+            spacing_output = processing.run(
+                "terraworkbench:interline_spacing_quality_control",
+                {
+                    "INPUT": spacing_layer,
+                    "LINE_FIELD": "line",
+                    "EXPECTED": 100.0,
+                    "TOLERANCE": 25.0,
+                    "OUTPUT": "memory:",
+                },
+            )["OUTPUT"]
+            if sum(bool(feature["qc_flag"]) for feature in spacing_output.getFeatures()) != 1:
+                raise AssertionError("Missing-line spacing QC failed")
+            dem_layer = QgsRasterLayer(str(input_path), "drape DEM")
+            drape_layer = QgsVectorLayer(
+                "Point?crs=EPSG:32718&field=altitude:double",
+                "drape samples",
+                "memory",
+            )
+            drape_features = []
+            for x, y in ((500050.0, 8999950.0), (500150.0, 8999850.0)):
+                feature = QgsFeature(drape_layer.fields())
+                feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x, y)))
+                feature.setAttributes([500.0])
+                drape_features.append(feature)
+            drape_layer.dataProvider().addFeatures(drape_features)
+            drape_result = processing.run(
+                "terraworkbench:drape_dem_quality_control",
+                {
+                    "INPUT": drape_layer,
+                    "ALTITUDE_FIELD": "altitude",
+                    "DEM": dem_layer,
+                    "BAND": 1,
+                    "TARGET": 200.0,
+                    "TOLERANCE": 500.0,
+                    "MINIMUM": 0.0,
+                    "MAXIMUM": 0.0,
+                    "OUTPUT": "memory:",
+                    "SUMMARY": "memory:",
+                },
+            )
+            if drape_result["OUTPUT"].featureCount() != 2:
+                raise AssertionError("Drape/DEM QC output failed")
             corrected_mag = processing.run(
                 "terraworkbench:correct_magnetic_survey_lines",
                 {
@@ -466,6 +674,8 @@ def main():
                     "ORDER_FIELD": "fiducial",
                     "TIE_VALUES": "tie",
                     "OUTLIER_SIGMA": 4.5,
+                    "CORRECTION_ORDER": 1,
+                    "HIGH_ORDER_DAMPING": 0.1,
                     "CORRECTED": "memory:",
                     "CROSSOVERS": "memory:",
                     "CORRECTIONS": "memory:",
@@ -780,7 +990,7 @@ def main():
                             f"No output from {stack_algorithm.id()}"
                         )
                     exercised_stack_algorithms += 1
-                if exercised_stack_algorithms != len(algorithm_ids) - 21:
+                if exercised_stack_algorithms != 62:
                     raise AssertionError(
                         "Not every Filter Stack-compatible algorithm was executed"
                     )
@@ -874,7 +1084,7 @@ def main():
                     if spectrum_plot.grab().isNull():
                         raise AssertionError("Spectrum preview did not render")
                     spectrum_plot.deleteLater()
-                    if len(available_algorithms()) != len(algorithm_ids) - 21:
+                    if len(available_algorithms()) != 62:
                         raise AssertionError(
                             "Filter Stack is missing registered algorithms"
                         )
@@ -1119,16 +1329,25 @@ def main():
                     "layer",
                     "terrain_layer",
                     "complete_layer",
+                    "dem_layer",
                 ):
                     raster_layer = locals().get(raster_layer_name)
                     if isinstance(raster_layer, QgsRasterLayer):
                         raster_layer.setDataSource("", "released", "gdal")
                 point_layer = None
+                igrf_points = None
+                igrf_features = None
                 gridded_layer = None
                 line_layer = None
                 radiometric_points = None
                 corrected_radiometry = None
                 moving_survey = None
+                flight_qc = None
+                flight_qc_points = None
+                flight_qc_summary = None
+                repeat_qc = None
+                repeat_qc_points = None
+                repeat_qc_summary = None
                 corrected_mag = None
                 corrected_grav = None
                 corrected_grav_features = None
@@ -1137,6 +1356,7 @@ def main():
                 layer = None
                 terrain_layer = None
                 complete_layer = None
+                dem_layer = None
                 gc.collect()
                 application.processEvents()
 

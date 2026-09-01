@@ -402,7 +402,7 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 - Interpola el valor en las intersecciones entre líneas
 - Calcula residuales: rᵢⱼ = Tᵢ − Tⱼ
 - Rechaza outliers mediante mediana y MAD
-- Resuelve correcciones constantes por línea mediante mínimos cuadrados
+- Resuelve correcciones constantes, lineales o cuadráticas amortiguadas por línea mediante mínimos cuadrados
 - Reporta RMS antes y después
 
 **Aplicación:** Control de calidad esencial antes de cualquier realce — un levantamiento mal nivelado genera artefactos de línea que se amplifican fuertemente en Dz, Dz2 y filtros paso alto.
@@ -411,6 +411,38 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 **Qué hace:** Separación espectral tipo Minty; aísla corrugaciones cortas transversales y largas en la dirección de vuelo. Entrega raster corregido y raster de corrección (diferencia) por separado.
 
 **Aplicación:** Elimina el "efecto peine" de líneas de vuelo que sobrevive a la nivelación de crossovers, previo a derivadas de alto orden.
+
+### 6.4 Remoción del campo principal IGRF-14 por punto
+**Qué hace:** Transforma cada observación a WGS84, evalúa IGRF-14 en su longitud,
+latitud, fecha y altitud elipsoidal, y calcula `anomalía = T observado − F_IGRF`.
+Conserva las componentes este, norte y vertical positiva hacia abajo, además de
+declinación, inclinación, intensidad total y bandera de validez. Debe ejecutarse
+después de base station, lag, heading y despike, pero antes de nivelar y gridear.
+
+### 6.5 QC de vuelo y líneas repetidas
+**Qué hace:** El QC de vuelo añade intervalo, distancia, velocidad, azimut respecto
+al norte verdadero, cambio de rumbo, tasa del canal y una máscara de fallos sin
+eliminar puntos. La comparación de repetición empareja espacialmente cada línea
+con la referencia que tenga más muestras válidas en su grupo, informa residual, mediana robusta, MAD y
+RMS, y permite aplicar explícitamente un offset mediano sin tocar el canal original.
+
+### 6.6 Lag automático, estación base, espaciamiento y drape
+**Lag:** busca un desfase configurable entre un canal retrasado y uno de referencia,
+maximiza la correlación absoluta de Pearson y entrega toda la curva lag–correlación.
+Un lag positivo desplaza el tiempo de respuesta hacia atrás. Solo es válido si ambos
+canales expresan las mismas variaciones físicas.
+
+**Estación base:** detecta tiempo inválido/invertido, huecos, picos locales robustos,
+tasa excesiva y deriva lineal; puede desenvolver segundos del día al cruzar medianoche.
+No declara tormenta magnética sin un índice Kp u observatorio externo.
+
+**Espaciamiento:** estima la dirección axial de líneas por PCA, ordena sus centros
+transversalmente y marca separaciones fuera de tolerancia. `gap_ratio` ayuda a reconocer
+una línea probablemente faltante, sin afirmar que todo hueco sea un error.
+
+**Drape/DEM:** transforma horizontalmente los puntos al CRS del DEM, muestrea terreno y
+calcula altura de plataforma menos terreno. Datum vertical y unidades deben coincidir;
+TerraWorkbench no inventa una transformación vertical ausente.
 
 **Formatos de importación soportados por la GUI:** GeoTIFF, Geosoft GRD (si GDAL puede leerlo), GXF, AAIGrid/ASC, XYZ regular, CSV/ASCII, Esri FileGDB y GeoDatabase Geosoft de archivo único. En Windows, la GDB se lee con el runtime público BSD de GX Developer sin requerir Oasis montaj; `omscore.exe` queda solo como respaldo opcional.
 
@@ -455,11 +487,11 @@ Aplicables a ambos dominios; encadenables entre sí en un panel tipo *Filter Sta
 | Procesamiento magnético 2D y filtros espectrales | Alta — bien cubierto, ahora con dominio declarado por herramienta (§9) |
 | Gravimetría: realces | Cubierto |
 | Cadena de corrección gravimétrica (§4.1–4.11, 10 algoritmos) | Cubierto — latitud/disturbance, aire libre (corrección+anomalía), curvatura, Bouguer simple, terreno, Bouguer completa, Moho Airy, anomalía isostática residual |
-| Preparación de levantamientos (gridding, crossovers, microleveling) | Cubierto |
+| Preparación de levantamientos (QC, IGRF, repetición, crossovers polinómicos, gridding y microleveling) | Cubierto para producción 2D básica |
 | Inversión 3D (gravedad, magnética escalar, MVI, conjunta) | Cubierto, con soporte de malla adaptativa y topografía |
 | Diferenciación espacial vs. FFT como parte visible del producto | **Nuevo en v0.12.0** — etiquetas de dominio en la UI (§9) + motor MAGMAP-like con acondicionamiento de bordes (§9.2) |
 
-**Versión y validación actual (v0.14.0):** 83 algoritmos registrados, 47 pruebas locales y Ruff correctos, ejecución real de los 62 algoritmos compatibles con Filter Stack y prueba integral validada en QGIS 3.44. El registro incluye radiometría de grilla/puntos, correcciones MAG y GRAV móviles previas al gridding, continuación mediante fuentes equivalentes, pseudogravedad magnética y regularización escalar Lp/IRLS.
+**Versión y validación actual (v0.15.0):** 90 algoritmos registrados, 53 pruebas locales y Ruff correctos, ejecución real de los 62 algoritmos compatibles con Filter Stack y prueba integral en QGIS 3.44. El registro añade remoción IGRF-14 por punto, QC de vuelo, lag automático, QC de estación base, espaciamiento/líneas faltantes, drape contra DEM, comparación de líneas repetidas y nivelación de crossovers constante, lineal o cuadrática.
 
 **Resuelto en v0.11.1–v0.12.0 (ya no son limitaciones abiertas):**
 - La continuación ascendente usa una altura configurable (§1.5) y su identidad no codifica una distancia fija.
