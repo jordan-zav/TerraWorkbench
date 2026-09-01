@@ -515,7 +515,13 @@ def main():
                 feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(500000 + index, 9000000)))
                 reference_value = np.sin(time_value * 0.73) + 0.2 * np.cos(time_value * 1.91)
                 response_value = np.sin((time_value - 1.5) * 0.73) + 0.2 * np.cos((time_value - 1.5) * 1.91)
-                feature.setAttributes([time_value, response_value, reference_value])
+                feature.setAttributes(
+                    [
+                        float(time_value),
+                        float(response_value),
+                        float(reference_value),
+                    ]
+                )
                 lag_features.append(feature)
             lag_layer.dataProvider().addFeatures(lag_features)
             lag_result = processing.run(
