@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="icon.svg" alt="TerraWorkbench" width="112">
+  <img src="assets/branding/terraworkbench-icon.png" alt="TerraWorkbench" width="160">
 
   # TerraWorkbench
 
@@ -89,12 +89,12 @@ Survey grids / points / channels
 
 | Input | Support | Notes |
 | --- | --- | --- |
-| Oasis montaj `.GRD` | Native open-source read | Recovers CRS, title, dates and available XML metadata |
+| Geosoft binary `.GRD` | Native open-source read | Recovers CRS, title, dates and available XML metadata |
 | GeoTIFF, GXF, AAIGrid and regular XYZ | GDAL | Converted to analysis-ready GeoTIFF |
 | CSV / ASCII X-Y-value grids | Native | Requires a complete regular grid; irregular points are not silently interpolated |
 | Survey point layers | Native | IDW or nearest-neighbor gridding to a projected raster |
 | Esri FileGDB rasters, feature classes and tables | GDAL/OGR | Select one raster/vector layer or load every vector/table layer |
-| Geosoft single-file `.gdb` | Standalone inventory and full export to open CSV/QGIS layers | Uses the Windows-only BSD GX Developer runtime; Oasis montaj is optional fallback only |
+| Geosoft single-file `.gdb` | Standalone inventory and full export to open CSV/QGIS layers | Uses the Windows-only BSD GX Developer runtime with an optional installed-runtime fallback |
 
 Original survey files are never modified. A Geosoft channel database is not an
 Esri FileGDB. TerraWorkbench does not bundle Geosoft code: when the optional
@@ -207,19 +207,17 @@ operation as the same kind of filter. Algorithm labels use:
 
 - **SPATIAL / FINITE DIFFERENCE** for cell-neighbour derivatives such as the
   default DX and DY exploration products
-- **FFT / HARMONICA** for Harmonica transformations executed in wavenumber space
-- **FFT / MAGMAP-LIKE** for the explicit TerraWorkbench spectral engine
-- **MIXED GRID / FFT** for products such as Tilt or analytic signal that combine
+- **FREQUENCY / FOURIER** for transformations executed by a two-dimensional FFT
+- **MIXED / SPATIAL + FREQUENCY** for products such as Tilt or analytic signal that combine
   spatial horizontal derivatives with an FFT vertical derivative
-- **PHYSICAL CORRECTION / GRID** for Bouguer, terrain and gravity-reduction physics
+- **PHYSICAL MODEL / SPATIAL GRID** for Bouguer, terrain and gravity-reduction physics
+- **SPATIAL / CELLWISE GRID** for independent transformations of aligned cells
 
-The MAGMAP-like engine removes a mean or plane, reflect-pads the grid, applies a
+The frequency-domain engine removes a mean or plane, reflect-pads the grid, applies a
 cosine taper across only the padded margin, multiplies compatible transfer
 operators on one forward 2D FFT, performs inverse transforms for requested
 outputs, crops to the original footprint and optionally restores the trend.
-Preprocessing parameters are stored with every stack recipe. This is deliberately
-described as MAGMAP-like, not as a bit-for-bit reproduction of proprietary
-MAGMAP preprocessing.
+Preprocessing parameters are stored with every stack recipe.
 
 - Butterworth low-pass, high-pass, band-pass and notch
 - FFT easting, northing and upward derivatives, orders 1–5
