@@ -242,8 +242,8 @@ def main():
             raise AssertionError(
                 f"Missing algorithms: {sorted(expected - algorithm_ids)}"
             )
-        if len(algorithm_ids) != 90:
-            raise AssertionError(f"Expected 90 algorithms, found {len(algorithm_ids)}")
+        if len(algorithm_ids) != 93:
+            raise AssertionError(f"Expected 93 algorithms, found {len(algorithm_ids)}")
 
         with tempfile.TemporaryDirectory(
             prefix="terraworkbench_"
@@ -996,7 +996,7 @@ def main():
                             f"No output from {stack_algorithm.id()}"
                         )
                     exercised_stack_algorithms += 1
-                if exercised_stack_algorithms != 62:
+                if exercised_stack_algorithms != 65:
                     raise AssertionError(
                         "Not every Filter Stack-compatible algorithm was executed"
                     )
@@ -1090,7 +1090,7 @@ def main():
                     if spectrum_plot.grab().isNull():
                         raise AssertionError("Spectrum preview did not render")
                     spectrum_plot.deleteLater()
-                    if len(available_algorithms()) != 62:
+                    if len(available_algorithms()) != 65:
                         raise AssertionError(
                             "Filter Stack is missing registered algorithms"
                         )
@@ -1098,10 +1098,10 @@ def main():
                     application.processEvents()
                     if (
                         not dock.algorithm_picker.isVisible()
-                        or dock.algorithm_picker.width() > 440
+                        or dock.algorithm_picker.width() < 560
                     ):
                         raise AssertionError(
-                            "Compact left-side algorithm chooser failed"
+                            "Expanded algorithm catalogue failed"
                         )
                     dock.algorithm_search.setText("RTP IGRF")
                     application.processEvents()
@@ -1169,9 +1169,9 @@ def main():
                     dock.add_step()
                     if len(dock.steps()) != 2:
                         raise AssertionError("Filter Stack UI did not retain two steps")
-                    if dock.maximumWidth() > 380 or not dock.inspector.isVisible():
+                    if dock.maximumWidth() <= 430 or not dock.inspector.isVisible():
                         raise AssertionError(
-                            "Compact dock/floating inspector behavior failed"
+                            "Resizable dock/floating inspector behavior failed"
                         )
                     print("OK: Filter Stack UI retained two steps", flush=True)
                 finally:
@@ -1246,7 +1246,7 @@ def main():
                     )
                     imported_dataset = gdal.Open(str(imported_path))
                     if imported_dataset is None or imported_dataset.RasterCount != 1:
-                        raise AssertionError("Real Oasis montaj GRD import failed")
+                        raise AssertionError("Real Geosoft GRD import failed")
                     imported_projection = imported_dataset.GetProjection()
                     imported_dataset = None
                     if not imported_projection:

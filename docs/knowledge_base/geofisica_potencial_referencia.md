@@ -2,7 +2,7 @@
 
 Documento de referencia para el módulo de geofísica (magnetometría, gravimetría, radiometría gamma, filtros FFT, preparación de levantamientos e inversión 3D) implementado en QGIS. Cada entrada indica fórmula, fundamento, qué resalta/calcula, aplicación en exploración mineral y limitaciones u observaciones de implementación.
 
-Cada herramienta declara explícitamente en la interfaz su dominio numérico — `[SPATIAL / FINITE DIFFERENCE]`, `[FFT / HARMONICA]`, `[FFT / MAGMAP-LIKE]`, `[MIXED GRID / FFT]`, `[PHYSICAL CORRECTION / GRID]`. Ver la taxonomía completa en §9.
+Cada herramienta declara explícitamente en la interfaz su dominio numérico — `[SPATIAL / FINITE DIFFERENCE]`, `[FREQUENCY / FOURIER]`, `[MIXED / SPATIAL + FREQUENCY]`, `[PHYSICAL MODEL / SPATIAL GRID]` o `[SPATIAL / CELLWISE GRID]`. Ver la taxonomía completa en §9.
 
 ---
 
@@ -17,7 +17,7 @@ Cada herramienta declara explícitamente en la interfaz su dominio numérico —
 
 **Limitación:** No indica profundidad, composición ni tipo de depósito; combinar con AS, THDR, Tilt y geología. Depende de la orientación de la estructura respecto al eje X.
 
-**Dominio:** `[SPATIAL / FINITE DIFFERENCE]` por defecto — menos problemas de borde. Desde v0.12.0 existe también **DX FFT** (operador espectral ikx, `[FFT / HARMONICA]`), útil cuando se va a encadenar con otros filtros que ya operan en número de onda (Butterworth, continuaciones, etc.) dentro del Filter Stack.
+**Dominio:** `[SPATIAL / FINITE DIFFERENCE]` por defecto — menos problemas de borde. Desde v0.12.0 existe también **DX FFT** (operador espectral ikx, `[FREQUENCY / FOURIER]`), útil cuando se va a encadenar con otros filtros que ya operan en número de onda (Butterworth, continuaciones, etc.) dentro del Filter Stack.
 
 ---
 
@@ -30,7 +30,7 @@ Cada herramienta declara explícitamente en la interfaz su dominio numérico —
 
 **Nota de implementación:** Se combina con Dx para THDR, eliminando la dependencia direccional individual.
 
-**Dominio:** `[SPATIAL / FINITE DIFFERENCE]` por defecto. Desde v0.12.0 existe también **DY FFT** (operador espectral iky, `[FFT / HARMONICA]`), análogo a DX FFT.
+**Dominio:** `[SPATIAL / FINITE DIFFERENCE]` por defecto. Desde v0.12.0 existe también **DY FFT** (operador espectral iky, `[FREQUENCY / FOURIER]`), análogo a DX FFT.
 
 ---
 
@@ -43,7 +43,7 @@ Cada herramienta declara explícitamente en la interfaz su dominio numérico —
 
 **Limitación:** Amplifica ruido — requiere control de calidad, nivelación y desruido previos.
 
-**Dominio:** `[FFT / HARMONICA]` — la derivada vertical no tiene una definición de diferencias finitas consistente sobre una sola grilla 2D, por lo que siempre se calculó espectralmente. Desde v0.12.0 esto además se expone como algoritmo explícito ("derivada vertical por FFT") en vez de estar solo implícito dentro de otras herramientas (THDR, Tilt, ASA, etc.).
+**Dominio:** `[FREQUENCY / FOURIER]` — la derivada vertical no tiene una definición de diferencias finitas consistente sobre una sola grilla 2D, por lo que siempre se calculó espectralmente. Desde v0.12.0 esto además se expone como algoritmo explícito ("derivada vertical por FFT") en vez de estar solo implícito dentro de otras herramientas (THDR, Tilt, ASA, etc.).
 
 ---
 
@@ -444,7 +444,7 @@ una línea probablemente faltante, sin afirmar que todo hueco sea un error.
 calcula altura de plataforma menos terreno. Datum vertical y unidades deben coincidir;
 TerraWorkbench no inventa una transformación vertical ausente.
 
-**Formatos de importación soportados por la GUI:** GeoTIFF, Geosoft GRD (si GDAL puede leerlo), GXF, AAIGrid/ASC, XYZ regular, CSV/ASCII, Esri FileGDB y GeoDatabase Geosoft de archivo único. En Windows, la GDB se lee con el runtime público BSD de GX Developer sin requerir Oasis montaj; `omscore.exe` queda solo como respaldo opcional.
+**Formatos de importación soportados por la GUI:** GeoTIFF, Geosoft GRD (si GDAL puede leerlo), GXF, AAIGrid/ASC, XYZ regular, CSV/ASCII, Esri FileGDB y GeoDatabase Geosoft de archivo único. En Windows, la GDB se lee con el runtime público BSD de GX Developer; un runtime instalado de Geosoft Desktop queda solo como respaldo opcional.
 
 ---
 
@@ -489,7 +489,7 @@ TerraWorkbench no inventa una transformación vertical ausente.
 | Cadena de corrección gravimétrica (§4.1–4.11, 10 algoritmos) | Cubierto — latitud/disturbance, aire libre (corrección+anomalía), curvatura, Bouguer simple, terreno, Bouguer completa, Moho Airy, anomalía isostática residual |
 | Preparación de levantamientos (QC, IGRF, repetición, crossovers polinómicos, gridding y microleveling) | Cubierto para producción 2D básica |
 | Inversión 3D (gravedad, magnética escalar, MVI, conjunta) | Cubierto, con soporte de malla adaptativa y topografía |
-| Diferenciación espacial vs. FFT como parte visible del producto | **Nuevo en v0.12.0** — etiquetas de dominio en la UI (§9) + motor MAGMAP-like con acondicionamiento de bordes (§9.2) |
+| Diferenciación espacial vs. frecuencia como parte visible del producto | **Nuevo en v0.12.0** — etiquetas de dominio en la UI (§9) + motor Fourier con acondicionamiento de bordes (§9.2) |
 
 **Versión y validación actual (v0.15.0):** 90 algoritmos registrados, 53 pruebas locales y Ruff correctos, ejecución real de los 62 algoritmos compatibles con Filter Stack y prueba integral en QGIS 3.44. El registro añade remoción IGRF-14 por punto, QC de vuelo, lag automático, QC de estación base, espaciamiento/líneas faltantes, drape contra DEM, comparación de líneas repetidas y nivelación de crossovers constante, lineal o cuadrática.
 
@@ -507,7 +507,7 @@ TerraWorkbench no inventa una transformación vertical ausente.
 
 **Limitaciones abiertas:**
 - **Corrección de aire libre extendida** (§4.4) — la forma dependiente de latitud + término cuadrático no existe como opción independiente; solo está implementada la aproximación lineal Δg_FA = 0.3086·h (con coeficiente configurable).
-- **Operadores especializados de MAGMAP** aún ausentes: susceptibilidad/densidad aparente, filtro de Wiener, conversión entre componentes del campo, y otros (lista completa en §9.2).
+- **Operadores espectrales especializados** aún ausentes: susceptibilidad/densidad aparente, filtro de Wiener, conversión entre componentes del campo y operador radial general (lista en §9.2).
 
 **Nota sobre fórmulas:** Las de §4.2–4.11 siguen las convenciones estándar de geodesia física (Somigliana/GRS80, Nagy para prismas, Bullard A/B/C, Airy-Heiskanen), y la secuencia de Bouguer completa fue confirmada como `SBA + terreno − curvatura` (Harmonica + USGS PP 646-A). Para el resto de módulos, si el código usa una convención de signos, densidad de referencia o radio de terreno distinto, verificar contra el registro exacto antes de dar por definitiva la equivalencia fórmula-a-fórmula.
 
@@ -515,22 +515,22 @@ TerraWorkbench no inventa una transformación vertical ausente.
 
 ## 9. Apéndice — Dominio de cálculo por herramienta (espacial vs. FFT)
 
-Distinción relevante frente a software como Oasis montaj: ahí "filtros normales" suelen ser operaciones espaciales sobre la grilla/canales, mientras que **MAGMAP** es un motor FFT 2D dedicado. Desde v0.12.0, TerraWorkbench **declara este dominio explícitamente en la propia UI** (etiqueta visible junto a cada algoritmo), no solo en este documento:
+Desde v0.12.0, TerraWorkbench **declara el dominio explícitamente en la propia UI** (etiqueta visible junto a cada algoritmo), no solo en este documento. Una base de datos es un contenedor o tipo de entrada; no es un dominio numérico:
 
 | Etiqueta en UI | Significado | Ejemplos |
 |---|---|---|
 | `[SPATIAL / FINITE DIFFERENCE]` | Operación entre celdas vecinas, sin pasar por frecuencia | DX, DY, THDR, gradiente horizontal direccional configurable |
-| `[FFT / HARMONICA]` | Transformación espectral provista por Harmonica | DZ, DZ2, DX FFT, DY FFT, DZ FFT, continuación ascendente/descendente, RTP manual |
-| `[FFT / MAGMAP-LIKE]` | Motor espectral propio con acondicionamiento geofísico (detrend/padding/taper — ver §9.2) | Butterworth, ideal, coseno, direccional, RTP/RTE/IGRF estabilizados, transformación general de dirección, integraciones X/Y/Z |
-| `[MIXED GRID / FFT]` | Combina componentes espaciales y espectrales | Tilt, ASA, TDX, Theta, TGA |
-| `[PHYSICAL CORRECTION / GRID]` | Corrección/anomalía física sobre la grilla, sin FFT | Bouguer (§4.1), aire libre, terreno, isostasia (§4) |
+| `[FREQUENCY / FOURIER]` | Transformación por FFT 2D en el dominio del número de onda | DZ, continuaciones, Butterworth, ideal, coseno, RTP/RTE, integraciones X/Y/Z |
+| `[MIXED / SPATIAL + FREQUENCY]` | Combina componentes espaciales y espectrales | Tilt, ASA, TDX, Theta, TGA |
+| `[PHYSICAL MODEL / SPATIAL GRID]` | Modelo o corrección física evaluada sobre la grilla | Bouguer (§4.1), aire libre, terreno, isostasia (§4) |
+| `[SPATIAL / CELLWISE GRID]` | Transformación independiente de celdas alineadas | razones radiométricas y transformaciones algebraicas de grilla |
 
 **Por qué DX/DY son espaciales y DZ es FFT:** Harmonica usa diferencias finitas por defecto para Dx/Dy porque reducen los efectos de borde respecto al cálculo espectral; Dz, en cambio, no tiene una definición de diferencias finitas consistente sobre una sola grilla 2D y se calcula necesariamente en número de onda. Ver `magnetic_filters.py` y `spectral_filters.py` en el repositorio.
 
 ### 9.1 Grupo FFT explícito
 17 operadores FFT dedicados (14 de v0.11.1 + 3 nuevos en v0.12.0): Butterworth (low-pass, high-pass, band-pass, notch), ideal (band-pass, band-reject), cosine roll-off (low-pass, high-pass), coseno direccional (pass, reject), continuación descendente estabilizada, integración horizontal X, integración horizontal Y, integración vertical, **derivada Este FFT, derivada Norte FFT, derivada vertical FFT**. A esto se suman RTP, RTE y la transformación general de dirección, también FFT aunque agrupados visualmente dentro de magnetometría (§2).
 
-### 9.2 Motor MAGMAP-like — pipeline real (v0.12.0)
+### 9.2 Motor en dominio de frecuencia — pipeline real (v0.12.0)
 Antes (v0.11.x) el Filter Stack ejecutaba cada filtro como transformación independiente sin acondicionamiento de bordes:
 
 ```
@@ -538,7 +538,7 @@ FFT → filtro 1 → inversa → GeoTIFF
 FFT → filtro 2 → inversa → GeoTIFF
 ```
 
-Desde v0.12.0, el motor `[FFT / MAGMAP-LIKE]` sigue el flujo:
+Desde v0.12.0, el motor `[FREQUENCY / FOURIER]` sigue el flujo:
 
 ```
 Grilla
@@ -552,18 +552,18 @@ Grilla
   → restauración opcional de tendencia
 ```
 
-Esto sigue la arquitectura general de MAGMAP (preprocesamiento → FFT → operadores → inversa → posprocesamiento) descrita por [Seequent — MAGMAP Filtering](https://help.seequent.com/Oasismontaj/2026.1/Content/gxhelp/m/geosoft_gx_fft2d_magmapfiltering.htm), identificada explícitamente como **"MAGMAP-like"** (no como copia exacta) — distinción honesta que evita sobre-vender equivalencia con el motor comercial de Seequent.
+La secuencia es una implementación explícita y auditable de procesamiento Fourier 2D: acondiciona bordes, aplica funciones de transferencia en número de onda y reconstruye una grilla espacial. No afirma equivalencia bit a bit con motores externos.
 
 **Combinación resuelta:** cuando todos los pasos son espectrales y comparten detrend, padding y taper, Filter Stack calcula una sola FFT directa y acumula `H_final = H₁·H₂·…`. Si los dominios o preprocesamientos no son compatibles, conserva la ejecución secuencial explícita.
 
-**Operadores de MAGMAP que TerraWorkbench aún no tiene (estado actualizado en v0.14.0):**
+**Operadores espectrales que TerraWorkbench aún no tiene (estado actualizado en v0.14.0):**
 - Susceptibilidad aparente
 - Densidad aparente
 - Filtro de Wiener
 - Conversión entre componentes del campo
-- Otros operadores especializados (lista extendida de referencia, MAGMAP tiene 29 operadores en total): RTP diferencial, transformación desde el polo, Gravity Earth filter, filtro radial general definido por el usuario, variantes adicionales de ideal/notch, separaciones regional/residual adicionales, decorrugación MAGMAP completa.
+- Otros operadores especializados: RTP diferencial, transformación desde el polo, filtro radial general definido por el usuario, variantes adicionales de ideal/notch y separaciones regional/residual adicionales.
 
-**Conclusión (actualizada en v0.14.0):** TerraWorkbench declara el dominio numérico de cada herramienta como parte visible del producto, el motor espectral propio incorpora acondicionamiento de bordes y la pseudogravedad ya está cubierta. La brecha restante frente a MAGMAP es de **cobertura de operadores especializados** (susceptibilidad/densidad aparente, Wiener y conversión de componentes), no de arquitectura de dominio.
+**Conclusión (actualizada en v0.14.0):** TerraWorkbench declara el dominio numérico de cada herramienta como parte visible del producto, el motor espectral propio incorpora acondicionamiento de bordes y la pseudogravedad ya está cubierta. La brecha restante es de **cobertura de operadores especializados**: susceptibilidad/densidad aparente, Wiener y conversión de componentes.
 
 ---
 
@@ -651,7 +651,7 @@ Verificadas por búsqueda directa antes de citarlas (no recuperadas de memoria).
 
 ### 10.7 Nota sobre cobertura de esta bibliografía
 
-Esta lista cubre los conceptos con fórmula explícita en el documento (§1–§7). No incluye MAGMAP en sí (Seequent/Geosoft, software comercial, ya referenciado en §9.2 con su propio enlace) ni papers de implementación numérica interna de TerraWorkbench (no publicados). Si algún algoritmo del §5 (Gaussianos, coseno direccional) requiere cita más específica que la que dan Gunn (1975)/Blakely (1995), verificar contra la literatura de procesamiento de señales aplicada — no se encontró un paper fundacional único y verificable para esas variantes puntuales, y se prefirió señalarlo aquí en vez de inventar una atribución.
+Esta lista cubre los conceptos con fórmula explícita en el documento (§1–§7). No incluye papers de implementación numérica interna de TerraWorkbench (no publicados). Si algún algoritmo del §5 (Gaussianos, coseno direccional) requiere cita más específica que la que dan Gunn (1975)/Blakely (1995), verificar contra la literatura de procesamiento de señales aplicada — no se encontró un paper fundacional único y verificable para esas variantes puntuales, y se prefirió señalarlo aquí en vez de inventar una atribución.
 
 ---
 

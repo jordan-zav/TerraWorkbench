@@ -71,6 +71,14 @@ def test_every_static_processing_label_has_a_spanish_translation():
         and any(isinstance(target, ast.Name) and target.id == "_ES" for target in node.targets)
     )
     translated = {key.value for key in translation_dict.keys}
+    # The paired new-process catalogue extends both ES and PT at runtime.
+    paired = next(node.value for node in translation_tree.body
+                  if isinstance(node, ast.Assign) and any(
+                      isinstance(target, ast.Name) and target.id == "_BASIC_PROCESSING_TRANSLATIONS"
+                      for target in node.targets))
+    for key, value in zip(paired.keys, paired.values):
+        assert len(value.elts) == 2 and all(isinstance(item, ast.Constant) and item.value for item in value.elts)
+        translated.add(key.value)
     processing_strings = set()
     for path in (ROOT / "algorithms").glob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -104,6 +112,9 @@ def test_every_static_processing_label_has_a_spanish_translation():
             for target in node.targets
         )
     )
+
+    portuguese_exact.update({key.value: ast.literal_eval(value)[1]
+                             for key, value in zip(paired.keys, paired.values)})
 
     def portuguese(source):
         if source in portuguese_exact:
@@ -162,7 +173,7 @@ def test_user_knowledge_base_is_clickable_and_packaged():
     assert "KnowledgeBaseDialog" in dock
     assert "setOpenExternalLinks(True)" in dock
     assert "FilterInfoDialog" in dock
-    assert 'info_button.setText("ⓘ")' in dock
+    assert 'info_button.setText("i")' in dock
     assert "setItemWidget(item, row)" in dock
     assert len(sources["sources"]) >= 20
     assert all(source["url"].startswith("https://") for source in sources["sources"])
@@ -220,7 +231,7 @@ def test_redistributable_sample_data_is_packaged_separately():
         assert f'"sample_data/nrcan/{entry["path"]}"' in packager
 
 
-def test_standalone_geosoft_reader_is_declared_before_oasis_fallback():
+def test_standalone_geosoft_reader_is_declared_before_installed_fallback():
     requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     bridge = (ROOT / "geosoft_bridge.py").read_text(encoding="utf-8")
     dock = (ROOT / "workflow_dock.py").read_text(encoding="utf-8")
@@ -304,6 +315,8 @@ def test_canonical_requirements_are_parseable_and_complete():
         "ppigrf",
         "defusedxml",
         "geosoft",
+        "scipy",
+        "pyarrow",
     }
 
 

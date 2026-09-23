@@ -8,7 +8,7 @@ pueda copiar código sin revisar licencia y atribución.
 
 | Proyecto | Cobertura útil | Licencia | Uso recomendado |
 | --- | --- | --- | --- |
-| [Harmonica](https://github.com/fatiando/harmonica) | GRD de Oasis, derivadas, RTP, continuaciones, Gaussianos, Bouguer, prismas/tesseroides, fuentes equivalentes y Euler | BSD-3-Clause | Primera referencia para convenciones, kernels y casos sintéticos |
+| [Harmonica](https://github.com/fatiando/harmonica) | GRD binario Geosoft, derivadas, RTP, continuaciones, Gaussianos, Bouguer, prismas/tesseroides, fuentes equivalentes y Euler | BSD-3-Clause | Primera referencia para convenciones, kernels y casos sintéticos |
 | [Verde](https://github.com/fatiando/verde) | Gridding, tendencias, block reductions, splines y validación espacial | BSD-3-Clause | Preparación de puntos y validación de interpolación sin fuga espacial |
 | [Boule](https://github.com/fatiando/boule) | Elipsoides, gravedad normal y coordenadas geocéntricas | BSD-3-Clause | GRS80/WGS84 y reducción gravimétrica geodésicamente consistente |
 | [Choclo](https://github.com/fatiando/choclo) | Kernels Numba de gravedad y magnetismo para puntos y prismas | BSD-3-Clause | Modelado directo rápido y backend de sensibilidades |
@@ -62,8 +62,8 @@ pueda copiar código sin revisar licencia y atribución.
 - Reimplementar desde la ecuación cuando sea viable y comparar contra dos fuentes.
 - Registrar atribución incluso cuando una licencia permisiva no obligue a citar.
 - Aislar dependencias GPL/EUPL/LGPL hasta revisar el efecto sobre distribución.
-- No afirmar equivalencia con MAGMAP, Oasis montaj u otro motor propietario sin
-  conjuntos de referencia y tolerancias explícitas.
+- No afirmar equivalencia con un motor propietario sin conjuntos de referencia
+  y tolerancias explícitas.
 - Fijar versiones solo en el entorno de ejecución; los enlaces de conocimiento
   deben apuntar al repositorio canónico y a documentación versionada cuando exista.
 

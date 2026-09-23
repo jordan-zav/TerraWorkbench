@@ -29,7 +29,11 @@ class SpectralFilterBase(RasterAlgorithmBase):
     """Base class for explicitly defined FFT transfer functions."""
 
     output_description = "TerraWorkbench spectral result"
-    processing_domain = "FFT / MAGMAP-LIKE"
+    processing_domain = "FREQUENCY / FOURIER"
+    implementation_details = (
+        ("Numerical backend", "TerraWorkbench Fourier engine using NumPy FFT"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
     restore_trend_default = False
     DETREND_ORDER = "FFT_DETREND_ORDER"
     PADDING_PERCENT = "FFT_PADDING_PERCENT"
@@ -37,7 +41,7 @@ class SpectralFilterBase(RasterAlgorithmBase):
     RESTORE_TREND = "FFT_RESTORE_TREND"
 
     def group(self):
-        return self.tr("FFT / MAGMAP-like spectral filters")
+        return self.tr("Frequency-domain spectral filters")
 
     def groupId(self):
         return "fft_spectral_filters"
@@ -108,7 +112,7 @@ class SpectralFilterBase(RasterAlgorithmBase):
 
     def processAlgorithm(self, parameters, context, feedback):
         grid = self.input_grid(parameters, context, require_projected=True)
-        orientation = to_regular_data_array(grid)
+        orientation = to_regular_data_array(grid, fill_missing=True)
         self.prepare(grid, parameters, context, feedback)
         data = orientation.data
         northing = np.asarray(data.coords["northing"])
@@ -144,7 +148,7 @@ class SpectralFilterBase(RasterAlgorithmBase):
         values = restore_raster_order(filtered, orientation)
         feedback.setProgress(85)
         output = self.output_path(parameters, context)
-        write_geotiff(output, values, grid, self.output_description)
+        write_geotiff(output, values, grid, self.output_description, output_nodata=float("nan"))
         feedback.setProgress(100)
         return {self.OUTPUT: output}
 
@@ -152,7 +156,7 @@ class SpectralFilterBase(RasterAlgorithmBase):
         return self.tr(
             "Applies an explicit two-dimensional Fourier transfer function. Input "
             "must be a complete, evenly spaced raster in a projected CRS. Wavelengths "
-            "and distances use the raster CRS units. The MAGMAP-like preprocessing "
+            "and distances use the raster CRS units. The frequency-domain preprocessing "
             "removes a mean/plane, reflect-pads the grid, tapers the padded margin, "
             "and optionally restores the trend after inverse FFT."
         )
@@ -622,7 +626,7 @@ class MagneticPseudogravityAlgorithm(SpectralFilterBase):
 
     SCALE = "SCALE"
     output_description = "Scaled magnetic pseudogravity"
-    processing_domain = "FFT / MAGNETIC PSEUDOGRAVITY"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "magnetic_pseudogravity"

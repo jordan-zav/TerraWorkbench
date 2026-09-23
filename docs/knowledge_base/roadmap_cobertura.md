@@ -36,6 +36,13 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 
 ## Prioridad A — cerrar el flujo 2D de producción
 
+El alcance inmediato de sustitución del procesamiento básico está definido en
+[Procesamiento básico sin Oasis](../basic_processing_migration.md): mínima
+curvatura, controles de gridding, suavizado, filtros y exportación. TPS global/local,
+suavizado binomial de nueve puntos y AGC RMS tienen una primera implementación;
+la equivalencia con referencias históricas sigue pendiente. Excluye pseudogradientes, crosshatch
+y experimentos arqueológicos.
+
 | Familia | Brecha candidata | Referencias iniciales | Validación mínima |
 | --- | --- | --- | --- |
 | Nivelación MAG | implementada: corrección base, lag firmado y estimación automática, heading armónico, despike Hampel, IGRF por punto, QC de estación base/vuelo/repetición/espaciamiento/drape y nivelación robusta constante, lineal o cuadrática; falta ajuste conjunto de líneas sin red tie defendible | PyGMI, literatura de levantamientos | líneas sintéticas + survey con base conocida |
@@ -44,7 +51,7 @@ auxiliares reales; no pueden reconstruirse de una grilla K/eU/eTh terminada.
 | MAG transform | pseudogravedad implementada; faltan susceptibilidad aparente y conversión de componentes | SGTool, GMT, Blakely | prisma/dipolo con solución directa |
 | Profundidad | Euler por ventanas e inversión Euler moderna | Harmonica, euler-inversion | familias de SI, ruido y fuentes interferentes |
 | Espectro | espectro radial y estimación de profundidad con incertidumbre | GMT y bibliografía | dos capas sintéticas y análisis de sensibilidad |
-| FFT avanzado | Wiener/depth filter, operador radial general y decorrugación espectral | GMT, MAGMAP público, papers | respuesta impulsional + comparación espectral |
+| FFT avanzado | Wiener/depth filter, operador radial general y decorrugación espectral | GMT y papers | respuesta impulsional + comparación espectral |
 
 ## Prioridad B — inversión científicamente robusta
 

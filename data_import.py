@@ -77,8 +77,8 @@ def _projection_from_metadata(metadata):
     return spatial_reference.ExportToWkt()
 
 
-def import_oasis_montaj_grid(source, output):
-    """Convert an Oasis montaj binary GRD using Harmonica's proven reader."""
+def import_geosoft_grd(source, output):
+    """Convert a Geosoft binary GRD using Harmonica's proven reader."""
     source, output = Path(source), Path(output)
     data = import_harmonica().load_oasis_montaj_grid(source)
     if "easting" not in data.coords or "northing" not in data.coords:
@@ -117,7 +117,7 @@ def import_oasis_montaj_grid(source, output):
         dataset.SetProjection(projection)
     metadata.update(
         {
-            "SOURCE_FORMAT": "Oasis montaj GRD",
+            "SOURCE_FORMAT": "Geosoft binary GRD",
             "SOURCE_FILE": source.name,
             "IMPORTER": "TerraWorkbench/Harmonica",
         }
@@ -263,13 +263,13 @@ def import_survey_grid(source, output, subdataset=None):
     if not source.exists():
         raise QgsProcessingException(f"Input does not exist: {source}")
     if source.is_file() and source.suffix.lower() == ".grd":
-        return import_oasis_montaj_grid(source, output)
+        return import_geosoft_grd(source, output)
     if source.is_file() and source.suffix.lower() == ".gdb":
         with source.open("rb") as stream:
             signature = stream.read(4)
         if signature == GEOSOFT_SIGNATURE:
             raise QgsProcessingException(
-                "This is a GeoDatabase (Oasis montaj), not an Esri FileGDB. "
+                "This is a single-file Geosoft GeoDatabase, not an Esri FileGDB. "
                 "Open it with TerraWorkbench's dedicated GeoDatabase inventory/export "
                 "command, which uses the public GX Developer reader when available."
             )

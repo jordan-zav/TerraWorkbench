@@ -17,6 +17,16 @@ All current runtime licenses are compatible with distribution of TerraWorkbench 
 
 ## Core scientific stack
 
+The survey workspace uses Apache Arrow / PyArrow (Apache-2.0) for Parquet and
+CSV I/O, and Python's standard-library SQLite interface for its catalogue.
+PyArrow is installed as an explicit runtime dependency, not bundled in the ZIP.
+
+The basic spatial processors directly use SciPy's `RBFInterpolator`
+(`thin_plate_spline`, affine polynomial), `ndimage.convolve` and
+`ndimage.uniform_filter`, with NumPy array operations. Their definitions are
+independent; no proprietary gridding or filter code is bundled. SciPy is an
+explicit runtime requirement; backend attribution is exposed in process info.
+
 | Package | Tested version | Declared license |
 |---|---:|---|
 | Harmonica | 0.7.0 | BSD-3-Clause |
@@ -38,7 +48,7 @@ All current runtime licenses are compatible with distribution of TerraWorkbench 
 
 The Geosoft package supplies its own GX public runtime and is used only to read
 and export single-file Geosoft GeoDatabase data into open CSV/QGIS formats. It
-does not require Oasis montaj. TerraWorkbench pins the 2024.2 series to retain
+does not require a separately installed desktop application. TerraWorkbench pins the 2024.2 series to retain
 compatibility with the NumPy versions shipped by supported QGIS releases. The
 package's upstream copyright and BSD notice remain installed with its wheel.
 

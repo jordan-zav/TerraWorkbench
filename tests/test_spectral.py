@@ -19,7 +19,7 @@ from spectral import (
 )
 
 
-def test_magmap_style_preprocessing_restores_original_footprint_and_plane():
+def test_conditioned_frequency_preprocessing_restores_footprint_and_plane():
     y, x = np.meshgrid(np.arange(12.0), np.arange(16.0), indexing="ij")
     values = 10.0 + 2.0 * x - 0.5 * y + np.sin(x)
     prepared, state = prepare_fft_grid(

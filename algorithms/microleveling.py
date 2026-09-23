@@ -14,7 +14,11 @@ from ..raster_io import nodata_mask, write_geotiff
 
 
 class MicrolevelingAlgorithm(RasterAlgorithmBase):
-    processing_domain = "FFT / DIRECTIONAL DECORRUGATION"
+    processing_domain = "FREQUENCY / FOURIER"
+    implementation_details = (
+        ("Numerical backend", "TerraWorkbench directional filter using NumPy FFT"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
     AZIMUTH = "AZIMUTH"
     ACROSS_WAVELENGTH = "ACROSS_WAVELENGTH"
     ALONG_WAVELENGTH = "ALONG_WAVELENGTH"

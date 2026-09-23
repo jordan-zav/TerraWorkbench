@@ -21,7 +21,7 @@ def _like(data, values):
 
 class GravityFilterBase(HarmonicaTransformBase):
     """Common metadata for gravity exploration filters."""
-    processing_domain = "MIXED GRID / FFT"
+    processing_domain = "MIXED / SPATIAL + FREQUENCY"
 
     def group(self):
         return self.tr("GRAV exploration filters")
@@ -70,7 +70,7 @@ class GravDyAlgorithm(GravityFilterBase):
 
 class GravDzAlgorithm(GravityFilterBase):
     output_description = "Gravity DZ first upward derivative"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "grav_dz"
@@ -84,7 +84,7 @@ class GravDzAlgorithm(GravityFilterBase):
 
 class GravDz2Algorithm(GravityFilterBase):
     output_description = "Gravity DZ2 second upward derivative"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "grav_dz2"
@@ -99,7 +99,7 @@ class GravDz2Algorithm(GravityFilterBase):
 class GravityUpwardContinuationAlgorithm(GravityFilterBase):
     HEIGHT = "HEIGHT"
     output_description = "Gravity upward continuation"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "grav_upward_continuation"
@@ -127,7 +127,7 @@ class GravityUpwardContinuationAlgorithm(GravityFilterBase):
 class GravGaussianRegionalAlgorithm(GravityFilterBase):
     WAVELENGTH = "WAVELENGTH"
     output_description = "Gravity Gaussian regional field"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "grav_regional"
@@ -155,7 +155,7 @@ class GravGaussianRegionalAlgorithm(GravityFilterBase):
 class GravResidualAlgorithm(GravityFilterBase):
     HEIGHT = "HEIGHT"
     output_description = "Gravity residual field"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "grav_residual"

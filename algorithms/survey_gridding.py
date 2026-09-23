@@ -21,9 +21,16 @@ from qgis.core import (
 
 from ..qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
 from ..i18n import translate
+from ..basic_processing import ThinPlateGridder
 
 
 class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
+    processing_domain = "SPACE / POINTS"
+    implementation_details = (
+        ("Numerical backend", "SciPy cKDTree / RBFInterpolator thin_plate_spline, NumPy"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+        ("Compatibility", "TPS is not RANGRID; local TPS is an approximation, not a global minimum-curvature solution"),
+    )
     INPUT = "INPUT"
     VALUE_FIELD = "VALUE_FIELD"
     TARGET_CRS = "TARGET_CRS"
@@ -78,7 +85,11 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterEnum(
                 self.METHOD,
                 self.tr("Interpolation method"),
-                options=["Inverse distance weighting (IDW)", "Nearest neighbor"],
+                options=[self.tr(label) for label in (
+                    "Inverse distance weighting (IDW)", "Nearest neighbor",
+                    "Minimum curvature (global thin-plate spline)",
+                    "Local thin-plate spline (approximation)",
+                )],
                 defaultValue=0,
             )
         )
@@ -122,6 +133,12 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
                 minValue=0.0,
             )
         )
+        self.addParameter(QgsProcessingParameterNumber(
+            "TPS_SMOOTHING", self.tr("TPS smoothing (normalized coordinates; not tension)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "TPS_NEIGHBORS", self.tr("Local TPS neighbors"),
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=64, minValue=3, maxValue=512))
         self.addParameter(
             QgsProcessingParameterRasterDestination(
                 self.OUTPUT, self.tr("Gridded GeoTIFF")
@@ -206,6 +223,8 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
         radius = self.parameterAsDouble(parameters, self.SEARCH_RADIUS, context)
         query_radius = np.inf if radius <= 0.0 else radius
         method = self.parameterAsInt(parameters, self.METHOD, context)
+        if method not in (0, 1, 2, 3):
+            raise QgsProcessingException("Unknown interpolation method.")
         neighbors = min(
             self.parameterAsInt(parameters, self.NEIGHBORS, context), len(values)
         )
@@ -218,6 +237,17 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
                 "SciPy is required for survey gridding. Use TerraWorkbench's built-in dependency manager."
             ) from error
         tree = cKDTree(coordinates)
+        tps = None
+        smoothing = self.parameterAsDouble(parameters, "TPS_SMOOTHING", context)
+        if method >= 2:
+            tps_neighbors = self.parameterAsInt(parameters, "TPS_NEIGHBORS", context) if method == 3 else 0
+            try:
+                tps = ThinPlateGridder(coordinates, values, smoothing, tps_neighbors)
+            except (ValueError, np.linalg.LinAlgError) as error:
+                raise QgsProcessingException(str(error)) from error
+            feedback.pushInfo(f"TPS: {tps.duplicate_count} coincident observations averaged; "
+                              f"neighbors={tps.neighbors or 'global'}; normalized smoothing={smoothing}. "
+                              "Search radius masks output by nearest-point distance; it does not restrict TPS fitting points.")
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
         dataset = gdal.GetDriverByName("GTiff").Create(
             output,
@@ -242,13 +272,21 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             {
                 "SOURCE_FORMAT": "QGIS survey point layer",
                 "VALUE_FIELD": value_field,
-                "INTERPOLATION": "IDW" if method == 0 else "Nearest neighbor",
+                "INTERPOLATION": ("IDW", "Nearest neighbor", "Global thin-plate spline", "Local thin-plate spline approximation")[method],
                 "CELL_SIZE": str(cell_size),
                 "SEARCH_RADIUS": "unlimited" if radius <= 0.0 else str(radius),
                 "NEIGHBORS": str(neighbors),
                 "IDW_POWER": str(power),
             }
         )
+        if tps is not None:
+            import scipy
+            dataset.SetMetadataItem("TPS_BACKEND", "SciPy RBFInterpolator " + scipy.__version__)
+            dataset.SetMetadataItem("TPS_SMOOTHING", str(smoothing))
+            dataset.SetMetadataItem("TPS_NEIGHBORS", str(tps.neighbors or "global"))
+            dataset.SetMetadataItem("TPS_COORDINATE_SCALE", str(tps.scale))
+            dataset.SetMetadataItem("TPS_DUPLICATES_AVERAGED", str(tps.duplicate_count))
+            dataset.SetMetadataItem("TPS_RADIUS_MEANING", "Output nearest-point distance mask only")
         band = dataset.GetRasterBand(1)
         nodata = -3.4028234663852886e38
         band.SetNoDataValue(nodata)
@@ -262,6 +300,28 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             y_centers = maximum[1] - np.arange(row_start, row_end) * cell_size
             grid_x, grid_y = np.meshgrid(x_centers, y_centers)
             query = np.column_stack((grid_x.ravel(), grid_y.ravel()))
+            if tps is not None:
+                distances, _ = tree.query(query, k=1)
+                supported = distances <= query_radius
+                result = np.full(len(query), nodata, dtype=np.float64)
+                # Bound TPS evaluation memory independently of raster width.
+                indices = np.flatnonzero(supported)
+                try:
+                    for start in range(0, len(indices), 2048):
+                        if feedback.isCanceled():
+                            dataset = None
+                            return {}
+                        selected = indices[start:start + 2048]
+                        result[selected] = tps(query[selected])
+                except ValueError as error:
+                    dataset = None
+                    raise QgsProcessingException(str(error)) from error
+                if np.any(np.abs(result[supported]) > np.finfo(np.float32).max):
+                    dataset = None
+                    raise QgsProcessingException("TPS output exceeds Float32 range; rescale the input.")
+                band.WriteArray(result.reshape(row_end - row_start, columns).astype(np.float32), 0, row_start)
+                feedback.setProgress(20.0 + 80.0 * row_end / rows)
+                continue
             k = 1 if method == 1 else neighbors
             distances, indices = tree.query(
                 query, k=k, distance_upper_bound=query_radius, workers=-1
@@ -316,4 +376,8 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             "for FFT filters but extrapolates at edges and across unsampled gaps. Set a finite "
             "radius to constrain extrapolation and leave unsupported cells as NoData. IDW is "
             "deterministic and does not perform line leveling."
+        ) + "\n\n" + self.tr(
+            "Global thin-plate spline minimizes bending with an affine polynomial and is limited to 2000 unique points. Local TPS uses a configurable neighborhood and is not a global minimum-curvature solution. Coincident values are averaged. Smoothing uses isotropically normalized coordinates; it is not tension. Search radius only masks TPS output by distance to the nearest observation. No RANGRID equivalence is claimed."
+        ) + "\n\n" + self.tr(
+            "Numerical backend: NumPy and SciPy (RBFInterpolator, cKDTree). Raster I/O: QGIS and GDAL."
         )

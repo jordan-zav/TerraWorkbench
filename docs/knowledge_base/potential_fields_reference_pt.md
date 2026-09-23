@@ -103,14 +103,14 @@ As ferramentas FFT transformam um raster projetado, completo e regularmente espa
 O TerraWorkbench distingue:
 
 - **ESPACIAL / DIFERENÇA FINITA:** operações entre células vizinhas.
-- **FFT / HARMONICA:** operadores espectrais fornecidos pelo Harmonica.
-- **FFT / TIPO MAGMAP:** motor espectral condicionado do TerraWorkbench.
-- **MISTO GRADE / FFT:** atributos formados por componentes de mais de um domínio.
-- **CORREÇÃO FÍSICA / GRADE:** reduções físicas avaliadas sobre células do raster.
+- **FREQUÊNCIA / FOURIER:** operadores avaliados no domínio 2D do número de onda.
+- **MISTO / ESPACIAL + FREQUÊNCIA:** atributos formados por componentes calculados nos dois domínios.
+- **MODELO FÍSICO / GRADE ESPACIAL:** reduções físicas avaliadas sobre células do raster.
+- **ESPACIAL / CÉLULA A CÉLULA:** transformações independentes de células alinhadas.
 
 ### Condicionamento espectral
 
-O motor tipo MAGMAP pode remover média ou plano, adicionar preenchimento refletido, aplicar taper na margem, combinar operadores compatíveis em uma única FFT direta, recortar a área original e opcionalmente restaurar a tendência. Isso reduz, mas não elimina, artefatos de borda.
+O motor no domínio da frequência pode remover média ou plano, adicionar preenchimento refletido, aplicar taper na margem, combinar operadores compatíveis em uma única FFT direta, recortar a área original e opcionalmente restaurar a tendência. Isso reduz, mas não elimina, artefatos de borda.
 
 ### Funções de transferência disponíveis
 
@@ -126,7 +126,7 @@ Comprimentos de onda e distâncias de continuação usam as unidades do SRC. Use
 
 ## 6. Preparação e importação de levantamentos
 
-O TerraWorkbench importa grades aceitas pelo GDAL, dados CSV/ASCII e conteúdo Esri FileGDB. No Windows, o runtime oficial BSD GX Developer lê GeoDatabase Geosoft de arquivo único sem Oasis montaj e exporta os dados para CSV/GeoTIFF/camadas QGIS abertas. Uma instalação do Oasis é apenas uma alternativa.
+O TerraWorkbench importa grades aceitas pelo GDAL, dados CSV/ASCII e conteúdo Esri FileGDB. No Windows, o runtime oficial BSD GX Developer lê GeoDatabase Geosoft de arquivo único e exporta os dados para CSV/GeoTIFF/camadas QGIS abertas. Um runtime instalado do Geosoft Desktop é apenas uma alternativa.
 
 A interpolação de pontos expõe SRC projetado de saída, tamanho da célula, método, número de vizinhos e raio de busca. Raio zero preenche o retângulo completo para FFT, mas extrapola em áreas sem suporte.
 

@@ -103,14 +103,14 @@ FFT tools transform a complete, regularly spaced projected raster into wavenumbe
 TerraWorkbench distinguishes:
 
 - **SPATIAL / FINITE DIFFERENCE:** cell-neighbour operations.
-- **FFT / HARMONICA:** spectral operators supplied by Harmonica.
-- **FFT / MAGMAP-LIKE:** TerraWorkbench's conditioned spectral engine.
-- **MIXED GRID / FFT:** attributes built from components calculated in more than one domain.
-- **PHYSICAL CORRECTION / GRID:** physical reductions evaluated on raster cells.
+- **FREQUENCY / FOURIER:** operators evaluated in 2D wavenumber space.
+- **MIXED / SPATIAL + FREQUENCY:** attributes built from components calculated in both domains.
+- **PHYSICAL MODEL / SPATIAL GRID:** physical reductions evaluated on raster cells.
+- **SPATIAL / CELLWISE GRID:** independent transformations of aligned raster cells.
 
 ### Spectral conditioning
 
-The MAGMAP-like engine can remove a mean or plane, reflect-pad the grid, taper the padded margin, combine compatible transfer operators in one forward FFT, crop the original footprint and optionally restore the trend. This reduces, but does not eliminate, edge artefacts.
+The frequency-domain engine can remove a mean or plane, reflect-pad the grid, taper the padded margin, combine compatible transfer operators in one forward FFT, crop the original footprint and optionally restore the trend. This reduces, but does not eliminate, edge artefacts.
 
 ### Available transfer functions
 
@@ -126,7 +126,7 @@ Wavelengths and continuation distances use raster CRS units. Use a projected met
 
 ## 6. Survey preparation and import
 
-TerraWorkbench imports GDAL-supported grids, CSV/ASCII data and Esri FileGDB content. On Windows, the official BSD GX Developer runtime reads single-file Geosoft GeoDatabase data without Oasis montaj and exports it to open CSV/GeoTIFF/QGIS layers. An installed Oasis runtime is only a fallback.
+TerraWorkbench imports GDAL-supported grids, CSV/ASCII data and Esri FileGDB content. On Windows, the official BSD GX Developer runtime reads single-file Geosoft GeoDatabase data and exports it to open CSV/GeoTIFF/QGIS layers. An installed Geosoft Desktop runtime is only a fallback.
 
 Point gridding supports projected output CRS selection, cell size, interpolation method, neighbour count and search radius. A zero search radius fills the complete rectangle for FFT processing but extrapolates into unsupported areas.
 

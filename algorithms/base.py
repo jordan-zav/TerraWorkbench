@@ -19,6 +19,10 @@ class RasterAlgorithmBase(QgsProcessingAlgorithm):
     INPUT = "INPUT"
     BAND = "BAND"
     OUTPUT = "OUTPUT"
+    implementation_details = (
+        ("Numerical implementation", "TerraWorkbench algorithms using NumPy"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
 
     def add_raster_parameters(self):
         self.addParameter(

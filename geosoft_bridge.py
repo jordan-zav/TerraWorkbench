@@ -1,4 +1,4 @@
-"""Executed by the licensed Geosoft Python runtime to inventory/export a GDB."""
+"""Executed by a Geosoft Python runtime to inventory/export a GDB."""
 
 from __future__ import annotations
 
@@ -64,7 +64,7 @@ def main():
     lines_path = options.output / f"{options.input.stem}_lines.csv"
     manifest = {
         "source": str(options.input),
-        "source_format": "GeoDatabase (Oasis montaj)",
+        "source_format": "Geosoft GeoDatabase",
         "conversion_engine": os.environ.get(
             "TERRAWORKBENCH_GEOSOFT_ENGINE",
             "Geosoft GX Developer public runtime",
@@ -93,7 +93,7 @@ def main():
                 manifest["channels"].append(
                     {
                         "name": channel,
-                        "source_format": "GeoDatabase (Oasis montaj)",
+                        "source_format": "Geosoft GeoDatabase",
                         **{str(key): json_safe(value) for key, value in detail.items()},
                     }
                 )
@@ -102,7 +102,7 @@ def main():
                 manifest["lines"].append(
                     {
                         "name": line,
-                        "source_format": "GeoDatabase (Oasis montaj)",
+                        "source_format": "Geosoft GeoDatabase",
                         **{str(key): json_safe(value) for key, value in detail.items()},
                     }
                 )
@@ -143,7 +143,7 @@ def main():
                         for row_index, row in enumerate(values):
                             writer.writerow(
                                 [
-                                    "GeoDatabase (Oasis montaj)",
+                                    "Geosoft GeoDatabase",
                                     line,
                                     start + row_index * increment,
                                     *[

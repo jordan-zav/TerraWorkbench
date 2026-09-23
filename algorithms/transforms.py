@@ -16,7 +16,11 @@ class HarmonicaTransformBase(RasterAlgorithmBase):
     """Base class for complete regular-grid transformations."""
 
     output_description = "TerraWorkbench result"
-    processing_domain = "GRID TRANSFORM"
+    processing_domain = "SPATIAL / CELLWISE GRID"
+    implementation_details = (
+        ("Numerical backend", "Harmonica >=0.7,<0.8 with NumPy/xarray grids"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
 
     def calculate(self, harmonica, data, parameters, context):
         raise NotImplementedError
@@ -24,21 +28,21 @@ class HarmonicaTransformBase(RasterAlgorithmBase):
     def processAlgorithm(self, parameters, context, feedback):
         grid = self.input_grid(parameters, context, require_projected=True)
         feedback.setProgress(10)
-        orientation = to_regular_data_array(grid)
+        orientation = to_regular_data_array(grid, fill_missing=True)
         harmonica = import_harmonica()
         feedback.setProgress(25)
         result = self.calculate(harmonica, orientation.data, parameters, context)
         values = restore_raster_order(result.values, orientation)
         feedback.setProgress(85)
         output = self.output_path(parameters, context)
-        write_geotiff(output, values, grid, self.output_description)
+        write_geotiff(output, values, grid, self.output_description, output_nodata=float("nan"))
         feedback.setProgress(100)
         return {self.OUTPUT: output}
 
     def shortHelpString(self):
         return self.tr(
             "Runs a Harmonica transformation on a complete, evenly spaced raster. "
-            "The raster must use a projected CRS and must not contain NoData cells. "
+            "The raster must use a projected CRS. NoData is filled by nearest neighbor only in the FFT workspace; the original mask is restored in the output. "
             "The tool is available in QGIS batch processing and the Model Designer."
         )
 
@@ -46,7 +50,7 @@ class HarmonicaTransformBase(RasterAlgorithmBase):
 class UpwardContinuationAlgorithm(HarmonicaTransformBase):
     HEIGHT = "HEIGHT"
     output_description = "Upward continued field"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "upward_continuation"
@@ -92,7 +96,7 @@ class GaussianFilterBase(HarmonicaTransformBase):
 
 class GaussianLowPassAlgorithm(GaussianFilterBase):
     output_description = "Gaussian low-pass field"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "gaussian_lowpass"
@@ -108,7 +112,7 @@ class GaussianLowPassAlgorithm(GaussianFilterBase):
 
 class GaussianHighPassAlgorithm(GaussianFilterBase):
     output_description = "Gaussian high-pass field"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "gaussian_highpass"
@@ -128,7 +132,7 @@ class ReductionToPoleAlgorithm(HarmonicaTransformBase):
     MAGNETIZATION_INCLINATION = "MAGNETIZATION_INCLINATION"
     MAGNETIZATION_DECLINATION = "MAGNETIZATION_DECLINATION"
     output_description = "Magnetic anomaly reduced to the pole"
-    processing_domain = "FFT / HARMONICA RTP"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "reduction_to_pole"
@@ -249,7 +253,7 @@ class DerivativeNorthingAlgorithm(DerivativeBase):
 class DerivativeUpwardAlgorithm(DerivativeBase):
     derivative_function = "derivative_upward"
     output_description = "Upward derivative"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "derivative_upward"

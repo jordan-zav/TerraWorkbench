@@ -17,7 +17,12 @@ from ..crs_utils import grid_convergence_degrees, raster_center
 
 
 class MagneticDirectionTransformBase(SpectralFilterBase):
-    processing_domain = "FFT / MAGNETIC WAVENUMBER"
+    processing_domain = "FREQUENCY / FOURIER"
+    implementation_details = (
+        ("Numerical backend", "TerraWorkbench Fourier engine using NumPy FFT"),
+        ("Automatic field model", "ppigrf >=2.1,<3 when IGRF-14 mode is enabled"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
     restore_trend_default = True
     FIELD_MODE = "FIELD_MODE"
     INCLINATION = "INCLINATION"

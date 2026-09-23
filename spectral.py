@@ -49,6 +49,8 @@ def prepare_fft_grid(
     detrend_order=1,
     padding_percent=25.0,
     taper_percent=100.0,
+    padding_cells=None,
+    nodata_policy="nearest",
 ):
     """Detrend, reflect-pad, and taper a grid for geophysical 2D FFT filtering.
 
@@ -58,6 +60,15 @@ def prepare_fft_grid(
     values = np.asarray(values, dtype=np.float64)
     if values.ndim != 2 or min(values.shape) < 2:
         raise ValueError("FFT filtering requires a two-dimensional grid")
+    missing = ~np.isfinite(values)
+    if nodata_policy not in ("nearest", "reject"):
+        raise ValueError("NoData policy must be nearest or reject.")
+    if missing.all() or (missing.any() and nodata_policy == "reject"):
+        raise ValueError("FFT input has no usable support or NoData was explicitly rejected.")
+    if missing.any():
+        from scipy.ndimage import distance_transform_edt
+        indices = distance_transform_edt(missing, return_distances=False, return_indices=True)
+        values = values[tuple(indices)]
     padding_percent = float(padding_percent)
     if padding_percent < 0.0 or padding_percent > 100.0:
         raise ValueError("FFT padding percent must be between 0 and 100")
@@ -65,6 +76,10 @@ def prepare_fft_grid(
     residual = values - trend
     pad_rows = int(round(values.shape[0] * padding_percent / 100.0))
     pad_columns = int(round(values.shape[1] * padding_percent / 100.0))
+    if padding_cells is not None:
+        if len(padding_cells) != 2 or any(type(n) is not int or n < 0 for n in padding_cells):
+            raise ValueError("Padding cells must be two non-negative integers.")
+        pad_rows, pad_columns = padding_cells
     padding = ((pad_rows, pad_rows), (pad_columns, pad_columns))
     prepared = np.pad(residual, padding, mode="reflect") if any(padding[0] + padding[1]) else residual.copy()
     if pad_rows or pad_columns:
@@ -75,6 +90,8 @@ def prepare_fft_grid(
         "trend": trend,
         "row_slice": slice(pad_rows, pad_rows + values.shape[0]),
         "column_slice": slice(pad_columns, pad_columns + values.shape[1]),
+        "missing": missing,
+        "padding_cells": (pad_rows, pad_columns),
     }
     return prepared, state
 
@@ -86,6 +103,8 @@ def finish_fft_grid(filtered, state, restore_trend=True):
     ]
     if restore_trend:
         result = result + state["trend"]
+    result = result.copy()
+    result[state.get("missing", np.zeros(result.shape, dtype=bool))] = np.nan
     return result
 
 

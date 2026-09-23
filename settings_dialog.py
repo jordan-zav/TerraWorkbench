@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from qgis.PyQt.QtCore import QLocale, QSettings, QUrl, pyqtSignal
-from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QLocale, QSettings, Qt, QUrl, pyqtSignal
+from qgis.PyQt.QtGui import QDesktopServices, QPixmap
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -37,6 +37,7 @@ KEY_ADD_RESULT = "TerraWorkbench/addFinalResultToProject"
 KEY_TOOLTIPS = "TerraWorkbench/showScientificTooltips"
 KEY_GEOb = "TerraWorkbench/geosoftLocation"
 KEY_LOCAL_DATA = "TerraWorkbench/localTestDataDirectory"
+BRAND_LOGO_PATH = Path(__file__).parent / "assets" / "branding" / "terraworkbench-logo.png"
 
 
 class SettingsDialog(QDialog):
@@ -178,6 +179,19 @@ class SettingsDialog(QDialog):
     def _build_about_tab(self):
         self.about_tab = QWidget()
         layout = QVBoxLayout(self.about_tab)
+        self.about_logo = QLabel()
+        self.about_logo.setAlignment(qt_enum(Qt, "AlignmentFlag", "AlignCenter"))
+        logo = QPixmap(str(BRAND_LOGO_PATH))
+        if not logo.isNull():
+            self.about_logo.setPixmap(
+                logo.scaled(
+                    300,
+                    220,
+                    qt_enum(Qt, "AspectRatioMode", "KeepAspectRatio"),
+                    qt_enum(Qt, "TransformationMode", "SmoothTransformation"),
+                )
+            )
+        layout.addWidget(self.about_logo)
         self.about_label = QLabel()
         self.about_label.setWordWrap(True)
         self.about_label.setOpenExternalLinks(True)
@@ -208,7 +222,7 @@ class SettingsDialog(QDialog):
     def choose_geosoft_directory(self):
         selected = QFileDialog.getExistingDirectory(
             self,
-            text("Locate Geosoft or Oasis montaj", "Ubicar Geosoft u Oasis montaj"),
+            text("Locate optional Geosoft Desktop runtime", "Ubicar runtime opcional de Geosoft Desktop"),
             self.geosoft_location.text() or r"C:\Program Files\Geosoft",
         )
         if selected:
@@ -308,7 +322,7 @@ class SettingsDialog(QDialog):
         self.add_final_result.setText(text("Add the final result to the QGIS project", "Añadir el resultado final al proyecto QGIS"))
         self.processing_note.setText(text("Scientific parameters remain explicit in every filter. These preferences control workflow behavior, not geophysical assumptions.", "Los parámetros científicos permanecen explícitos en cada filtro. Estas preferencias controlan el flujo, no los supuestos geofísicos."))
         self.geosoft_group.setTitle(text("Geosoft GeoDatabase reader", "Lector de GeoDatabase Geosoft"))
-        self.geosoft_note.setText(text("TerraWorkbench first uses the standalone BSD GX Developer runtime installed by its dependency manager. Oasis montaj is not required. An installed Oasis runtime is retained only as an optional fallback.", "TerraWorkbench usa primero el runtime autónomo BSD de GX Developer instalado por su gestor de dependencias. Oasis montaj no es necesario. Una instalación de Oasis se conserva únicamente como respaldo opcional."))
+        self.geosoft_note.setText(text("TerraWorkbench first uses the standalone BSD GX Developer runtime installed by its dependency manager. An installed Geosoft Desktop runtime is retained only as an optional fallback.", "TerraWorkbench usa primero el runtime autónomo BSD de GX Developer instalado por su gestor de dependencias. Un runtime instalado de Geosoft Desktop se conserva únicamente como respaldo opcional."))
         self.geosoft_browse.setText(text("Locate…", "Ubicar…"))
         self.local_data_group.setTitle(
             text("Local test datasets", "Datos locales de prueba")

@@ -400,12 +400,19 @@ scripts and previous archives are excluded.
 
 ## Project status
 
+Survey data can now be organized in a working folder through **Raster →
+TerraWorkbench → Survey databases…**: a SQLite catalogue and immutable Parquet
+channels, selective batch reads, channel formulas/versions, CSV export and a
+QGIS point-layer bridge. See [survey workspaces](docs/survey_workspaces.md).
+This is a first local-project implementation, not a replacement for every
+database editing feature or a field-scale performance certification.
+
 Version **0.15.0** is an internal test build. The current verification baseline is:
 
-- 53 unit/structure tests
+- 145 unit/structure tests
 - Ruff clean
-- 90 algorithms expected in QGIS 3.44
-- Real Processing of all 62 Filter Stack-compatible algorithms and multi-step stack smoke tests
+- 93 algorithms expected in QGIS 3.44
+- Real Processing of all 65 Filter Stack-compatible algorithms and multi-step stack smoke tests
 - Gravity, susceptibility, MVI and joint TreeMesh inversion smoke tests
 - Validated QGIS ZIP structure
 
@@ -414,6 +421,12 @@ repository validation, the pending NRCan publication notification and broader
 scientific comparison against independent reference grids.
 
 ## License and third-party software
+
+Basic processing now includes global thin-plate-spline gridding (up to 2000
+unique points), an explicitly local TPS approximation for larger inputs,
+nine-point binomial smoothing and local-RMS automatic gain control. These run
+without Oasis Montaj. Their definitions are independent: proprietary numerical
+equivalence is not claimed. See the [implementation scope and limitations](docs/basic_processing_migration.md).
 
 TerraWorkbench is released under
 [GPL-3.0-or-later](LICENSE). Runtime libraries remain separate projects under

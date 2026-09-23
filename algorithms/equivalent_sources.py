@@ -19,7 +19,11 @@ class EquivalentSourceContinuationAlgorithm(RasterAlgorithmBase):
     MAX_CELLS = "MAX_CELLS"
     MAX_MATRIX_ELEMENTS = "MAX_MATRIX_ELEMENTS"
     HOLDOUT_PERCENT = "HOLDOUT_PERCENT"
-    processing_domain = "EQUIVALENT SOURCES / PHYSICAL MODEL"
+    processing_domain = "PHYSICAL MODEL / EQUIVALENT SOURCES"
+    implementation_details = (
+        ("Numerical backend", "Harmonica >=0.7,<0.8 EquivalentSources with NumPy"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
 
     def name(self):
         return "equivalent_source_continuation"

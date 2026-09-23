@@ -15,11 +15,11 @@ def test_validate_geosoft_desktop_application_folder(tmp_path):
 
 
 def test_validate_geosoft_parent_folder_with_nested_install(tmp_path):
-    root = tmp_path / "Seequent" / "Oasis 2026" / "Desktop Applications"
+    root = tmp_path / "Geosoft" / "Desktop 2026" / "Desktop Applications"
     (root / "bin").mkdir(parents=True)
     (root / "python").mkdir()
     (root / "bin" / "omscore.exe").touch()
     (root / "python" / "python.exe").touch()
-    runtime = validate_geosoft_location(tmp_path / "Seequent")
+    runtime = validate_geosoft_location(tmp_path / "Geosoft")
     assert runtime is not None
     assert Path(runtime.omscore).name.casefold() == "omscore.exe"

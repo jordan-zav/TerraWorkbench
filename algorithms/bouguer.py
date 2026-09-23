@@ -11,7 +11,11 @@ from ..raster_io import nodata_mask, write_geotiff
 
 class BouguerCorrectionAlgorithm(RasterAlgorithmBase):
     """Calculate the gravitational effect of topography in mGal."""
-    processing_domain = "PHYSICAL CORRECTION / GRID"
+    processing_domain = "PHYSICAL MODEL / SPATIAL GRID"
+    implementation_details = (
+        ("Numerical backend", "Harmonica >=0.7,<0.8 with NumPy arrays"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
 
     DENSITY_CRUST = "DENSITY_CRUST"
     DENSITY_WATER = "DENSITY_WATER"

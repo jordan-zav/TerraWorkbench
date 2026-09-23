@@ -23,7 +23,7 @@ def _like(data, values):
 
 class MagneticFilterBase(HarmonicaTransformBase):
     """Common metadata for the twelve MAG exploration filters."""
-    processing_domain = "MIXED GRID / FFT"
+    processing_domain = "MIXED / SPATIAL + FREQUENCY"
 
     def group(self):
         return self.tr("MAG exploration filters")
@@ -72,7 +72,7 @@ class DyAlgorithm(MagneticFilterBase):
 
 class DzAlgorithm(MagneticFilterBase):
     output_description = "DZ first upward derivative"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "mag_dz"
@@ -86,7 +86,7 @@ class DzAlgorithm(MagneticFilterBase):
 
 class Dz2Algorithm(MagneticFilterBase):
     output_description = "DZ2 second upward derivative"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "mag_dz2"
@@ -101,7 +101,7 @@ class Dz2Algorithm(MagneticFilterBase):
 class MagneticUpwardContinuationAlgorithm(MagneticFilterBase):
     HEIGHT = "HEIGHT"
     output_description = "Magnetic upward continuation"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "mag_upward_continuation"
@@ -129,7 +129,7 @@ class MagneticUpwardContinuationAlgorithm(MagneticFilterBase):
 class ResidualEnhancementAlgorithm(MagneticFilterBase):
     HEIGHT = "HEIGHT"
     output_description = "RS residual enhancement"
-    processing_domain = "FFT / HARMONICA"
+    processing_domain = "FREQUENCY / FOURIER"
 
     def name(self):
         return "mag_rs"

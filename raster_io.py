@@ -30,6 +30,7 @@ class OrientedGrid:
     data: object
     flip_vertical: bool
     flip_horizontal: bool
+    missing: Optional[np.ndarray] = None
 
 
 def _physical_source(layer):
@@ -79,7 +80,7 @@ def nodata_mask(grid):
     return mask
 
 
-def to_regular_data_array(grid):
+def to_regular_data_array(grid, fill_missing=False):
     """Convert a north-up projected raster into Harmonica grid convention."""
     transform = grid.geotransform
     if not np.isclose(transform[2], 0.0) or not np.isclose(transform[4], 0.0):
@@ -88,7 +89,8 @@ def to_regular_data_array(grid):
         )
     if np.isclose(transform[1], 0.0) or np.isclose(transform[5], 0.0):
         raise QgsProcessingException("The raster has an invalid pixel size.")
-    if nodata_mask(grid).any():
+    missing = nodata_mask(grid)
+    if missing.any() and not fill_missing:
         raise QgsProcessingException(
             "FFT transformations require a complete regular grid without NoData or "
             "non-finite cells. Fill or crop gaps before running this algorithm."
@@ -98,6 +100,13 @@ def to_regular_data_array(grid):
     easting = transform[0] + (np.arange(columns) + 0.5) * transform[1]
     northing = transform[3] + (np.arange(rows) + 0.5) * transform[5]
     values = grid.values
+    if missing.any():
+        if missing.all():
+            raise QgsProcessingException("The raster has no finite observations to support FFT processing.")
+        from scipy.ndimage import distance_transform_edt
+        indices = distance_transform_edt(missing, return_distances=False, return_indices=True)
+        values = values[tuple(indices)]
+        grid.metadata = dict(grid.metadata, TW_NODATA="Nearest-filled FFT workspace only; original mask restored")
 
     flip_vertical = rows > 1 and northing[1] < northing[0]
     flip_horizontal = columns > 1 and easting[1] < easting[0]
@@ -115,16 +124,18 @@ def to_regular_data_array(grid):
         dims=("northing", "easting"),
         name="field",
     )
-    return OrientedGrid(data, flip_vertical, flip_horizontal)
+    return OrientedGrid(data, flip_vertical, flip_horizontal, missing)
 
 
 def restore_raster_order(values, orientation):
     """Restore top-to-bottom and left-to-right order of the source raster."""
-    restored = np.asarray(values, dtype=np.float64)
+    restored = np.asarray(values, dtype=np.float64).copy()
     if orientation.flip_horizontal:
         restored = np.fliplr(restored)
     if orientation.flip_vertical:
         restored = np.flipud(restored)
+    if orientation.missing is not None:
+        restored[orientation.missing] = np.nan
     return restored
 
 

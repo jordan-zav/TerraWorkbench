@@ -80,6 +80,7 @@ from .algorithms.magnetic_transforms import (
     ReductionToPoleIgrfAlgorithm,
 )
 from .algorithms.survey_gridding import SurveyPointGriddingAlgorithm
+from .algorithms.spatial_filters import NinePointSmoothingAlgorithm, AutomaticGainControlAlgorithm, CircularMedianAlgorithm
 from .algorithms.line_leveling import CrossoverLevelingAlgorithm
 from .algorithms.microleveling import MicrolevelingAlgorithm
 from .algorithms.inversion import (
@@ -122,6 +123,9 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
     """Expose gravity and magnetic algorithms through QGIS Processing."""
 
     def loadAlgorithms(self):
+        self.addAlgorithm(NinePointSmoothingAlgorithm())
+        self.addAlgorithm(CircularMedianAlgorithm())
+        self.addAlgorithm(AutomaticGainControlAlgorithm())
         self.addAlgorithm(GravDxAlgorithm())
         self.addAlgorithm(GravDyAlgorithm())
         self.addAlgorithm(GravDzAlgorithm())

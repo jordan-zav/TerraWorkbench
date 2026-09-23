@@ -17,6 +17,7 @@ from qgis.PyQt.QtCore import (
     QProcess,
     QProcessEnvironment,
     QRectF,
+    QSize,
     Qt,
     QUrl,
     QUrlQuery,
@@ -40,6 +41,7 @@ from qgis.PyQt.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QFormLayout,
+    QFrame,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -52,7 +54,10 @@ from qgis.PyQt.QtWidgets import (
     QMenu,
     QPushButton,
     QProgressDialog,
+    QScrollArea,
+    QSizePolicy,
     QSpinBox,
+    QStyle,
     QTabWidget,
     QTextBrowser,
     QToolButton,
@@ -125,6 +130,7 @@ PLUGIN_PREFIX = "terraworkbench:"
 PIPELINE_FORMAT_VERSION = 1
 _FIXED_PARAMETERS = {"INPUT", "BAND", "OUTPUT"}
 _SEARCH_TEXT_ROLE = int(qt_enum(Qt, "ItemDataRole", "UserRole")) + 1
+BRAND_ICON_PATH = Path(__file__).parent / "assets" / "branding" / "terraworkbench-icon.png"
 
 _KNOWLEDGE_REPOSITORIES = (
     (
@@ -380,7 +386,7 @@ def _run_combined_spectral_stack(
     if not source_layer.isValid():
         raise QgsProcessingException("The FFT stack input raster is not valid.")
     grid = read_raster(source_layer, int(band))
-    orientation = to_regular_data_array(grid)
+    orientation = to_regular_data_array(grid, fill_missing=True)
     data = orientation.data
     northing = np.asarray(data.coords["northing"])
     easting = np.asarray(data.coords["easting"])
@@ -435,6 +441,7 @@ def _run_combined_spectral_stack(
             values,
             grid,
             f"Combined FFT stack through {algorithm.displayName()}",
+            output_nodata=float("nan"),
         )
         outputs.append(str(destination))
         feedback.setProgress(100.0 * index / last_index)
@@ -638,8 +645,7 @@ class FilterInfoDialog(QDialog):
             self.windowFlags() | qt_enum(Qt, "WindowType", "Tool")
         )
         self.setMinimumSize(480, 400)
-        self.setMaximumSize(620, 720)
-        self.resize(540, 580)
+        self.resize(720, 680)
         layout = QVBoxLayout(self)
         self.browser = QTextBrowser()
         self.browser.setOpenExternalLinks(True)
@@ -687,6 +693,15 @@ class FilterInfoDialog(QDialog):
                 "</tr>"
             )
 
+        implementation_rows = []
+        for label, value in getattr(algorithm, "implementation_details", ()):
+            implementation_rows.append(
+                "<tr>"
+                f"<td><b>{html.escape(translate(label))}</b></td>"
+                f"<td>{html.escape(translate(value))}</td>"
+                "</tr>"
+            )
+
         links = _algorithm_reference_links(algorithm)
         link_items = "".join(
             f'<li><a href="{url}">{html.escape(name)}</a></li>'
@@ -700,6 +715,9 @@ class FilterInfoDialog(QDialog):
             f"<p><b>{text('Group', 'Grupo')}:</b> {html.escape(algorithm.group())}<br>"
             f"<b>{text('Numerical domain', 'Dominio numérico')}:</b> {html.escape(domain)}<br>"
             f"<b>ID Processing:</b> <code>{html.escape(algorithm.id())}</code></p>"
+            f"<h3>{text('Implementation and libraries', 'Implementación y librerías')}</h3>"
+            f"<table cellspacing='5'>{''.join(implementation_rows)}</table>"
+            f"<p><small>{text('Libraries are shown here for transparency; the domain label describes where the calculation operates, not which package implements it.', 'Las librerías se muestran aquí por transparencia; la etiqueta de dominio indica dónde opera el cálculo, no qué paquete lo implementa.')}</small></p>"
             f"<h3>{text('What it does', 'Qué hace')}</h3><p>{html.escape(translate(help_text))}</p>"
             f"<h3>{text('Parameters', 'Parámetros')}</h3>"
             f"<table cellspacing='4'><tr><th>{text('Name', 'Nombre')}</th><th>{text('Description', 'Descripción')}</th>"
@@ -718,7 +736,7 @@ def _algorithm_reference_links(algorithm):
     links = []
     if any(term in searchable for term in ("gravity", "magnetic", "harmonica")):
         links.append(("Harmonica", "https://github.com/fatiando/harmonica"))
-    if any(term in searchable for term in ("fft", "spectral", "magmap")):
+    if any(term in searchable for term in ("fft", "spectral", "frequency", "fourier")):
         links.append(("GMT grid FFT reference", "https://github.com/GenericMappingTools/gmt"))
     if any(term in searchable for term in ("igrf", "field-direction", "pole", "equator")):
         links.append(("ppigrf / IGRF-14", "https://github.com/IAGA-VMOD/ppigrf"))
@@ -744,9 +762,9 @@ class FilterStackDock(QDockWidget):
     def __init__(self, parent=None):
         super().__init__("TerraWorkbench — Filter Stack", parent)
         self.setObjectName("TerraWorkbenchFilterStackDock")
-        self.setMinimumWidth(300)
-        self.setMaximumWidth(380)
-        self.setWindowIcon(QIcon(str(Path(__file__).with_name("icon.svg"))))
+        self.setMinimumWidth(320)
+        self.resize(460, 820)
+        self.setWindowIcon(QIcon(str(BRAND_ICON_PATH)))
         self._parameter_editors = {}
         self._algorithm_labels = {}
         self._build_ui()
@@ -758,9 +776,35 @@ class FilterStackDock(QDockWidget):
 
     def _build_ui(self):
         body = QWidget(self)
+        body.setObjectName("TerraWorkbenchBody")
         layout = QVBoxLayout(body)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(10)
+
+        self.header = QFrame()
+        self.header.setObjectName("TerraWorkbenchHeader")
+        header_layout = QHBoxLayout(self.header)
+        header_layout.setContentsMargins(12, 10, 12, 10)
+        self.brand_icon = QLabel()
+        self.brand_icon.setObjectName("TerraWorkbenchBrandIcon")
+        self.brand_icon.setPixmap(
+            QIcon(str(BRAND_ICON_PATH)).pixmap(QSize(36, 36))
+        )
+        self.brand_icon.setFixedSize(40, 40)
+        brand_copy = QVBoxLayout()
+        brand_copy.setSpacing(1)
+        self.brand_title = QLabel("TerraWorkbench")
+        self.brand_title.setObjectName("TerraWorkbenchBrandTitle")
+        self.brand_subtitle = QLabel("Geophysical workflow builder")
+        self.brand_subtitle.setObjectName("TerraWorkbenchBrandSubtitle")
+        brand_copy.addWidget(self.brand_title)
+        brand_copy.addWidget(self.brand_subtitle)
+        header_layout.addWidget(self.brand_icon)
+        header_layout.addLayout(brand_copy, 1)
+        layout.addWidget(self.header)
 
         self.source_group = QGroupBox("Input raster")
+        self.source_group.setObjectName("TerraWorkbenchSection")
         source_layout = QFormLayout(self.source_group)
         self.layer_combo = QComboBox()
         self.layer_combo.setSizeAdjustPolicy(
@@ -777,19 +821,44 @@ class FilterStackDock(QDockWidget):
         source_layout.addRow("Band", self.band_spin)
         layout.addWidget(self.source_group)
 
+        workflow_heading = QHBoxLayout()
+        self.workflow_title = QLabel("FILTER WORKFLOW")
+        self.workflow_title.setObjectName("TerraWorkbenchSectionTitle")
+        self.step_count = QLabel("0 filters")
+        self.step_count.setObjectName("TerraWorkbenchCountBadge")
+        workflow_heading.addWidget(self.workflow_title)
+        workflow_heading.addStretch(1)
+        workflow_heading.addWidget(self.step_count)
+        layout.addLayout(workflow_heading)
+
         add_row = QHBoxLayout()
         self.algorithm_combo = QComboBox()
         self.algorithm_combo.hide()
         self.algorithm_button = QPushButton("Choose filter…")
+        self.algorithm_button.setObjectName("TerraWorkbenchAlgorithmButton")
+        self.algorithm_button.setSizePolicy(
+            qt_enum(QSizePolicy, "Policy", "Ignored"),
+            qt_enum(QSizePolicy, "Policy", "Fixed"),
+        )
         self.algorithm_button.setToolTip(
-            "Open the compact filter chooser to the left of TerraWorkbench"
+            "Open the filter catalogue"
         )
         self.add_button = QPushButton("Add filter")
+        self.add_button.setObjectName("TerraWorkbenchAccentButton")
         add_row.addWidget(self.algorithm_button, 1)
         add_row.addWidget(self.add_button)
         layout.addLayout(add_row)
 
+        self.empty_stack_note = QLabel(
+            "No filters yet. Choose a method above, then add it to the workflow."
+        )
+        self.empty_stack_note.setObjectName("TerraWorkbenchEmptyState")
+        self.empty_stack_note.setWordWrap(True)
+        self.empty_stack_note.setAlignment(qt_enum(Qt, "AlignmentFlag", "AlignCenter"))
+        layout.addWidget(self.empty_stack_note)
+
         self.step_list = QListWidget()
+        self.step_list.setObjectName("TerraWorkbenchStepList")
         self.step_list.setAlternatingRowColors(True)
         self.step_list.setDragDropMode(
             qt_enum(QAbstractItemView, "DragDropMode", "InternalMove")
@@ -803,12 +872,29 @@ class FilterStackDock(QDockWidget):
         layout.addWidget(self.step_list, 1)
 
         self.stack_actions_layout = QGridLayout()
+        self.move_up_button = QToolButton()
+        self.move_up_button.setIcon(
+            self.style().standardIcon(qt_enum(QStyle, "StandardPixmap", "SP_ArrowUp"))
+        )
+        self.move_down_button = QToolButton()
+        self.move_down_button.setIcon(
+            self.style().standardIcon(qt_enum(QStyle, "StandardPixmap", "SP_ArrowDown"))
+        )
+        for button in (self.move_up_button, self.move_down_button):
+            button.setIconSize(QSize(16, 16))
+            button.setToolButtonStyle(
+                qt_enum(Qt, "ToolButtonStyle", "ToolButtonTextBesideIcon")
+            )
         self.duplicate_button = QPushButton("Duplicate")
         self.remove_button = QPushButton("Remove")
         self.clear_button = QPushButton("Clear")
-        self.stack_actions_layout.addWidget(self.duplicate_button, 0, 0)
-        self.stack_actions_layout.addWidget(self.remove_button, 0, 1)
-        self.stack_actions_layout.addWidget(self.clear_button, 0, 2)
+        self.stack_actions_layout.addWidget(self.move_up_button, 0, 0)
+        self.stack_actions_layout.addWidget(self.move_down_button, 0, 1)
+        self.stack_actions_layout.addWidget(self.duplicate_button, 1, 0)
+        self.stack_actions_layout.addWidget(self.remove_button, 1, 1)
+        self.stack_actions_layout.addWidget(self.clear_button, 1, 2)
+        for column in range(3):
+            self.stack_actions_layout.setColumnStretch(column, 1)
         layout.addLayout(self.stack_actions_layout)
 
         self.inspector = QDialog(self.parentWidget() or self)
@@ -817,15 +903,16 @@ class FilterStackDock(QDockWidget):
         self.inspector.setWindowFlags(
             self.inspector.windowFlags() | qt_enum(Qt, "WindowType", "Tool")
         )
-        self.inspector.setMinimumWidth(400)
-        self.inspector.setMaximumWidth(460)
-        self.inspector.resize(440, 620)
+        self.inspector.setMinimumWidth(520)
+        self.inspector.resize(720, 720)
         inspector_layout = QVBoxLayout(self.inspector)
         self.inspector_tabs = QTabWidget()
         parameter_tab = QWidget()
         parameter_tab_layout = QVBoxLayout(parameter_tab)
         self.parameter_group = QGroupBox("Selected filter parameters")
         self.parameter_form = QFormLayout(self.parameter_group)
+        self.parameter_form.setRowWrapPolicy(qt_enum(QFormLayout, "RowWrapPolicy", "WrapLongRows"))
+        self.parameter_form.setVerticalSpacing(12)
         self.empty_parameters = QLabel("Select a filter to edit its parameters.")
         self.parameter_form.addRow(self.empty_parameters)
         parameter_tab_layout.addWidget(self.parameter_group)
@@ -850,7 +937,10 @@ class FilterStackDock(QDockWidget):
         self.igrf_note.setWordWrap(True)
         igrf_layout.addWidget(self.igrf_note)
         igrf_layout.addStretch(1)
-        self.inspector_tabs.addTab(parameter_tab, "Parameters")
+        parameter_scroll = QScrollArea()
+        parameter_scroll.setWidgetResizable(True)
+        parameter_scroll.setWidget(parameter_tab)
+        self.inspector_tabs.addTab(parameter_scroll, "Parameters")
         self.inspector_tabs.addTab(spectrum_tab, "Spectrum")
         self.inspector_tabs.addTab(igrf_tab, "IGRF")
         inspector_layout.addWidget(self.inspector_tabs)
@@ -864,14 +954,19 @@ class FilterStackDock(QDockWidget):
             self.algorithm_picker.windowFlags()
             | qt_enum(Qt, "WindowType", "Tool")
         )
-        self.algorithm_picker.setMinimumWidth(360)
-        self.algorithm_picker.setMaximumWidth(440)
-        self.algorithm_picker.resize(410, 520)
+        self.algorithm_picker.setMinimumWidth(560)
+        self.algorithm_picker.resize(840, 700)
         picker_layout = QVBoxLayout(self.algorithm_picker)
+        picker_layout.setSpacing(12)
+        self.domain_filter = QComboBox()
+        for key in ("", "SPACE", "FREQUENCY", "MIXED", "MODEL", "OTHER"):
+            self.domain_filter.addItem(key, key)
+        self.domain_filter.currentIndexChanged.connect(lambda: self.filter_algorithm_picker(self.algorithm_search.text()))
+        picker_layout.addWidget(self.domain_filter)
         self.domain_note = QLabel(
-            "SPATIAL = cell-neighbour operation; FFT/HARMONICA = library FFT; "
-            "FFT/MAGMAP-LIKE = detrend + reflected padding + taper + combined "
-            "wavenumber operators; MIXED = components from more than one domain."
+            "SPATIAL = cells and neighbours; FREQUENCY = 2D Fourier/wavenumber; "
+            "MIXED = spatial + frequency; PHYSICAL MODEL = equations constrained "
+            "by geophysical parameters. Database describes the input, not a numerical domain."
         )
         self.domain_note.setWordWrap(True)
         picker_layout.addWidget(self.domain_note)
@@ -882,6 +977,7 @@ class FilterStackDock(QDockWidget):
         picker_layout.addWidget(self.algorithm_search)
         self.algorithm_list = QListWidget()
         self.algorithm_list.setAlternatingRowColors(True)
+        self.algorithm_list.setSpacing(4)
         picker_layout.addWidget(self.algorithm_list, 1)
         picker_buttons = QHBoxLayout()
         picker_buttons.addStretch(1)
@@ -896,6 +992,7 @@ class FilterStackDock(QDockWidget):
         self.settings_dialog.preferencesChanged.connect(self.preferences_changed)
 
         self.output_group = QGroupBox("Outputs")
+        self.output_group.setObjectName("TerraWorkbenchSection")
         output_layout = QGridLayout(self.output_group)
         self.output_directory = QLineEdit()
         self.output_directory.setPlaceholderText(
@@ -919,7 +1016,7 @@ class FilterStackDock(QDockWidget):
         self.import_grid_action = self.import_menu.addAction("Survey grid file…", self.import_grid)
         self.import_gdb_action = self.import_menu.addAction("Esri FileGDB folder…", self.import_filegdb)
         self.import_geosoft_action = self.import_menu.addAction(
-            "GeoDatabase (Oasis montaj) inventory/export…", self.import_geosoft_gdb
+            "Geosoft GeoDatabase inventory/export…", self.import_geosoft_gdb
         )
         self.example_menu = self.import_menu.addMenu("Bundled sample datasets")
         self.sample_mag_action = self.example_menu.addAction(
@@ -970,6 +1067,8 @@ class FilterStackDock(QDockWidget):
         self.load_button = QPushButton("Load stack…")
         self.save_button = QPushButton("Save stack…")
         self.run_button = QPushButton("Run stack")
+        self.run_button.setObjectName("TerraWorkbenchPrimaryButton")
+        self.run_button.setMinimumHeight(34)
         self.settings_button = QPushButton("Settings…")
         self.file_grid.addWidget(self.import_button, 0, 0)
         self.file_grid.addWidget(self.knowledge_button, 0, 1)
@@ -982,6 +1081,7 @@ class FilterStackDock(QDockWidget):
         layout.addLayout(self.file_grid)
 
         self.setWidget(body)
+        self._apply_visual_style()
         self.algorithm_button.clicked.connect(self.show_algorithm_picker)
         self.algorithm_search.textChanged.connect(self.filter_algorithm_picker)
         self.algorithm_list.itemClicked.connect(self.choose_algorithm_item)
@@ -990,6 +1090,8 @@ class FilterStackDock(QDockWidget):
         self.duplicate_button.clicked.connect(self.duplicate_step)
         self.remove_button.clicked.connect(self.remove_step)
         self.clear_button.clicked.connect(self.clear_stack)
+        self.move_up_button.clicked.connect(lambda: self.move_step(-1))
+        self.move_down_button.clicked.connect(lambda: self.move_step(1))
         self.output_browse.clicked.connect(self.choose_output_directory)
         self.output_directory.textChanged.connect(
             lambda text: self.keep_intermediate.setEnabled(bool(text.strip()))
@@ -1000,6 +1102,102 @@ class FilterStackDock(QDockWidget):
         self.knowledge_button.clicked.connect(self.show_knowledge_base)
         self.settings_button.clicked.connect(self.show_settings)
         self.run_button.clicked.connect(self.run_stack)
+        self.step_list.model().rowsInserted.connect(self._update_stack_state)
+        self.step_list.model().rowsRemoved.connect(self._update_stack_state)
+        self.step_list.model().rowsMoved.connect(self._update_stack_state)
+        self.step_list.currentRowChanged.connect(self._update_stack_state)
+        self._update_stack_state()
+
+    def _apply_visual_style(self):
+        """Apply a restrained theme that stays legible in light and dark QGIS."""
+        dark = self.palette().window().color().lightness() < 128
+        if dark:
+            panel = "#263238"
+            border = "#455a64"
+            muted = "#b0bec5"
+            empty = "#1f292e"
+            hover = "#37474f"
+        else:
+            panel = "#f4f8f7"
+            border = "#cbd9d5"
+            muted = "#526460"
+            empty = "#f8faf9"
+            hover = "#e6f0ed"
+        self.widget().setStyleSheet(
+            f"""
+            #TerraWorkbenchHeader {{
+                background: {panel}; border: 1px solid {border};
+                border-radius: 8px;
+            }}
+            #TerraWorkbenchBrandTitle {{ font-size: 15px; font-weight: 700; }}
+            #TerraWorkbenchBrandSubtitle {{ color: {muted}; font-size: 11px; }}
+            #TerraWorkbenchSection {{
+                border: 1px solid {border}; border-radius: 7px;
+                margin-top: 7px; padding-top: 7px;
+            }}
+            #TerraWorkbenchSection::title {{
+                subcontrol-origin: margin; left: 10px; padding: 0 5px;
+                font-weight: 600;
+            }}
+            #TerraWorkbenchSectionTitle {{
+                color: {muted}; font-size: 10px; font-weight: 700;
+            }}
+            #TerraWorkbenchCountBadge {{
+                background: {panel}; border: 1px solid {border};
+                border-radius: 8px; padding: 2px 7px; color: {muted};
+            }}
+            #TerraWorkbenchEmptyState {{
+                background: {empty}; border: 1px dashed {border};
+                border-radius: 7px; padding: 12px; color: {muted};
+            }}
+            #TerraWorkbenchStepList {{
+                border: 1px solid {border}; border-radius: 6px;
+                padding: 3px; alternate-background-color: {panel};
+            }}
+            #TerraWorkbenchStepList::item {{ padding: 7px 5px; border-radius: 4px; }}
+            #TerraWorkbenchStepList::item:hover {{ background: {hover}; }}
+            #TerraWorkbenchAlgorithmButton {{ text-align: left; padding: 5px 8px; }}
+            #TerraWorkbenchAccentButton {{ font-weight: 600; padding: 5px 9px; }}
+            #TerraWorkbenchPrimaryButton {{
+                background: #147d64; color: white; border: 1px solid #0f6853;
+                border-radius: 6px; font-weight: 700; padding: 7px 12px;
+            }}
+            #TerraWorkbenchPrimaryButton:hover {{ background: #198f73; }}
+            #TerraWorkbenchPrimaryButton:pressed {{ background: #0f6853; }}
+            #TerraWorkbenchPrimaryButton:disabled {{
+                background: {panel}; color: {muted}; border-color: {border};
+            }}
+            """
+        )
+
+    def _update_stack_state(self, *_args):
+        count = self.step_list.count()
+        selected = self.step_list.currentRow()
+        self.step_count.setText(
+            text(
+                "{count} filter" if count == 1 else "{count} filters",
+                "{count} filtro" if count == 1 else "{count} filtros",
+            )
+            .format(count=count)
+        )
+        self.empty_stack_note.setVisible(count == 0)
+        self.run_button.setEnabled(count > 0 and self.layer_combo.count() > 0)
+        self.save_button.setEnabled(count > 0)
+        self.clear_button.setEnabled(count > 0)
+        self.duplicate_button.setEnabled(selected >= 0)
+        self.remove_button.setEnabled(selected >= 0)
+        self.move_up_button.setEnabled(selected > 0)
+        self.move_down_button.setEnabled(0 <= selected < count - 1)
+
+    def move_step(self, offset):
+        """Move the selected filter one position while preserving its data."""
+        row = self.step_list.currentRow()
+        target = row + int(offset)
+        if row < 0 or target < 0 or target >= self.step_list.count():
+            return
+        item = self.step_list.takeItem(row)
+        self.step_list.insertItem(target, item)
+        self.step_list.setCurrentItem(item)
 
     def apply_preferences(self):
         settings = QgsSettings()
@@ -1011,8 +1209,8 @@ class FilterStackDock(QDockWidget):
         tooltips = settings.value(KEY_TOOLTIPS, True, type=bool)
         self.algorithm_button.setToolTip(
             text(
-                "Open the compact filter chooser to the left of TerraWorkbench",
-                "Abrir el selector compacto a la izquierda de TerraWorkbench",
+                "Open the filter catalogue",
+                "Abrir el catálogo de filtros",
             )
             if tooltips
             else ""
@@ -1039,6 +1237,16 @@ class FilterStackDock(QDockWidget):
         self.setWindowTitle(
             text("TerraWorkbench — Filter Stack", "TerraWorkbench — Pila de filtros")
         )
+        self.brand_subtitle.setText(
+            text("Geophysical workflow builder", "Constructor de flujos geofísicos")
+        )
+        self.workflow_title.setText(text("FILTER WORKFLOW", "FLUJO DE FILTROS"))
+        self.empty_stack_note.setText(
+            text(
+                "No filters yet. Choose a method above, then add it to the workflow.",
+                "Aún no hay filtros. Elija un método arriba y añádalo al flujo.",
+            )
+        )
         self.source_group.setTitle(text("Input raster", "Ráster de entrada"))
         source_form = self.source_group.layout()
         source_form.labelForField(self.layer_combo).setText(text("Layer", "Capa"))
@@ -1048,6 +1256,14 @@ class FilterStackDock(QDockWidget):
         self.duplicate_button.setText(text("Duplicate", "Duplicar"))
         self.remove_button.setText(text("Remove", "Eliminar"))
         self.clear_button.setText(text("Clear", "Limpiar"))
+        self.move_up_button.setText(text("Up", "Subir"))
+        self.move_down_button.setText(text("Down", "Bajar"))
+        self.move_up_button.setToolTip(
+            text("Move the selected filter up", "Subir el filtro seleccionado")
+        )
+        self.move_down_button.setToolTip(
+            text("Move the selected filter down", "Bajar el filtro seleccionado")
+        )
         self.step_list.setToolTip(
             text(
                 "Drag filters to change their execution order.",
@@ -1087,10 +1303,12 @@ class FilterStackDock(QDockWidget):
         )
         self.domain_note.setText(
             text(
-                "SPATIAL = cell-neighbour operation; FFT/HARMONICA = library FFT; FFT/MAGMAP-LIKE = detrend + reflected padding + taper + combined wavenumber operators; MIXED = components from more than one domain.",
-                "ESPACIAL = operación entre celdas vecinas; FFT/HARMONICA = FFT de biblioteca; FFT/TIPO MAGMAP = tendencia + relleno reflejado + suavizado + operadores combinados de número de onda; MIXTO = componentes de más de un dominio.",
+                "SPATIAL = cells and neighbours; FREQUENCY = 2D Fourier/wavenumber; MIXED = spatial + frequency; PHYSICAL MODEL = equations constrained by geophysical parameters. Database describes the input, not a numerical domain.",
+                "ESPACIAL: celdas y sus vecinas. FRECUENCIA: Fourier 2D y número de onda. MIXTO: combina ambos dominios. MODELO FÍSICO: ecuaciones con parámetros geofísicos. Una base de datos es un tipo de entrada, no un dominio numérico.",
             )
         )
+        for index, label in enumerate(("All domains", "Spatial · 2D grids", "Frequency · 2D Fourier", "Mixed · space and frequency", "Physical models", "Other grid operations")):
+            self.domain_filter.setItemText(index, translate(label))
         self.search_label.setText(
             text("Search by method, group or abbreviation", "Buscar por método, grupo o abreviatura")
         )
@@ -1118,7 +1336,7 @@ class FilterStackDock(QDockWidget):
         self.settings_button.setText(text("Settings…", "Configuración…"))
         self.import_grid_action.setText(text("Survey grid file…", "Archivo de grilla de levantamiento…"))
         self.import_gdb_action.setText(text("Esri FileGDB folder…", "Carpeta Esri FileGDB…"))
-        self.import_geosoft_action.setText(text("GeoDatabase (Oasis montaj) inventory/export…", "Inventario/exportación GeoDatabase (Oasis montaj)…"))
+        self.import_geosoft_action.setText(text("Geosoft GeoDatabase inventory/export…", "Inventario/exportación de GeoDatabase Geosoft…"))
         self.example_menu.setTitle(text("Bundled sample datasets", "Datos de ejemplo incluidos"))
         self.sample_mag_action.setText(text("Synthetic magnetic anomaly (nT)", "Anomalía magnética sintética (nT)"))
         self.sample_grav_action.setText(text("Synthetic gravity anomaly (mGal)", "Anomalía gravimétrica sintética (mGal)"))
@@ -1142,6 +1360,7 @@ class FilterStackDock(QDockWidget):
         for index in range(self.step_list.count()):
             item = self.step_list.item(index)
             self._set_item_step(item, self._item_step(item))
+        self._update_stack_state()
 
     def show_settings(self):
         self.settings_dialog.load()
@@ -1202,6 +1421,7 @@ class FilterStackDock(QDockWidget):
         if selected_index >= 0:
             self.layer_combo.setCurrentIndex(selected_index)
         self.layer_combo.blockSignals(False)
+        self._update_stack_state()
 
     def refresh_algorithms(self):
         selected_id = self.algorithm_combo.currentData()
@@ -1210,7 +1430,7 @@ class FilterStackDock(QDockWidget):
         self._algorithm_labels.clear()
         for algorithm in available_algorithms():
             label = (
-                f"[{algorithm_domain(algorithm)}] "
+                f"[{translate(algorithm_domain(algorithm))}] "
                 f"{algorithm.group()} — {algorithm.displayName()}"
             )
             self._algorithm_labels[algorithm.id()] = label
@@ -1233,18 +1453,20 @@ class FilterStackDock(QDockWidget):
             row = QWidget(self.algorithm_list)
             row_layout = QHBoxLayout(row)
             row_layout.setContentsMargins(2, 1, 2, 1)
-            choose_button = QPushButton(label)
+            choose_button = QPushButton(algorithm.displayName() + "\n" + translate(algorithm_domain(algorithm)) + " · " + algorithm.group())
             choose_button.setFlat(True)
-            choose_button.setStyleSheet("text-align: left; padding: 4px;")
-            choose_button.setToolTip("Select this filter")
+            choose_button.setStyleSheet("text-align: left; padding: 10px;")
+            choose_button.setMinimumHeight(64)
+            choose_button.setSizePolicy(qt_enum(QSizePolicy, "Policy", "Ignored"), qt_enum(QSizePolicy, "Policy", "Fixed"))
+            choose_button.setToolTip(label)
             choose_button.clicked.connect(
                 lambda _checked=False, algorithm_id=algorithm.id():
                 self.choose_algorithm_id(algorithm_id)
             )
             info_button = QToolButton()
-            info_button.setText("ⓘ")
+            info_button.setText("i")
             info_button.setToolTip(
-                f"Read scientific and numerical information about {algorithm.displayName()}"
+                translate("Method, parameters and libraries") + ": " + algorithm.displayName()
             )
             info_button.setFixedWidth(30)
             info_button.clicked.connect(
@@ -1261,6 +1483,7 @@ class FilterStackDock(QDockWidget):
         elif self.algorithm_combo.count():
             self.algorithm_combo.setCurrentIndex(0)
         self._update_algorithm_button()
+        self.filter_algorithm_picker(self.algorithm_search.text())
 
     def _update_algorithm_button(self):
         algorithm_id = self.algorithm_combo.currentData()
@@ -1270,10 +1493,14 @@ class FilterStackDock(QDockWidget):
 
     def filter_algorithm_picker(self, text):
         words = text.casefold().split()
+        selected_domain = self.domain_filter.currentData()
         for index in range(self.algorithm_list.count()):
             item = self.algorithm_list.item(index)
             label = str(item.data(_SEARCH_TEXT_ROLE) or "").casefold()
-            item.setHidden(not all(word in label for word in words))
+            algorithm = self._algorithm(item.data(qt_enum(Qt, "ItemDataRole", "UserRole")))
+            domain = algorithm_domain(algorithm).upper() if algorithm else ""
+            category = "MIXED" if "MIXED" in domain else "MODEL" if "MODEL" in domain else "FREQUENCY" if "FREQUENCY" in domain else "SPACE" if "SPACE" in domain or "SPATIAL" in domain else "OTHER"
+            item.setHidden(not all(word in label for word in words) or bool(selected_domain and selected_domain != category))
 
     def choose_algorithm_item(self, item):
         algorithm_id = item.data(qt_enum(Qt, "ItemDataRole", "UserRole"))
@@ -1654,7 +1881,7 @@ class FilterStackDock(QDockWidget):
             return runtime
         selected = QFileDialog.getExistingDirectory(
             self,
-            text("Locate the Geosoft or Oasis montaj installation folder", "Ubicar la carpeta de instalación de Geosoft u Oasis montaj"),
+            text("Locate the optional Geosoft Desktop runtime", "Ubicar el runtime opcional de Geosoft Desktop"),
             "",
         )
         if not selected:
@@ -1677,9 +1904,9 @@ class FilterStackDock(QDockWidget):
         if not source:
             source, _selected_filter = QFileDialog.getOpenFileName(
                 self,
-                text("Choose GeoDatabase (Oasis montaj)", "Elegir GeoDatabase (Oasis montaj)"),
+                text("Choose Geosoft GeoDatabase", "Elegir GeoDatabase Geosoft"),
                 "",
-                "GeoDatabase (Oasis montaj) (*.gdb)",
+                "Geosoft GeoDatabase (*.gdb)",
             )
         if not source:
             return
@@ -1687,9 +1914,9 @@ class FilterStackDock(QDockWidget):
         if runtime is None:
             return
         choice_dialog = QMessageBox(self)
-        choice_dialog.setWindowTitle(text("GeoDatabase (Oasis montaj) export", "Exportación GeoDatabase (Oasis montaj)"))
+        choice_dialog.setWindowTitle(text("Geosoft GeoDatabase export", "Exportación de GeoDatabase Geosoft"))
         choice_dialog.setText(
-            text("Choose what to recover from the Oasis montaj GeoDatabase.", "Elija qué recuperar de la GeoDatabase de Oasis montaj.")
+            text("Choose what to recover from the Geosoft GeoDatabase.", "Elija qué recuperar de la GeoDatabase Geosoft.")
         )
         choice_dialog.setInformativeText(
             text(
@@ -1734,7 +1961,7 @@ class FilterStackDock(QDockWidget):
         else:
             process_environment.insert(
                 "TERRAWORKBENCH_GEOSOFT_ENGINE",
-                "Geosoft gxpy runtime from installed Oasis montaj",
+                "Installed Geosoft Python runtime",
             )
         process.setProcessEnvironment(process_environment)
         starting_message = (
@@ -1744,14 +1971,14 @@ class FilterStackDock(QDockWidget):
             )
             if runtime.standalone
             else text(
-                "Starting the installed Oasis montaj runtime…",
-                "Iniciando el runtime instalado de Oasis montaj…",
+                "Starting the installed Geosoft runtime…",
+                "Iniciando el runtime instalado de Geosoft…",
             )
         )
         progress = QProgressDialog(
             starting_message, text("Cancel", "Cancelar"), 0, 0, self
         )
-        progress.setWindowTitle("TerraWorkbench — GeoDatabase (Oasis montaj)")
+        progress.setWindowTitle("TerraWorkbench — Geosoft GeoDatabase")
         progress.setWindowModality(qt_enum(Qt, "WindowModality", "WindowModal"))
         progress.setMinimumDuration(0)
         progress.setAutoClose(False)
@@ -1783,8 +2010,8 @@ class FilterStackDock(QDockWidget):
                     self,
                     "TerraWorkbench",
                     text(
-                        f"GeoDatabase (Oasis montaj) {'export' if extract_all else 'inventory'} completed.\nAdded {loaded} open-data layer(s)/table(s) to QGIS.\n{output}\n\nThese exported files no longer require Oasis montaj.",
-                        f"Se completó {'la exportación' if extract_all else 'el inventario'} de GeoDatabase (Oasis montaj).\nSe añadieron {loaded} capa(s)/tabla(s) de datos abiertos a QGIS.\n{output}\n\nEstos archivos exportados ya no requieren Oasis montaj.",
+                        f"Geosoft GeoDatabase {'export' if extract_all else 'inventory'} completed.\nAdded {loaded} open-data layer(s)/table(s) to QGIS.\n{output}\n\nThe exported files are open CSV/QGIS data.",
+                        f"Se completó {'la exportación' if extract_all else 'el inventario'} de GeoDatabase Geosoft.\nSe añadieron {loaded} capa(s)/tabla(s) de datos abiertos a QGIS.\n{output}\n\nLos archivos exportados son datos abiertos CSV/QGIS.",
                     ),
                 )
                 if extract_all and self._last_geosoft_point_layer is not None:
@@ -1797,8 +2024,8 @@ class FilterStackDock(QDockWidget):
                     )
                     if runtime.standalone
                     else text(
-                        "The installed Oasis montaj runtime failed. Confirm that it is licensed for this user.",
-                        "Falló el runtime instalado de Oasis montaj. Confirme que tenga licencia para este usuario.",
+                        "The installed Geosoft runtime failed. Confirm that it is available to this user.",
+                        "Falló el runtime instalado de Geosoft. Confirme que esté disponible para este usuario.",
                     )
                 )
                 diagnostic = error_text or text(
@@ -1840,11 +2067,11 @@ class FilterStackDock(QDockWidget):
             url.setQuery(query)
             layer = QgsVectorLayer(
                 url.toString(),
-                f"{Path(source).stem} — {suffix} — GeoDatabase (Oasis montaj)",
+                f"{Path(source).stem} — {suffix} — Geosoft GeoDatabase",
                 "delimitedtext",
             )
             if layer.isValid():
-                self._mark_oasis_source(layer, source, manifest)
+                self._mark_geosoft_source(layer, source, manifest)
                 QgsProject.instance().addMapLayer(layer)
                 loaded += 1
         csv_path = manifest.get("csv")
@@ -1865,14 +2092,14 @@ class FilterStackDock(QDockWidget):
             url.setQuery(query)
             layer = QgsVectorLayer(
                 url.toString(),
-                f"{Path(source).stem} — all channels — GeoDatabase (Oasis montaj)",
+                f"{Path(source).stem} — all channels — Geosoft GeoDatabase",
                 "delimitedtext",
             )
             wkt = manifest.get("coordinate_system", {}).get("wkt", "")
             if wkt:
                 layer.setCrs(QgsCoordinateReferenceSystem.fromWkt(wkt))
             if layer.isValid():
-                self._mark_oasis_source(layer, source, manifest)
+                self._mark_geosoft_source(layer, source, manifest)
                 QgsProject.instance().addMapLayer(layer)
                 self._last_geosoft_point_layer = layer
                 loaded += 1
@@ -1882,7 +2109,7 @@ class FilterStackDock(QDockWidget):
         answer = QMessageBox.question(
             self,
             text("Create analysis grid", "Crear grilla de análisis"),
-            text("The GeoDatabase points are now independent from Oasis montaj. Open the gridding tool to select a channel and create a GeoTIFF for RTP/RTE and the Filter Stack?", "Los puntos de GeoDatabase ya son independientes de Oasis montaj. ¿Abrir la herramienta de interpolación para elegir un canal y crear un GeoTIFF para RTP/RTE y la pila de filtros?"),
+            text("The GeoDatabase points are now open QGIS data. Open the gridding tool to select a channel and create a GeoTIFF for RTP/RTE and the Filter Stack?", "Los puntos de GeoDatabase ya son datos abiertos de QGIS. ¿Abrir la herramienta de interpolación para elegir un canal y crear un GeoTIFF para RTP/RTE y la pila de filtros?"),
             qt_enum(QMessageBox, "StandardButton", "Yes")
             | qt_enum(QMessageBox, "StandardButton", "No"),
             qt_enum(QMessageBox, "StandardButton", "Yes"),
@@ -1908,10 +2135,10 @@ class FilterStackDock(QDockWidget):
         )
 
     @staticmethod
-    def _mark_oasis_source(layer, source, manifest):
+    def _mark_geosoft_source(layer, source, manifest):
         layer.setCustomProperty(
             "TerraWorkbench/sourceFormat",
-            manifest.get("source_format", "GeoDatabase (Oasis montaj)"),
+            manifest.get("source_format", "Geosoft GeoDatabase"),
         )
         layer.setCustomProperty("TerraWorkbench/sourceFile", str(source))
         layer.setCustomProperty(
@@ -1921,11 +2148,11 @@ class FilterStackDock(QDockWidget):
         metadata = layer.metadata()
         metadata.setTitle(layer.name())
         metadata.setAbstract(
-            "Imported from GeoDatabase (Oasis montaj) and converted to open CSV by "
-            "TerraWorkbench. The exported layer is usable without Oasis montaj."
+            "Imported from a Geosoft GeoDatabase and converted to open CSV by "
+            "TerraWorkbench. The exported layer is standard QGIS data."
         )
         metadata.addHistoryItem(
-            f"Source: GeoDatabase (Oasis montaj): {Path(source).name}"
+            f"Source: Geosoft GeoDatabase: {Path(source).name}"
         )
         layer.setMetadata(metadata)
 

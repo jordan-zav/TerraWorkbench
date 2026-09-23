@@ -34,9 +34,20 @@ from ..raster_io import (
 )
 
 
+HARMONICA_GRAVITY_DETAILS = (
+    ("Numerical backend", "TerraWorkbench gravity equations using NumPy"),
+    ("Bouguer/prism backend", "Harmonica >=0.7,<0.8"),
+    ("Host and raster I/O", "QGIS Processing and GDAL"),
+)
+
+
 class GravityCorrectionBase(RasterAlgorithmBase):
     """Shared utilities and metadata for gravity reductions."""
-    processing_domain = "PHYSICAL CORRECTION / GRID"
+    processing_domain = "PHYSICAL MODEL / SPATIAL GRID"
+    implementation_details = (
+        ("Numerical backend", "TerraWorkbench gravity equations using NumPy"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
 
     ELEVATION = "ELEVATION"
     ELEVATION_BAND = "ELEVATION_BAND"
@@ -292,6 +303,7 @@ class CurvatureCorrectionAlgorithm(GravityCorrectionBase):
 
 
 class SimpleBouguerAnomalyAlgorithm(GravityCorrectionBase):
+    implementation_details = HARMONICA_GRAVITY_DETAILS
     def name(self):
         return "simple_bouguer_anomaly"
 
@@ -326,6 +338,7 @@ class SimpleBouguerAnomalyAlgorithm(GravityCorrectionBase):
 
 
 class TerrainCorrectionAlgorithm(GravityCorrectionBase):
+    implementation_details = HARMONICA_GRAVITY_DETAILS
     MAX_CELLS = "MAX_CELLS"
     CLEARANCE = "CLEARANCE"
 
@@ -386,6 +399,7 @@ class TerrainCorrectionAlgorithm(GravityCorrectionBase):
 
 
 class CompleteBouguerAnomalyAlgorithm(GravityCorrectionBase):
+    implementation_details = HARMONICA_GRAVITY_DETAILS
     TERRAIN = "TERRAIN"
     TERRAIN_BAND = "TERRAIN_BAND"
 
@@ -461,6 +475,7 @@ class AiryMohoAlgorithm(GravityCorrectionBase):
 
 
 class AiryIsostaticAnomalyAlgorithm(AiryMohoAlgorithm):
+    implementation_details = HARMONICA_GRAVITY_DETAILS
     MAX_CELLS = "MAX_CELLS"
 
     def name(self):

@@ -41,7 +41,11 @@ from ..raster_io import (
 class RadiometryBase(RasterAlgorithmBase):
     """Shared grid validation and output handling."""
 
-    processing_domain = "RADIOMETRY / GRID"
+    processing_domain = "SPATIAL / CELLWISE GRID"
+    implementation_details = (
+        ("Numerical backend", "TerraWorkbench radiometry equations using NumPy"),
+        ("Host and raster I/O", "QGIS Processing and GDAL"),
+    )
 
     def group(self):
         return self.tr("Gamma-ray spectrometry")

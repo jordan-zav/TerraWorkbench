@@ -1,4 +1,4 @@
-"""Discover an optional licensed Geosoft/Oasis montaj runtime on Windows."""
+"""Discover an optional installed Geosoft Desktop runtime on Windows."""
 
 from __future__ import annotations
 
