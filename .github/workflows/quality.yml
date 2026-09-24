@@ -88,4 +88,4 @@ jobs:
           .qgis-venv/bin/python tests/qgis_coordinates_smoke.py
           .qgis-venv/bin/python tests/qgis_channel_filters_smoke.py
           .qgis-venv/bin/python tests/qgis_magnetic_pipeline_smoke.py
-          .qgis-venv/bin/python tests/qgis_archaeology_asc_smoke.py
+          .qgis-venv/bin/python tests/qgis_survey_asc_smoke.py

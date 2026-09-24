@@ -1,4 +1,4 @@
-"""Cardinal sin(x)/x interpolation of archaeological survey grids."""
+"""Cardinal sin(x)/x interpolation of regular survey grids."""
 
 import json
 import numpy as np

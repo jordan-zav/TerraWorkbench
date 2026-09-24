@@ -9,7 +9,7 @@ import tempfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 sys.path.insert(0, str(Path(os.environ["QGIS_PREFIX_PATH"]) / "python/plugins"))
 
-from process_archaeology_asc import process
+from process_survey_asc import process
 from TerraWorkbench.provider import TerraWorkbenchProvider
 from qgis.core import QgsApplication
 from processing.core.Processing import Processing

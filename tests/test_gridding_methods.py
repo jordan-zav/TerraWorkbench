@@ -163,8 +163,8 @@ def test_minimum_curvature_subset_matches_full_domain():
 
 
 def test_multilevel_checks_offnode_data_and_equation_residuals():
-    from gridding_methods import _multilevel_surface, _offnode_constraints
-    yy, xx = np.mgrid[1:6, 1:6]
+    from gridding_methods import _multilevel_surface, _briggs_constraints
+    yy, xx = np.mgrid[2:5, 2:5]
     xy = np.column_stack((xx.ravel()+.2, yy.ravel()-.15))
     z = np.sin(xy[:, 0]/3)+np.cos(xy[:, 1]/2)
     axis = np.arange(7.)
@@ -173,8 +173,39 @@ def test_multilevel_checks_offnode_data_and_equation_residuals():
         tension=0.,tolerance=1e-6,pass_tolerance=100.,max_iterations=4000)
     assert levels[-1]['converged']
     assert levels[-1]['max_diagonal_scaled_residual'] <= 1e-6
-    a,target = _offnode_constraints(xy,z,axis,axis)
+    a,target,_ = _briggs_constraints(xy,z,axis,axis)
     np.testing.assert_allclose(a@result.ravel(),target,atol=1e-6)
+
+
+@pytest.mark.parametrize("tension", [0., .3, 1.])
+def test_briggs_harmonic_polynomials_all_quadrants_and_near_node(tension):
+    from gridding_methods import _briggs_constraints
+    axis = np.arange(-3., 4.)
+    xx, yy = np.meshgrid(axis, axis)
+    for dx, dy in [(0., 0.), (1e-12, -1e-12), (.3, 0.), (0., -.2),
+                   (.3, .2), (-.3, .2), (.3, -.2), (-.3, -.2), (.5, .5)]:
+        point = np.array([[dx, dy]])
+        for field in (lambda x, y: 3+2*x-y, lambda x, y: x*x-y*y,
+                      lambda x, y: x*y):
+            z = field(point[:, 0], point[:, 1])
+            a, target, anchors = _briggs_constraints(point, z, axis, axis, tension)
+            assert anchors[0] == 24
+            assert np.isfinite(a.data).all()
+            np.testing.assert_allclose(a@field(xx, yy).ravel(), target, atol=1e-12)
+
+
+def test_briggs_quadratic_curvature_and_distinct_from_value_constraint():
+    from gridding_methods import _briggs_constraints, _offnode_constraints
+    axis = np.arange(-3., 4.)
+    point = np.array([[.31, -.27]])
+    xx, yy = np.meshgrid(axis, axis)
+    def field(x, y):
+        return 3+2*x-y+.2*x*x-.4*x*y+.7*y*y
+    z = field(point[:, 0], point[:, 1])
+    a, target, _ = _briggs_constraints(point, z, axis, axis)
+    np.testing.assert_allclose(a@field(xx, yy).ravel(), target, atol=1e-12)
+    taylor, _ = _offnode_constraints(point, z, axis, axis)
+    assert not np.allclose(a.toarray(), taylor.toarray())
 
 
 def test_multilevel_iteration_limit_and_active_seed_controls():
@@ -202,3 +233,14 @@ def test_multilevel_cancellation_during_iteration():
         return checks > 160
     with pytest.raises(InterruptedError):
         model.grid(np.arange(9.),np.arange(9.),canceled=canceled)
+
+
+def test_converged_surface_is_orientation_invariant_on_unaligned_domain():
+    from scripts.audit_curvature_symmetry import audit
+    results = audit(10, [5000])
+    for orientation in results.values():
+        assert orientation['direct_symmetry_max_error'] < 1e-10
+        run = orientation['runs'][0]
+        assert run['final_level']['converged']
+        assert run['rmse_to_direct'] < 1e-7
+        assert run['symmetry_max_error'] < 1e-7

@@ -1,7 +1,7 @@
 """Independent gridders used by TerraWorkbench survey processing.
 
 Minimum curvature defaults to multilevel finite-difference collocation with
-second-order Taylor constraints at spatially averaged observations. A direct
+Briggs curvature constraints at spatially averaged observations. A direct
 variational solver remains available for explicit comparisons. Neither solver
 is a certified replica of RANGRID.
 
@@ -140,11 +140,72 @@ def _prolongate(coarse, coarse_x, coarse_y, x_axis, y_axis):
     return result
 
 
+def _briggs_constraints(points, values, x_axis, y_axis, tension=0.0):
+    """Couple off-node data to the local curvature equation.
+
+    Moment fitting at four neighbouring nodes and the observation estimates
+    the Laplacian exactly for quadratic polynomials. Substitute that estimate
+    into (1-t)*Laplacian**2(u)-t*Laplacian(u)=0, then normalize by the
+    observation coefficient. Two surrounding nodes are needed in each axis.
+    Return anchors explicitly; they must not depend on coefficient ordering.
+    """
+    from scipy.sparse import coo_matrix
+
+    nx, ny = len(x_axis), len(y_axis)
+    h = x_axis[1]-x_axis[0]
+    ix = _nearest_axis_indices(points[:, 0], x_axis)
+    iy = _nearest_axis_indices(points[:, 1], y_axis)
+    nodes = iy*nx+ix
+    distance = (points[:, 0]-x_axis[ix])**2+(points[:, 1]-y_axis[iy])**2
+    order = np.lexsort((values, points[:, 1], points[:, 0], distance, nodes))
+    selected = order[np.r_[True, np.diff(nodes[order]) != 0]]
+    ix, iy, anchors = ix[selected], iy[selected], nodes[selected]
+    if np.any(ix < 2) or np.any(iy < 2) or np.any(ix >= nx-2) or np.any(iy >= ny-2):
+        raise ValueError("Briggs constraints require a two-node margin.")
+    uv = np.column_stack(((points[selected, 0]-x_axis[ix])/h,
+                          (points[selected, 1]-y_axis[iy])/h))
+    # Only exactly coincident coordinates use a fixed node, with no snap radius.
+    exact = np.all(uv == 0, axis=1)
+    active = np.flatnonzero(~exact)
+    offset = uv[active]
+    fixed = np.array([[-1., 1.], [-1., 0.], [0., -1.], [1., -1.]])
+    neighbours = fixed[None, :, :]*np.where(offset[:, None, :] >= 0, 1., -1.)
+    locations = np.concatenate((neighbours, offset[:, None, :]), axis=1)
+    x, y = locations[:, :, 0], locations[:, :, 1]
+    moments = np.stack((x, y, x*x, y*y, x*y), axis=1)
+    rhs = np.broadcast_to([0., 0., 2., 2., 0.], (len(active), 5))
+    weights = np.linalg.solve(moments, rhs[..., None])[..., 0]
+    bend = 1.-tension
+    coupling = 4.*bend+tension
+    denominator = coupling*weights[:, 4]
+    rows, cols, data = [], [], []
+
+    def put(r, c, v):
+        rows.extend(np.asarray(r).tolist())
+        cols.extend(np.asarray(c).tolist())
+        data.extend(np.asarray(v).tolist())
+
+    put(np.flatnonzero(exact), anchors[exact], np.ones(exact.sum()))
+    central = anchors[active]
+    put(active, central, (4.*bend+coupling*weights.sum(axis=1))/denominator)
+    stencil = [(1, 0, -4), (-1, 0, -4), (0, 1, -4), (0, -1, -4),
+               (1, 1, 2), (-1, 1, 2), (1, -1, 2), (-1, -1, 2),
+               (2, 0, 1), (-2, 0, 1), (0, 2, 1), (0, -2, 1)]
+    for dx, dy, coefficient in stencil:
+        put(active, central+dy*nx+dx, np.full(len(active), bend*coefficient)/denominator)
+    for k in range(4):
+        neighbour = central+neighbours[:, k, 1].astype(int)*nx+neighbours[:, k, 0].astype(int)
+        put(active, neighbour, -coupling*weights[:, k]/denominator)
+    a = coo_matrix((data, (rows, cols)), shape=(len(selected), nx*ny)).tocsr()
+    a.eliminate_zeros()
+    return a, values[selected], anchors
+
+
 def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
                         coarse_grid, search_radius, weighting_power, tension,
                         tolerance, pass_tolerance, max_iterations,
                         canceled=None, progress=None):
-    """Collocate the biharmonic equation and off-node Taylor constraints.
+    """Collocate the biharmonic equation and off-node Briggs constraints.
 
     A datum replaces the equation at its nearest node. In particular it does
     not exert the distributed adjoint forces of the variational KKT solver.
@@ -163,9 +224,11 @@ def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
     h = cell_size
     x0 = min(x_axis[0], x_axis[0]+np.floor((points[:, 0].min()-x_axis[0])/h)*h)
     y0 = min(y_axis[0], y_axis[0]+np.floor((points[:, 1].min()-y_axis[0])/h)*h)
-    nx = int(np.ceil((max(x_axis[-1], points[:, 0].max())-x0)/(h*coarse_grid)))*coarse_grid
-    ny = int(np.ceil((max(y_axis[-1], points[:, 1].max())-y0)/(h*coarse_grid)))*coarse_grid
-    if (nx+3)*(ny+3) > 250000:
+    # Coarse-grid rounding is temporary. Keeping it in the final domain adds
+    # an east/north-only extension and changes the converged boundary problem.
+    nx = int(np.ceil((max(x_axis[-1], points[:, 0].max())-x0)/h))
+    ny = int(np.ceil((max(y_axis[-1], points[:, 1].max())-y0)/h))
+    if (nx+5)*(ny+5) > 250000:
         raise ValueError("Minimum curvature is limited to 250000 working nodes; increase cell size.")
     factors = []
     factor = coarse_grid
@@ -179,12 +242,12 @@ def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
     reports = []
     for level, factor in enumerate(factors):
         check_cancel()
-        ax = x0+np.arange(-factor, nx+factor+1, factor)*h
-        ay = y0+np.arange(-factor, ny+factor+1, factor)*h
-        a, z = _offnode_constraints(points, values, ax, ay)
+        level_nx = int(np.ceil(nx/factor))*factor
+        level_ny = int(np.ceil(ny/factor))*factor
+        ax = x0+np.arange(-2*factor, level_nx+2*factor+1, factor)*h
+        ay = y0+np.arange(-2*factor, level_ny+2*factor+1, factor)*h
+        a, z, anchors = _briggs_constraints(points, values, ax, ay, tension)
         q = _bending_energy(len(ax), len(ay), tension)
-        # Taylor's central coefficient is >= 1/2 and larger than all others.
-        anchors = np.asarray(a.argmax(axis=1)).ravel()
         free = np.ones(q.shape[0], dtype=bool)
         free[anchors] = False
         qc, ac = q.tocoo(), a.tocoo()
@@ -247,8 +310,8 @@ def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
 class MinimumCurvatureGridder:
     """Independent finite-difference minimum-curvature interpolation.
 
-    Taylor interpolation is exact for quadratic surfaces but is approximate
-    for general fields. Natural discrete energy boundaries and grid-unit
+    Briggs constraints couple off-node observations to curvature. Natural
+    discrete energy boundaries and grid-unit
     tension are independently defined, not certified RANGRID equivalents.
     Multilevel iteration uses the seed, refinement and pass controls. The
     optional variational solver records the controls it does not use.
@@ -377,7 +440,9 @@ class MinimumCurvatureGridder:
             "proprietary_equivalence": False,
             "converged": bool(iteration_metadata[-1]["converged"]),
             "boundary": "natural variational boundary of discrete Hessian energy",
-            "constraints": "second-order Taylor constraints at actual observation coordinates",
+            "constraints": ("Briggs curvature constraints at actual observation coordinates"
+                            if self.solver == "multilevel" else
+                            "second-order Taylor constraints at actual observation coordinates"),
             "solver": "multilevel Gauss-Seidel collocation" if self.solver == "multilevel" else "sparse KKT LU with iterative refinement",
             "blanking_distance": self.blanking_distance,
         }

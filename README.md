@@ -92,7 +92,7 @@ Survey grids / points / channels
 | Geosoft binary `.GRD` | Native open-source read | Recovers CRS, title, dates and available XML metadata |
 | GeoTIFF, GXF, AAIGrid and regular XYZ | GDAL | Converted to analysis-ready GeoTIFF |
 | CSV / ASCII X-Y-value grids | Native | Requires a complete regular grid; irregular points are not silently interpolated |
-| Survey point layers | Native | IDW or nearest-neighbor gridding to a projected raster |
+| Survey point layers | Native | IDW, nearest neighbor, global/local TPS and experimental minimum curvature to a projected raster |
 | Esri FileGDB rasters, feature classes and tables | GDAL/OGR | Select one raster/vector layer or load every vector/table layer |
 | Geosoft single-file `.gdb` | Standalone inventory and full export to open CSV/QGIS layers | Uses the Windows-only BSD GX Developer runtime with an optional installed-runtime fallback |
 
@@ -262,9 +262,14 @@ unless an external geomagnetic index is supplied; DEM and platform heights must
 share a vertical datum.
 
 **Survey point gridding** supports a projected output CRS, density-based or
-explicit cell size, IDW or nearest-neighbor interpolation, neighbor limits and
-search radius. A zero search radius fills the bounding rectangle; use a finite
-radius to preserve unsupported gaps as NoData.
+explicit cell size, IDW, nearest neighbor, global/local TPS and experimental
+multilevel minimum curvature. Minimum curvature uses Briggs off-node constraints,
+reports convergence and separates the initialization search radius from output
+blanking. Its final domain does not inherit asymmetric coarse-grid rounding.
+Windowed sinc interpolation requires a regular sample lattice and also supports
+raster expansion; it does not directly grid irregular GPS points or increase
+measured resolution. See [interpolation methods](docs/interpolation_methods.md)
+for parameter semantics and limitations.
 
 **Directional microleveling** estimates short across-line corrugation while
 retaining longer along-line wavelengths. Both the corrected grid and removed

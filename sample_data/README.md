@@ -31,9 +31,3 @@ reproduction, including commercial use, under its dataset-specific usage
 conditions and the Open Government Licence - Canada. They are published under
 `nrcan/` with [`nrcan/NOTICE.md`](nrcan/NOTICE.md), original XML metadata,
 checksums and the required citation.
-
-The Mount Milligan files identify Geoscience BC Report 2009-7 as their source.
-They remain under ignored `local_private/` because their download page does not
-state an explicit redistribution licence. The official project page is:
-<https://www.geosciencebc.com/projects/2008-032/>. Public download availability
-must not be treated as permission to mirror a third party's files.

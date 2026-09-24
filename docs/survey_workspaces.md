@@ -245,11 +245,7 @@ removed on cancellation or failure; successful jobs are recorded in the catalog.
 NumPy supplies FFTs and algebra, SciPy supplies nearest fill/Gaussian smoothing,
 PyArrow supplies columnar channels, and GDAL supplies GeoTIFF/CRS I/O.
 
-This API is backend-only; no new GUI controls are added. The reproducible
-`scripts/validate_hydraulic_connected.py` compares 14 products with the historical
-Hydraulic reference using an existing finite-observation extraction and native
-crossover results. It is not validation of the GDB reader, new interpolation,
-inversion, eight-million-record capacity or all archaeology workflows.
+This API is backend-only; no new GUI controls are added.
 
 `tests/test_text_import.py` covers separator/header inference, preambles, decimal
 comma, encoding, quoted values, fixed widths, type overrides, leading-zero IDs,
