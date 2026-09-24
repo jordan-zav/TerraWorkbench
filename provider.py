@@ -79,6 +79,7 @@ from .algorithms.magnetic_transforms import (
     ReductionToEquatorAlgorithm,
     ReductionToPoleIgrfAlgorithm,
 )
+from .algorithms.sinc_interpolation import SincInterpolationAlgorithm
 from .algorithms.survey_gridding import SurveyPointGriddingAlgorithm
 from .algorithms.spatial_filters import NinePointSmoothingAlgorithm, AutomaticGainControlAlgorithm, CircularMedianAlgorithm
 from .algorithms.line_leveling import CrossoverLevelingAlgorithm
@@ -188,6 +189,7 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(ReductionToEquatorAlgorithm())
         self.addAlgorithm(FieldDirectionTransformAlgorithm())
         self.addAlgorithm(SurveyPointGriddingAlgorithm())
+        self.addAlgorithm(SincInterpolationAlgorithm())
         self.addAlgorithm(CrossoverLevelingAlgorithm())
         self.addAlgorithm(MicrolevelingAlgorithm())
         self.addAlgorithm(GravityDensityInversionAlgorithm())

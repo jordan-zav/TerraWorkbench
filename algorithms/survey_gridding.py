@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import json
 
 import numpy as np
 from osgeo import gdal
@@ -22,14 +23,15 @@ from qgis.core import (
 from ..qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
 from ..i18n import translate
 from ..basic_processing import ThinPlateGridder
+from ..gridding_methods import MinimumCurvatureGridder, SincGridder
 
 
 class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
     processing_domain = "SPACE / POINTS"
     implementation_details = (
-        ("Numerical backend", "SciPy cKDTree / RBFInterpolator thin_plate_spline, NumPy"),
+        ("Numerical backend", "NumPy / SciPy cKDTree, multilevel minimum-curvature and windowed sinc solvers"),
         ("Host and raster I/O", "QGIS Processing and GDAL"),
-        ("Compatibility", "TPS is not RANGRID; local TPS is an approximation, not a global minimum-curvature solution"),
+        ("Compatibility", "Independent experimental minimum-curvature solver; sinc(x)/x is a separate interpolator; no proprietary byte-identical claim"),
     )
     INPUT = "INPUT"
     VALUE_FIELD = "VALUE_FIELD"
@@ -89,6 +91,8 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
                     "Inverse distance weighting (IDW)", "Nearest neighbor",
                     "Minimum curvature (global thin-plate spline)",
                     "Local thin-plate spline (approximation)",
+                    "Sinc(x)/x (windowed 2D interpolator)",
+                    "Minimum curvature (experimental multilevel solver)",
                 )],
                 defaultValue=0,
             )
@@ -139,6 +143,48 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterNumber(
             "TPS_NEIGHBORS", self.tr("Local TPS neighbors"),
             type=PROCESSING_NUMBER_INTEGER, defaultValue=64, minValue=3, maxValue=512))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_TOLERANCE", self.tr("Minimum-curvature tolerance (channel units)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.01258, minValue=1e-12))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_PASS_TOLERANCE", self.tr("Minimum-curvature pass tolerance (%)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=99.0, minValue=0.1, maxValue=100.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_MAX_ITERATIONS", self.tr("Minimum-curvature maximum iterations"),
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=100, minValue=1, maxValue=10000))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_TENSION", self.tr("Minimum-curvature internal tension (0–1)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0, maxValue=1.0))
+        self.addParameter(QgsProcessingParameterEnum(
+            "RANGRID_COARSE_GRID", self.tr("Minimum-curvature starting coarse grid"),
+            options=["16", "8", "4", "2", "1"], defaultValue=0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_SEARCH_RADIUS", self.tr("Minimum-curvature starting search radius"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_BLANKING", self.tr("Minimum-curvature blanking distance"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_DESAMPLE", self.tr("Minimum-curvature desample factor"),
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=1, minValue=1, maxValue=64))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_WEIGHT_POWER", self.tr("Minimum-curvature weighting power"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=2.0, minValue=0.1, maxValue=20.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "RANGRID_WEIGHT_SLOPE", self.tr("Minimum-curvature weighting slope"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0, maxValue=1000.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "SINC_RADIUS", self.tr("Sinc(x)/x support radius (sample spacings)"),
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=4, minValue=1, maxValue=32))
+        self.addParameter(QgsProcessingParameterNumber(
+            "SINC_SPACING", self.tr("Sinc original X sample spacing (required)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "SINC_SPACING_Y", self.tr("Sinc original Y spacing (0 = X spacing)"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
+        self.addParameter(QgsProcessingParameterNumber(
+            "SINC_BLANKING", self.tr("Sinc(x)/x blanking distance"),
+            type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
         self.addParameter(
             QgsProcessingParameterRasterDestination(
                 self.OUTPUT, self.tr("Gridded GeoTIFF")
@@ -223,7 +269,7 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
         radius = self.parameterAsDouble(parameters, self.SEARCH_RADIUS, context)
         query_radius = np.inf if radius <= 0.0 else radius
         method = self.parameterAsInt(parameters, self.METHOD, context)
-        if method not in (0, 1, 2, 3):
+        if method not in (0, 1, 2, 3, 4, 5):
             raise QgsProcessingException("Unknown interpolation method.")
         neighbors = min(
             self.parameterAsInt(parameters, self.NEIGHBORS, context), len(values)
@@ -238,8 +284,10 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             ) from error
         tree = cKDTree(coordinates)
         tps = None
+        minimum_curvature = None
+        sinc = None
         smoothing = self.parameterAsDouble(parameters, "TPS_SMOOTHING", context)
-        if method >= 2:
+        if method in (2, 3):
             tps_neighbors = self.parameterAsInt(parameters, "TPS_NEIGHBORS", context) if method == 3 else 0
             try:
                 tps = ThinPlateGridder(coordinates, values, smoothing, tps_neighbors)
@@ -248,6 +296,54 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             feedback.pushInfo(f"TPS: {tps.duplicate_count} coincident observations averaged; "
                               f"neighbors={tps.neighbors or 'global'}; normalized smoothing={smoothing}. "
                               "Search radius masks output by nearest-point distance; it does not restrict TPS fitting points.")
+        if method == 5:
+            if cell_count > 250_000:
+                raise QgsProcessingException("Minimum curvature is limited to 250000 working nodes (including margins); increase cell size.")
+            coarse_options = (16, 8, 4, 2, 1)
+            coarse_index = self.parameterAsInt(parameters, "RANGRID_COARSE_GRID", context)
+            coarse_grid = coarse_options[max(0, min(coarse_index, len(coarse_options) - 1))]
+            rangrid_radius = self.parameterAsDouble(parameters, "RANGRID_SEARCH_RADIUS", context)
+            try:
+                minimum_curvature = MinimumCurvatureGridder(
+                    coordinates,
+                    values,
+                    cell_size,
+                    blanking_distance=self.parameterAsDouble(parameters, "RANGRID_BLANKING", context),
+                    desample_factor=self.parameterAsInt(parameters, "RANGRID_DESAMPLE", context),
+                    search_radius=rangrid_radius,
+                    weighting_power=self.parameterAsDouble(parameters, "RANGRID_WEIGHT_POWER", context),
+                    weighting_slope=self.parameterAsDouble(parameters, "RANGRID_WEIGHT_SLOPE", context),
+                    tolerance=self.parameterAsDouble(parameters, "RANGRID_TOLERANCE", context),
+                    pass_tolerance=self.parameterAsDouble(parameters, "RANGRID_PASS_TOLERANCE", context),
+                    max_iterations=self.parameterAsInt(parameters, "RANGRID_MAX_ITERATIONS", context),
+                    tension=self.parameterAsDouble(parameters, "RANGRID_TENSION", context),
+                    coarse_grid=coarse_grid,
+                )
+            except ValueError as error:
+                raise QgsProcessingException(str(error)) from error
+            feedback.pushInfo(
+                "Minimum curvature: independent multilevel experimental solver; "
+                "off-node constraints and residual checks at each refinement level; "
+                "not a proprietary byte-identical implementation."
+            )
+        if method == 4:
+            sinc_spacing = self.parameterAsDouble(parameters, "SINC_SPACING", context)
+            if sinc_spacing <= 0.0:
+                raise QgsProcessingException("Specify the original sample spacing for sinc, independently of output cell size.")
+            try:
+                sinc = SincGridder(
+                    coordinates,
+                    values,
+                    (sinc_spacing, self.parameterAsDouble(parameters, "SINC_SPACING_Y", context) or sinc_spacing),
+                    radius=self.parameterAsInt(parameters, "SINC_RADIUS", context),
+                    blanking_distance=self.parameterAsDouble(parameters, "SINC_BLANKING", context),
+                )
+            except ValueError as error:
+                raise QgsProcessingException(str(error)) from error
+            feedback.pushInfo(
+                "Sinc(x)/x: windowed two-dimensional interpolator; "
+                f"spacing={sinc_spacing:g}, radius={sinc.radius} sample spacings."
+            )
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
         dataset = gdal.GetDriverByName("GTiff").Create(
             output,
@@ -272,7 +368,14 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             {
                 "SOURCE_FORMAT": "QGIS survey point layer",
                 "VALUE_FIELD": value_field,
-                "INTERPOLATION": ("IDW", "Nearest neighbor", "Global thin-plate spline", "Local thin-plate spline approximation")[method],
+                "INTERPOLATION": (
+                    "IDW",
+                    "Nearest neighbor",
+                    "Global thin-plate spline",
+                    "Local thin-plate spline approximation",
+                    "Sinc(x)/x windowed 2D interpolator",
+                    "Minimum curvature (experimental multilevel)",
+                )[method],
                 "CELL_SIZE": str(cell_size),
                 "SEARCH_RADIUS": "unlimited" if radius <= 0.0 else str(radius),
                 "NEIGHBORS": str(neighbors),
@@ -287,10 +390,52 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             dataset.SetMetadataItem("TPS_COORDINATE_SCALE", str(tps.scale))
             dataset.SetMetadataItem("TPS_DUPLICATES_AVERAGED", str(tps.duplicate_count))
             dataset.SetMetadataItem("TPS_RADIUS_MEANING", "Output nearest-point distance mask only")
+        if minimum_curvature is not None:
+            dataset.SetMetadataItem("RANGRID_ALGORITHM", "Independent multilevel minimum-curvature solver")
+            dataset.SetMetadataItem("RANGRID_TOLERANCE", str(minimum_curvature.tolerance))
+            dataset.SetMetadataItem("RANGRID_PASS_TOLERANCE", str(minimum_curvature.pass_tolerance))
+            dataset.SetMetadataItem("RANGRID_MAX_ITERATIONS", str(minimum_curvature.max_iterations))
+            dataset.SetMetadataItem("RANGRID_TENSION", str(minimum_curvature.tension))
+            dataset.SetMetadataItem("RANGRID_COARSE_GRID", str(minimum_curvature.coarse_grid))
+            dataset.SetMetadataItem("RANGRID_SEARCH_RADIUS", str(minimum_curvature.search_radius))
+            dataset.SetMetadataItem("RANGRID_BLANKING", str(minimum_curvature.blanking_distance))
+            dataset.SetMetadataItem("RANGRID_DESAMPLE", str(minimum_curvature.desample_factor))
+            dataset.SetMetadataItem("RANGRID_WEIGHT_POWER", str(minimum_curvature.weighting_power))
+            dataset.SetMetadataItem("RANGRID_WEIGHT_SLOPE", str(minimum_curvature.weighting_slope))
+            dataset.SetMetadataItem("RANGRID_PROPRIETARY_EQUIVALENCE", "false")
+        if sinc is not None:
+            dataset.SetMetadataItem("SINC_ALGORITHM", "Windowed two-dimensional sinc(x)/x interpolator")
+            dataset.SetMetadataItem("SINC_SPACING_X", str(sinc.spacing[0]))
+            dataset.SetMetadataItem("SINC_SPACING_Y", str(sinc.spacing[1]))
+            dataset.SetMetadataItem("SINC_RADIUS", str(sinc.radius))
+            dataset.SetMetadataItem("SINC_BLANKING", str(sinc.blanking_distance))
         band = dataset.GetRasterBand(1)
         nodata = -3.4028234663852886e38
         band.SetNoDataValue(nodata)
         x_centers = minimum[0] + np.arange(columns) * cell_size
+        minimum_curvature_grid = None
+        if minimum_curvature is not None:
+            # The core solver uses ascending y coordinates; GeoTIFF rows are
+            # written north to south, so flip the completed grid once.
+            y_ascending = np.sort(maximum[1] - np.arange(rows) * cell_size)
+            try:
+                minimum_curvature_grid = np.flipud(
+                    minimum_curvature.grid(
+                        x_centers,
+                        y_ascending,
+                        canceled=feedback.isCanceled,
+                        progress=lambda fraction: feedback.setProgress(20.0 + 60.0 * fraction),
+                    )
+                )
+            except (InterruptedError, ValueError) as error:
+                dataset = None
+                if isinstance(error, InterruptedError):
+                    return {}
+                raise QgsProcessingException(str(error)) from error
+            dataset.SetMetadataItem("TW_MINIMUM_CURVATURE", json.dumps(minimum_curvature.metadata))
+            if not minimum_curvature.metadata["converged"]:
+                feedback.reportError("Minimum curvature reached the iteration limit without meeting convergence tolerance.", fatalError=False)
+            feedback.pushInfo(f"Minimum-curvature levels: {minimum_curvature.metadata['levels']}")
         block_rows = 128
         for row_start in range(0, rows, block_rows):
             if feedback.isCanceled():
@@ -300,6 +445,15 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             y_centers = maximum[1] - np.arange(row_start, row_end) * cell_size
             grid_x, grid_y = np.meshgrid(x_centers, y_centers)
             query = np.column_stack((grid_x.ravel(), grid_y.ravel()))
+            if minimum_curvature_grid is not None:
+                result = minimum_curvature_grid[row_start:row_end].ravel()
+                if np.any(np.abs(result[np.isfinite(result)]) > np.finfo(np.float32).max):
+                    dataset = None
+                    raise QgsProcessingException("Interpolation output exceeds Float32 range.")
+                result = np.where(np.isfinite(result), result, nodata).astype(np.float32)
+                band.WriteArray(result.reshape(row_end - row_start, columns), 0, row_start)
+                feedback.setProgress(80.0 + 20.0 * row_end / rows)
+                continue
             if tps is not None:
                 distances, _ = tree.query(query, k=1)
                 supported = distances <= query_radius
@@ -320,6 +474,19 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
                     dataset = None
                     raise QgsProcessingException("TPS output exceeds Float32 range; rescale the input.")
                 band.WriteArray(result.reshape(row_end - row_start, columns).astype(np.float32), 0, row_start)
+                feedback.setProgress(20.0 + 80.0 * row_end / rows)
+                continue
+            if sinc is not None:
+                try:
+                    result = sinc.evaluate(query, canceled=feedback.isCanceled)
+                except InterruptedError:
+                    dataset = None
+                    return {}
+                if np.any(np.abs(result[np.isfinite(result)]) > np.finfo(np.float32).max):
+                    dataset = None
+                    raise QgsProcessingException("Interpolation output exceeds Float32 range.")
+                result = np.where(np.isfinite(result), result, nodata).astype(np.float32)
+                band.WriteArray(result.reshape(row_end - row_start, columns), 0, row_start)
                 feedback.setProgress(20.0 + 80.0 * row_end / rows)
                 continue
             k = 1 if method == 1 else neighbors
@@ -375,9 +542,11 @@ class SurveyPointGriddingAlgorithm(QgsProcessingAlgorithm):
             "density. Search radius 0 fills the complete bounding rectangle, which is ready "
             "for FFT filters but extrapolates at edges and across unsampled gaps. Set a finite "
             "radius to constrain extrapolation and leave unsupported cells as NoData. IDW is "
-            "deterministic and does not perform line leveling."
+            "deterministic and does not perform line leveling. Minimum curvature uses an "
+            "independent multilevel experimental solver. Sinc(x)/x is a separate windowed "
+            "interpolator, not a raster smoothing filter."
         ) + "\n\n" + self.tr(
-            "Global thin-plate spline minimizes bending with an affine polynomial and is limited to 2000 unique points. Local TPS uses a configurable neighborhood and is not a global minimum-curvature solution. Coincident values are averaged. Smoothing uses isotropically normalized coordinates; it is not tension. Search radius only masks TPS output by distance to the nearest observation. No RANGRID equivalence is claimed."
+            "Global thin-plate spline minimizes bending with an affine polynomial and is limited to 2000 unique points. Local TPS uses a configurable neighborhood and is not a global minimum-curvature solution. Coincident values are averaged. Smoothing uses isotropically normalized coordinates; it is not tension. Search radius only masks TPS output by distance to the nearest observation. The minimum-curvature and sinc methods are independent implementations with explicit metadata; no proprietary byte-identical claim is made."
         ) + "\n\n" + self.tr(
-            "Numerical backend: NumPy and SciPy (RBFInterpolator, cKDTree). Raster I/O: QGIS and GDAL."
+            "Numerical backend: NumPy and SciPy (cKDTree, finite-difference minimum curvature, windowed sinc, RBFInterpolator). Raster I/O: QGIS and GDAL."
         )

@@ -81,9 +81,11 @@ jobs:
         run: |
           .qgis-venv/bin/python tests/qgis_smoke_test.py
           .qgis-venv/bin/python tests/qgis_basic_processing_smoke.py
+          .qgis-venv/bin/python tests/qgis_gridding_methods_smoke.py
           .qgis-venv/bin/python tests/qgis_gui_smoke.py
           .qgis-venv/bin/python tests/qgis_workspace_smoke.py
           .qgis-venv/bin/python tests/qgis_text_import_smoke.py
           .qgis-venv/bin/python tests/qgis_coordinates_smoke.py
           .qgis-venv/bin/python tests/qgis_channel_filters_smoke.py
           .qgis-venv/bin/python tests/qgis_magnetic_pipeline_smoke.py
+          .qgis-venv/bin/python tests/qgis_archaeology_asc_smoke.py

@@ -5,7 +5,7 @@ are immutable. Catalogue transactions expose complete files only. A crash
 before publication can leave an unreferenced file, never a partial channel.
 """
 
-from contextlib import contextmanager, ExitStack
+from contextlib import closing, contextmanager, ExitStack
 import ast
 import csv
 from datetime import datetime, timezone
@@ -466,6 +466,73 @@ class SurveyStore:
                     "value", "double", json.dumps(provenance), _now()))
                 self._event(db, database_id, "channel_filter", {**provenance, "output": output_name})
             return {"output": output_name, **stats}
+        except BaseException:
+            staging.unlink(missing_ok=True)
+            target.unlink(missing_ok=True)
+            raise
+
+    def correct_magnetic(self, database_id, value, time_channel, track, sensor,
+                         options, prefix="mag", time_scale=1., azimuth=None,
+                         base_time=None, base_value=None, base_reference=None,
+                         canceled=None):
+        """Atomically publish magnetic correction terms with version provenance.
+
+        time_scale converts the survey time channel to seconds. Base arrays must
+        already be seconds on the same clock. Bounded to three million rows.
+        """
+        import hashlib
+        if __package__:
+            from .survey_correction_pipeline import correct_magnetic_arrays
+        else:
+            from survey_correction_pipeline import correct_magnetic_arrays
+        options.validate()
+        if not np.isfinite(time_scale) or time_scale <= 0:
+            raise ValueError("Time scale must be positive seconds per input unit.")
+        database = next(d for d in self.databases() if d["id"] == database_id)
+        if database["rows"] > 3_000_000:
+            raise ValueError("Correction workspace is limited to three million rows.")
+        names = [value, time_channel, track, sensor] + ([azimuth] if azimuth else [])
+        snapshot = self._snapshot(database_id, list(dict.fromkeys(names)))
+        pa, pq = _arrow()
+        parts = {c["name"]: [] for c in snapshot}
+        with closing(self._batches(snapshot, canceled=canceled)) as batches:
+            for batch in batches:
+                for name in parts:
+                    parts[name].append(batch.column(name).to_numpy(zero_copy_only=False))
+        arrays = {name: np.concatenate(chunks) for name, chunks in parts.items()}
+        outputs, recipe = correct_magnetic_arrays(arrays[value], arrays[time_channel].astype(float) * time_scale,
+            arrays[track], arrays[sensor], options, base_time, base_value, base_reference,
+            arrays[azimuth] if azimuth else None, canceled)
+        if not recipe["valid_output_rows"]:
+            raise ValueError("No valid corrected observations; nothing published.")
+        output_names = {key: _name(prefix + "__" + key) for key in outputs}
+        if set(output_names.values()).intersection(c["name"] for c in self.channels(database_id)):
+            raise ValueError("Correction outputs must use new channel names.")
+        recipe.update(operation="magnetic_corrections", time_scale=time_scale,
+                      inputs={c["name"]: c["version_id"] for c in snapshot}, numpy=np.__version__)
+        if base_time is not None:
+            base_data = np.column_stack((base_time, base_value)).astype("<f8")
+            recipe["base_sha256"] = hashlib.sha256(base_data.tobytes()).hexdigest()
+            # Preserve the exact external observations, not just a fingerprint.
+            recipe["base_observations_seconds_value"] = base_data.tolist()
+        target = self._path(f"databases/{database_id}/{uuid.uuid4().hex}.parquet")
+        staging = target.with_suffix(".partial")
+        try:
+            table = pa.table({output_names[k]: pa.array(v, mask=~np.isfinite(v)) for k, v in outputs.items()})
+            pq.write_table(table, staging, compression="zstd")
+            _check_cancel(canceled)
+            staging.replace(target)
+            unit = next(c["unit"] for c in snapshot if c["name"] == value)
+            with self._connection() as db:
+                db.execute("BEGIN IMMEDIATE")
+                for role, name in output_names.items():
+                    channel_id = uuid.uuid4().hex
+                    db.execute("INSERT INTO channels VALUES(?,?,?,?)", (channel_id, database_id, name, unit))
+                    db.execute("INSERT INTO versions VALUES(?,?,?,?,?,?,?,?)", (
+                        uuid.uuid4().hex, channel_id, 1, target.relative_to(self.root).as_posix(), name,
+                        "double", json.dumps({**recipe, "output_role": role}, allow_nan=False), _now()))
+                self._event(db, database_id, "magnetic_corrections", {**recipe, "outputs": output_names})
+            return {"outputs": output_names, "recipe": recipe}
         except BaseException:
             staging.unlink(missing_ok=True)
             target.unlink(missing_ok=True)

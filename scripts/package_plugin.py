@@ -44,9 +44,11 @@ ROOT_FILES = (
     "line_processing.py",
     "microlevel.py",
     "basic_processing.py",
+    "gridding_methods.py",
     "survey_store.py",
     "magnetic_pipeline.py",
     "survey_grid_pipeline.py",
+    "survey_correction_pipeline.py",
     "channel_filters.py",
     "channel_filter_dialog.py",
     "channel_pipeline_dialog.py",
@@ -77,6 +79,7 @@ ROOT_FILES = (
 )
 
 DOC_FILES = (
+    "docs/interpolation_methods.md",
     "docs/basic_processing_migration.md",
     "docs/survey_workspaces.md",
     "docs/filter-stack.png",
