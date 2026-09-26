@@ -207,6 +207,7 @@ def main():
             "terraworkbench:complete_bouguer_anomaly",
             "terraworkbench:airy_isostatic_moho",
             "terraworkbench:airy_isostatic_anomaly",
+            "terraworkbench:airy_isostatic_anomaly_fft",
             "terraworkbench:grid_survey_points",
             "terraworkbench:crossover_line_leveling",
             "terraworkbench:microlevel_grid",
@@ -242,8 +243,8 @@ def main():
             raise AssertionError(
                 f"Missing algorithms: {sorted(expected - algorithm_ids)}"
             )
-        if len(algorithm_ids) != 93:
-            raise AssertionError(f"Expected 93 algorithms, found {len(algorithm_ids)}")
+        if len(algorithm_ids) != 95:
+            raise AssertionError(f"Expected 95 algorithms, found {len(algorithm_ids)}")
 
         with tempfile.TemporaryDirectory(
             prefix="terraworkbench_"
@@ -256,6 +257,7 @@ def main():
             terrain_path = temporary_path / "terrain.tif"
             complete_bouguer_path = temporary_path / "complete_bouguer.tif"
             airy_moho_path = temporary_path / "airy_moho.tif"
+            airy_fft_path = temporary_path / "airy_fft.tif"
             isostatic_path = temporary_path / "isostatic.tif"
             upward_path = temporary_path / "upward.tif"
             stack_path = temporary_path / "stack"
@@ -922,6 +924,13 @@ def main():
                     },
                 )
                 processing.run(
+                    "terraworkbench:airy_isostatic_anomaly_fft",
+                    {"INPUT": complete_layer, "BAND": 1, "REGIONAL": layer,
+                     "REFERENCE_DEPTH": 30000., "DENSITY_CRUST": 2670.,
+                     "DENSITY_MANTLE": 3270., "HEIGHT": 0.,
+                     "OUTPUT": str(airy_fft_path)},
+                )
+                processing.run(
                     "terraworkbench:reduction_to_pole_igrf",
                     {
                         "INPUT": layer,
@@ -996,7 +1005,7 @@ def main():
                             f"No output from {stack_algorithm.id()}"
                         )
                     exercised_stack_algorithms += 1
-                if exercised_stack_algorithms != 65:
+                if exercised_stack_algorithms != 66:
                     raise AssertionError(
                         "Not every Filter Stack-compatible algorithm was executed"
                     )
@@ -1090,7 +1099,7 @@ def main():
                     if spectrum_plot.grab().isNull():
                         raise AssertionError("Spectrum preview did not render")
                     spectrum_plot.deleteLater()
-                    if len(available_algorithms()) != 65:
+                    if len(available_algorithms()) != 66:
                         raise AssertionError(
                             "Filter Stack is missing registered algorithms"
                         )
@@ -1186,6 +1195,7 @@ def main():
                     terrain_path,
                     complete_bouguer_path,
                     airy_moho_path,
+                    airy_fft_path,
                     isostatic_path,
                     upward_path,
                     directional_path,

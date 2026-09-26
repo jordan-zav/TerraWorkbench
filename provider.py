@@ -8,6 +8,7 @@ from qgis.core import QgsProcessingProvider
 from .metadata_utils import plugin_version
 from .algorithms.bouguer import BouguerCorrectionAlgorithm
 from .algorithms.gravity_corrections import (
+    AiryFFTAnomalyAlgorithm,
     AiryIsostaticAnomalyAlgorithm,
     AiryMohoAlgorithm,
     CompleteBouguerAnomalyAlgorithm,
@@ -160,6 +161,7 @@ class TerraWorkbenchProvider(QgsProcessingProvider):
         self.addAlgorithm(CompleteBouguerAnomalyAlgorithm())
         self.addAlgorithm(AiryMohoAlgorithm())
         self.addAlgorithm(AiryIsostaticAnomalyAlgorithm())
+        self.addAlgorithm(AiryFFTAnomalyAlgorithm())
         self.addAlgorithm(UpwardContinuationAlgorithm())
         self.addAlgorithm(GaussianLowPassAlgorithm())
         self.addAlgorithm(GaussianHighPassAlgorithm())

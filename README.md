@@ -131,13 +131,15 @@ result into QGIS with recovered coordinate-system metadata.
 - Bullard-B Earth-curvature correction for land elevations
 - DEM rectangular-prism terrain correction with an explicit computation guard
 - Complete land Bouguer anomaly: `observed - GRS80 + free-air - plate + terrain - Bullard B`
-- Airy Moho-depth model and finite-prism isostatic residual anomaly
+- Airy Moho-depth model and [regional isostatic residuals](docs/isostasy.md), with finite-prism and explicitly periodic FFT models
 
 Observed gravity must be calibrated. Moving-platform points can use the explicit
 survey-wide drift, external-tide and Eötvös correction tool before gridding; an
 already reduced grid must not be corrected twice. Elevations must be geometric heights referenced to the ellipsoid and
-aligned rasters must share the same CRS, extent and pixel grid. Terrain and Airy
-forward modelling scale approximately with the square of the number of cells, so
+aligned reduction rasters must share the same CRS, extent and pixel grid. Airy
+uses a common vertical datum for model and stations, with an optional independent
+regional grid in the same metric CRS. Station NoData is preserved; regional load
+gaps are rejected. Direct forward modelling scales with station/prism pairs, so
 the tools enforce a configurable safety limit and should use a defensible regional
 resolution. The DEM/model extent is the outer correction boundary; inspect edges
 and run density, depth and resolution sensitivity tests.
@@ -414,10 +416,10 @@ database editing feature or a field-scale performance certification.
 
 Version **0.15.0** is an internal test build. The current verification baseline is:
 
-- 145 unit/structure tests
+- 176 unit/structure tests
 - Ruff clean
-- 93 algorithms expected in QGIS 3.44
-- Real Processing of all 65 Filter Stack-compatible algorithms and multi-step stack smoke tests
+- 95 algorithms expected in QGIS 3.44
+- Real Processing of all 66 Filter Stack-compatible algorithms and multi-step stack smoke tests
 - Gravity, susceptibility, MVI and joint TreeMesh inversion smoke tests
 - Validated QGIS ZIP structure
 

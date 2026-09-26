@@ -58,6 +58,7 @@ ROOT_FILES = (
     "survey_workspace_dialog.py",
     "inversion_core.py",
     "gravity_corrections.py",
+    "isostasy.py",
     "radiometry.py",
     "survey_corrections.py",
     "preprocessing.py",
@@ -79,6 +80,7 @@ ROOT_FILES = (
 )
 
 DOC_FILES = (
+    "docs/isostasy.md",
     "docs/interpolation_methods.md",
     "docs/basic_processing_migration.md",
     "docs/survey_workspaces.md",
