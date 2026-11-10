@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="430" viewBox="0 0 1120 430">
+<rect width="1120" height="430" fill="white"/>
+<defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8" fill="#31556c"/></marker></defs>
+<g font-family="Arial, sans-serif" fill="#17394c">
+<text x="35" y="40" font-size="23" font-weight="bold">One scientific implementation, multiple entry points</text>
+<path d="M270,165 L300,165" stroke="#31556c" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M540,165 L570,165" stroke="#31556c" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M810,165 L840,165" stroke="#31556c" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M690,245 L690,280" stroke="#31556c" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="35" y="90" width="235" height="155" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="49" y="120" font-size="18" font-weight="bold">Data and context</text>
+<text x="49" y="150" font-size="16">Channels, rasters, arrays</text>
+<text x="49" y="173" font-size="16">CRS, units, heights</text>
+<text x="49" y="196" font-size="16">Originals preserved</text>
+<rect x="305" y="90" width="235" height="155" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="319" y="120" font-size="18" font-weight="bold">Scientific Core</text>
+<text x="319" y="150" font-size="16">Python kernels</text>
+<text x="319" y="173" font-size="16">Optional engines</text>
+<text x="319" y="196" font-size="16">No QGIS or Qt</text>
+<rect x="575" y="90" width="235" height="155" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="589" y="120" font-size="18" font-weight="bold">Execution</text>
+<text x="589" y="150" font-size="16">API, jobs, workflows</text>
+<text x="589" y="173" font-size="16">Recipes and budgets</text>
+<text x="589" y="196" font-size="16">Status and provenance</text>
+<rect x="845" y="90" width="235" height="155" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="859" y="120" font-size="18" font-weight="bold">QGIS interface</text>
+<text x="859" y="150" font-size="16">Layers and forms</text>
+<text x="859" y="173" font-size="16">Explorer and filters</text>
+<text x="859" y="196" font-size="16">Result views</text>
+<rect x="305" y="285" width="505" height="85" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="319" y="315" font-size="18" font-weight="bold">Verifiable artefacts</text>
+<text x="319" y="345" font-size="16">Parquet · GeoTIFF · CSV · JSON · NPZ · VTK</text>
+<text x="35" y="407" font-size="15">Conceptual manual diagram; no field data.</text>
+</g></svg>

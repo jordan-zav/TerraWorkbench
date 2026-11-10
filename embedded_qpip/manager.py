@@ -1,0 +1,257 @@
+"""TerraWorkbench-scoped dependency management using embedded QPIP UI pieces."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import importlib
+from importlib import metadata
+import os
+from pathlib import Path
+import platform
+import site
+import sys
+
+from packaging.markers import default_environment
+from packaging.requirements import Requirement
+from qgis.core import Qgis, QgsApplication, QgsMessageLog
+
+from ..ui.i18n import text
+from qgis.PyQt.QtWidgets import QMessageBox
+
+from .install_progress import PipInstallProgressDialog
+
+
+LOG_TAG = "TerraWorkbench dependencies"
+INVERSION_MINIMUM_PYTHON = (3, 11)
+
+
+@dataclass(frozen=True)
+class RequirementStatus:
+    """Installed state of one direct TerraWorkbench requirement."""
+
+    requirement: Requirement
+    installed_version: str | None
+    satisfied: bool
+
+    @property
+    def state(self):
+        if self.installed_version is None:
+            return "Missing"
+        if self.satisfied:
+            return "Installed"
+        return f"Version conflict ({self.installed_version})"
+
+
+def requirements_path():
+    """Return the canonical requirements file shipped with TerraWorkbench."""
+    return Path(__file__).resolve().parents[1] / "requirements/base.txt"
+
+
+def inversion_requirements_path():
+    """Return the optional 3D-inversion requirements shipped with the plugin."""
+    return Path(__file__).resolve().parents[1] / "requirements/inversion.txt"
+
+
+def inversion_supported():
+    """Whether this QGIS Python can install the pinned SimPEG stack."""
+    return sys.version_info >= INVERSION_MINIMUM_PYTHON
+
+
+def dependency_directory():
+    """Return TerraWorkbench's isolated, version-specific dependency directory."""
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    return (
+        _active_profile_root()
+        / "python"
+        / "dependencies"
+        / "TerraWorkbench"
+        / python_version
+    )
+
+
+def _active_profile_root():
+    """Resolve one active profile without leaking packages across profiles."""
+    active = QgsApplication.qgisSettingsDirPath()
+    if not active:
+        raise RuntimeError("The active QGIS profile is unavailable")
+    # qgisSettingsDirPath is authoritative also when --profiles-path uses an
+    # arbitrary directory name. Never substitute APPDATA or lastProfile.
+    return Path(active).resolve()
+
+
+def activate_dependency_path():
+    """Expose managed packages without overriding QGIS' own Python runtime."""
+    if not QgsApplication.qgisSettingsDirPath():
+        # Host-free imports may occur before QgsApplication is constructed.
+        # Do not guess a profile or create any directory at that stage.
+        return None
+    target = dependency_directory()
+    if target.is_dir():
+        site.addsitedir(str(target))
+        if str(target) not in sys.path:
+            # Host-first ordering avoids replacing QGIS' compiled NumPy/SciPy stack
+            # for every plugin in the process. A conflicting host dependency is
+            # reported instead of being silently shadowed.
+            sys.path.append(str(target))
+        bin_path = target / "bin"
+        path_entries = os.environ.get("PATH", "").split(os.pathsep)
+        if str(bin_path) not in path_entries:
+            os.environ["PATH"] = str(bin_path) + os.pathsep + os.environ.get(
+                "PATH", ""
+            )
+        importlib.invalidate_caches()
+    return target
+
+
+def read_requirements(include_inversion=False):
+    """Parse core requirements and, only when requested, the optional 3D stack."""
+    environment = default_environment()
+    requirements = []
+    paths = [requirements_path()]
+    if include_inversion and inversion_supported():
+        paths.append(inversion_requirements_path())
+    for path in paths:
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith(("#", "-")):
+                continue
+            requirement = Requirement(line)
+            if requirement.marker and not requirement.marker.evaluate(environment):
+                continue
+            requirements.append(requirement)
+    return tuple(requirements)
+
+
+def dependency_status(include_inversion=False):
+    """Return version-aware status for direct TerraWorkbench requirements."""
+    activate_dependency_path()
+    status = []
+    for requirement in read_requirements(include_inversion=include_inversion):
+        try:
+            distribution = metadata.distribution(requirement.name)
+            version = distribution.version
+            satisfied = (
+                not requirement.specifier
+                or requirement.specifier.contains(version, prereleases=True)
+            )
+        except metadata.PackageNotFoundError:
+            version = None
+            satisfied = False
+        status.append(RequirementStatus(requirement, version, satisfied))
+    return tuple(status)
+
+
+def python_command():
+    """Match QPIP's safe Python executable discovery on QGIS installations."""
+    if (Path(sys.prefix) / "conda-meta").exists():
+        return "python"
+    base_paths = [Path(sys.prefix), Path(sys.executable).parent]
+    names = (
+        ("python.exe", "python3.exe")
+        if platform.system() == "Windows"
+        else ("python", "python3")
+    )
+    for base_path in base_paths:
+        for name in names:
+            candidate = base_path / name
+            if candidate.is_file():
+                return str(candidate)
+    return sys.executable
+
+
+# Kept for compatibility with the existing focused smoke test.
+_python_command = python_command
+
+
+def _log(message):
+    QgsMessageLog.logMessage(str(message), LOG_TAG, level=Qgis.MessageLevel.Info)
+
+
+def install_requirements(
+    parent=None, force_all=False, include_inversion=False, inversion_only=False
+):
+    """Install missing/conflicting or all direct requirements after user approval."""
+    if inversion_only and not inversion_supported():
+        QMessageBox.warning(
+            parent,
+            text("TerraWorkbench dependencies", "Dependencias de TerraWorkbench"),
+            text(
+                "3D inversion requires QGIS with Python 3.11 or newer.",
+                "La inversión 3D requiere QGIS con Python 3.11 o posterior.",
+            ),
+        )
+        return False
+    status = dependency_status(include_inversion=include_inversion or inversion_only)
+    inversion_names = {
+        requirement.name.casefold()
+        for requirement in read_requirements(include_inversion=True)
+    } - {
+        requirement.name.casefold() for requirement in read_requirements()
+    }
+    selected = [
+        str(item.requirement)
+        for item in status
+        if (not inversion_only or item.requirement.name.casefold() in inversion_names)
+        and (force_all or not item.satisfied)
+    ]
+    if not selected:
+        QMessageBox.information(
+            parent,
+            text("TerraWorkbench dependencies", "Dependencias de TerraWorkbench"),
+            text("All compatible TerraWorkbench dependency files are satisfied.", "Todos los archivos de dependencias compatibles de TerraWorkbench están satisfechos."),
+        )
+        return True
+
+    answer = QMessageBox.question(
+        parent,
+        text("Install TerraWorkbench dependencies?", "¿Instalar las dependencias de TerraWorkbench?"),
+        text("TerraWorkbench will install the selected open-source Python packages inside the active QGIS user profile. QGIS program files and other plugins will not be modified. Continue?", "TerraWorkbench instalará los paquetes Python de código abierto seleccionados dentro del perfil activo de QGIS. No se modificarán los archivos del programa QGIS ni otros complementos. ¿Continuar?"),
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        QMessageBox.StandardButton.No,
+    )
+    if answer != QMessageBox.StandardButton.Yes:
+        return False
+
+    target = dependency_directory()
+    target.mkdir(parents=True, exist_ok=True)
+    command = [
+        python_command(),
+        "-um",
+        "pip",
+        "install",
+        *selected,
+        "--target",
+        str(target),
+        "--upgrade",
+        "--upgrade-strategy",
+        "only-if-needed",
+        "--disable-pip-version-check",
+        "--progress-bar",
+        "raw",
+    ]
+    dialog = PipInstallProgressDialog(
+        command,
+        selected,
+        text("Installing TerraWorkbench scientific dependencies", "Instalando dependencias científicas de TerraWorkbench"),
+        log_callback=_log,
+        parent=parent,
+    )
+    return_code, cancelled, output = dialog.execute()
+    if return_code == 0:
+        activate_dependency_path()
+        QMessageBox.information(
+            parent,
+            text("TerraWorkbench dependencies installed", "Dependencias de TerraWorkbench instaladas"),
+            text("Installation completed. Restart QGIS before running scientific algorithms so every compiled package is loaded from the new profile.", "Instalación completada. Reinicie QGIS antes de ejecutar algoritmos científicos para que cada paquete compilado se cargue desde el nuevo perfil."),
+        )
+        return True
+    if not cancelled:
+        message = QMessageBox(
+            QMessageBox.Icon.Warning,
+            text("Dependency installation failed", "Falló la instalación de dependencias"),
+            text("TerraWorkbench could not install all selected dependencies.", "TerraWorkbench no pudo instalar todas las dependencias seleccionadas."),
+            parent=parent,
+        )
+        message.setDetailedText(output)
+        message.exec()
+    return False

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="430" viewBox="0 0 1120 430">
+<rect width="1120" height="430" fill="white"/>
+<defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8" fill="#31556c"/></marker></defs>
+<g font-family="Arial, sans-serif" fill="#17394c">
+<text x="35" y="40" font-size="23" font-weight="bold">A linhagem conserva conteúdo e receita, além do nome</text>
+<path d="M325,150 L400,205" stroke="#31556c" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M325,300 L400,235" stroke="#31556c" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<path d="M685,230 L760,230" stroke="#31556c" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<rect x="45" y="95" width="280" height="110" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="59" y="125" font-size="18" font-weight="bold">field_nt · versão 1</text>
+<text x="59" y="155" font-size="16">Fonte importada</text>
+<text x="59" y="178" font-size="16">Unidade e conteúdo original</text>
+<rect x="45" y="245" width="280" height="110" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="59" y="275" font-size="18" font-weight="bold">base_nt · versão 1</text>
+<text x="59" y="305" font-size="16">Outra observação alinhada</text>
+<text x="59" y="328" font-size="16">Suporte temporal verificado</text>
+<rect x="405" y="170" width="280" height="120" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="419" y="200" font-size="18" font-weight="bold">anomaly_nt · versão 1</text>
+<text x="419" y="230" font-size="16">field_nt − base_nt</text>
+<text x="419" y="253" font-size="16">Entradas por ID de versão</text>
+<rect x="765" y="170" width="300" height="120" rx="8" fill="#eef5f8" stroke="#7194a8"/>
+<text x="779" y="200" font-size="18" font-weight="bold">lowpass_nt · versão 1</text>
+<text x="779" y="230" font-size="16">Corte e domínio explícitos</text>
+<text x="779" y="253" font-size="16">Conserva o canal anterior</text>
+<text x="35" y="407" font-size="15">Esquema conceitual do manual; sem dados de campo.</text>
+</g></svg>

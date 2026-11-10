@@ -1,0 +1,31 @@
+name: Public quality checks
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  public-checks:
+    if: github.repository == 'jordan-zav/TerraWorkbench'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: "2"
+      OPENBLAS_NUM_THREADS: "2"
+      NUMBA_NUM_THREADS: "2"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install public validation dependencies
+        run: python -m pip install '.[inversion,prisms,borehole,storage,coordinates,geomagnetism,structure,tables,multisensor,archaeology,validation]' pytest ruff packaging wheel
+      - name: Tests
+        run: python -m pytest -q
+      - name: Ruff
+        run: python -m ruff check .
+      - name: Validate and build the public plugin ZIP
+        run: |
+          python scripts/package_plugin.py --check-only
+          python scripts/package_plugin.py

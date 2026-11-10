@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "repository": "simpeg/user-tutorials",
+  "commit": "d817cbf587605940d9125d4308a05c88610335e9",
+  "attribution": "SimPEG contributors; tutorial author Devin Cowan",
+  "license": {
+    "spdx_id": "CC-BY-4.0",
+    "sha256": "7e7170e3cebf88a9f60c7b8421418323c09304da1af4d5e90f4da1dc1c8a2661",
+    "url": "https://raw.githubusercontent.com/simpeg/user-tutorials/d817cbf587605940d9125d4308a05c88610335e9/LICENSE-CC-BY"
+  },
+  "assets": [
+    {
+      "id": "gravity",
+      "url": "https://raw.githubusercontent.com/simpeg/user-tutorials/d817cbf587605940d9125d4308a05c88610335e9/assets/03-gravity/inv_gravity_anomaly_3d_files.tar.gz",
+      "bytes": 10984,
+      "sha256": "f4e2e7e7c39c8b24e4ebb1ab5ed25e6e92c913399b7075f673076d80bab87d4d",
+      "git_blob_sha1": "dc9ee1bf8b391a070ea5adb3e641a0273b5e6c04",
+      "members": [
+        {
+          "path": "inv_gravity_anomaly_3d_files/gravity_data.obs",
+          "bytes": 13402,
+          "sha256": "c6660f41a6f83a8c8780d1692a61821396a23965d16f0e7b941cf0a548e03050"
+        },
+        {
+          "path": "inv_gravity_anomaly_3d_files/gravity_topo.txt",
+          "bytes": 58794,
+          "sha256": "52ae6761dd7ef981aa8731992f93c7f16714201d9972370154279f4669be57ec"
+        }
+      ],
+      "cache_subpath": "d817cbf587605940d9125d4308a05c88610335e9/assets/03-gravity/inv_gravity_anomaly_3d_files.tar.gz"
+    },
+    {
+      "id": "susceptibility",
+      "url": "https://raw.githubusercontent.com/simpeg/user-tutorials/d817cbf587605940d9125d4308a05c88610335e9/assets/04-magnetics/inv_magnetics_induced_3d_files.tar.gz",
+      "bytes": 10797,
+      "sha256": "a098688e946b500ae6496449241fea9a19a12648461f52503d5ffa2e02e2aca6",
+      "git_blob_sha1": "5c106bc4f4f2e667a04982c7bb3ab66c600124e9",
+      "members": [
+        {
+          "path": "inv_magnetics_induced_3d_files/magnetics_data.obs",
+          "bytes": 13277,
+          "sha256": "9a2766d8d5e8ad5ee94405e0b4004d7b37a04577b6247f8e7fe9268cda6b4426"
+        },
+        {
+          "path": "inv_magnetics_induced_3d_files/magnetics_topo.txt",
+          "bytes": 58794,
+          "sha256": "aa2fb9c88a9d26f522c13f64853972b48bd893204cc971c4479d1877f2b1287f"
+        }
+      ],
+      "cache_subpath": "d817cbf587605940d9125d4308a05c88610335e9/assets/04-magnetics/inv_magnetics_induced_3d_files.tar.gz"
+    }
+  ],
+  "scope": "Downloaded synthetic observations and topography; no true-model arrays in these archives"
+}

@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-06",
+  "scope": "Executed artificial teaching examples; no new field campaign or geological recovery claim",
+  "python": "3.11.9",
+  "libraries": {
+    "numpy": "1.26.4",
+    "scipy": "1.17.0",
+    "pyarrow": "25.0.1"
+  },
+  "cases": [
+    {
+      "id": "workspace",
+      "source": "examples/manual/workspace.py",
+      "source_sha256_lf": "446b6ce79cd3ad66084f0be65174b0e8c30ec4c9a83a6438b8606f0f26687865",
+      "observed": {
+        "kind": "synthetic tutorial",
+        "rows": 400,
+        "max_formula_error_nt": 3.552713678800501e-15,
+        "original_unchanged": true
+      }
+    },
+    {
+      "id": "fft",
+      "source": "examples/manual/fft.py",
+      "source_sha256_lf": "904ce14d1d459f0ae6fa4fec6e80fe54ae4540e84457e7a8e901bdad4b5bfd0a",
+      "observed": {
+        "kind": "synthetic periodic operator check",
+        "spacing_m": 10.0,
+        "height_m": 50.0,
+        "wavelengths_m": [
+          640.0,
+          160.0
+        ],
+        "max_error": 1.6375789613221059e-15,
+        "field_data": false
+      }
+    },
+    {
+      "id": "workflow",
+      "source": "examples/manual/workflow.py",
+      "source_sha256_lf": "d19645bd68a64aa5873c1cd455cb2d0e87f55653d2941101fe0606c3ef4f0084",
+      "observed": {
+        "kind": "synthetic teaching workflow",
+        "registry_count": 120,
+        "mt_max_resistivity_error": 1.4210854715202004e-14,
+        "layer_max_contrast_error": 2.842170943040401e-14,
+        "mt_source_sha256": "7c3cdc179b04790deb6f3da81a81ab6e76b5d29fa3af452803bd7d0204170a04"
+      }
+    }
+  ],
+  "ui": {
+    "qgis_version": "3.44.12-Solothurn",
+    "platform": "offscreen",
+    "provider_algorithms": 95,
+    "synthetic_workspace_rows": 400
+  },
+  "privacy": "No raw survey, local workstation path or private acquisition metadata is distributed"
+}

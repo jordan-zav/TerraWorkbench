@@ -1,0 +1,1424 @@
+{
+  "qgis_version": "3.44.12-Solothurn",
+  "locale": "es",
+  "scope": "Actual provider inventory, not numerical or field validation",
+  "algorithms": [
+    {
+      "id": "terraworkbench:airy_isostatic_anomaly",
+      "name": "10 Anomalía residual isostática de Airy",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "ELEVATION",
+        "ELEVATION_BAND",
+        "REGIONAL",
+        "WATER",
+        "DENSITY_WATER",
+        "BLOCK_SIZE",
+        "MAX_INTERACTIONS",
+        "REFERENCE_DEPTH",
+        "DENSITY_CRUST",
+        "DENSITY_MANTLE",
+        "MAX_CELLS"
+      ]
+    },
+    {
+      "id": "terraworkbench:airy_isostatic_anomaly_fft",
+      "name": "11 Residual isostático Airy (FFT periódica)",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "REGIONAL",
+        "WATER",
+        "REFERENCE_DEPTH",
+        "DENSITY_CRUST",
+        "DENSITY_MANTLE",
+        "DENSITY_WATER",
+        "HEIGHT",
+        "TOLERANCE",
+        "MAX_CELLS"
+      ]
+    },
+    {
+      "id": "terraworkbench:airy_isostatic_moho",
+      "name": "09 Profundidad isostática del Moho de Airy",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "REFERENCE_DEPTH",
+        "DENSITY_CRUST",
+        "DENSITY_MANTLE"
+      ]
+    },
+    {
+      "id": "terraworkbench:automatic_channel_lag",
+      "name": "Estimación automática del lag de canal",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "TIME_FIELD",
+        "RESPONSE_FIELD",
+        "REFERENCE_FIELD",
+        "MAXIMUM_LAG",
+        "LAG_STEP",
+        "USE_DERIVATIVE",
+        "OUTPUT",
+        "CURVE"
+      ]
+    },
+    {
+      "id": "terraworkbench:automatic_gain_control",
+      "name": "Control automático de ganancia (RMS local)",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "WINDOW",
+        "FLOOR",
+        "MAX_GAIN"
+      ]
+    },
+    {
+      "id": "terraworkbench:base_station_quality_control",
+      "name": "QC de estación base magnética",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "TIME_FIELD",
+        "VALUE_FIELD",
+        "UNWRAP",
+        "MAX_GAP",
+        "SPIKE_WINDOW",
+        "SPIKE_SIGMA",
+        "MAX_RATE",
+        "MAX_DRIFT",
+        "OUTPUT",
+        "SUMMARY"
+      ]
+    },
+    {
+      "id": "terraworkbench:bouguer_correction",
+      "name": "Corrección de Bouguer",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "DENSITY_CRUST",
+        "DENSITY_WATER"
+      ]
+    },
+    {
+      "id": "terraworkbench:bullard_b_curvature",
+      "name": "05 Corrección por curvatura terrestre — Bullard B",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "DENSITY_CRUST"
+      ]
+    },
+    {
+      "id": "terraworkbench:butterworth_bandpass",
+      "name": "Butterworth de paso de banda",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "LONG_WAVELENGTH",
+        "SHORT_WAVELENGTH",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:butterworth_highpass",
+      "name": "Butterworth de paso alto",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "WAVELENGTH",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:butterworth_lowpass",
+      "name": "Butterworth de paso bajo",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "WAVELENGTH",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:butterworth_notch",
+      "name": "Butterworth de rechazo de banda (notch)",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "LONG_WAVELENGTH",
+        "SHORT_WAVELENGTH",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:circular_median",
+      "name": "Mediana circular (disco 2D)",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "RADIUS"
+      ]
+    },
+    {
+      "id": "terraworkbench:complete_bouguer_anomaly",
+      "name": "08 Anomalía de Bouguer completa — terrestre",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "ELEVATION",
+        "ELEVATION_BAND",
+        "TERRAIN",
+        "TERRAIN_BAND",
+        "DENSITY_CRUST",
+        "DENSITY_WATER",
+        "VERTICAL_GRADIENT"
+      ]
+    },
+    {
+      "id": "terraworkbench:correct_magnetic_survey_lines",
+      "name": "Corrección de líneas magnéticas — base, lag, rumbo y despike",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "VALUE_FIELD",
+        "TIME_FIELD",
+        "LINE_FIELD",
+        "BASE",
+        "BASE_TIME_FIELD",
+        "BASE_VALUE_FIELD",
+        "SIGNED_LAG_SECONDS",
+        "HEADING_COSINE",
+        "HEADING_SINE",
+        "HAMPEL_RADIUS",
+        "HAMPEL_THRESHOLD",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:correct_moving_gravity_survey",
+      "name": "Corrección de gravedad móvil — deriva, campo de marea y Eötvös",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "VALUE_FIELD",
+        "TIME_FIELD",
+        "LINE_FIELD",
+        "TIDE_FIELD",
+        "DRIFT_RATE",
+        "EOTVOS_MODE",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:cosine_rolloff_highpass",
+      "name": "Paso alto con transición cosenoidal",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "LONG_WAVELENGTH",
+        "SHORT_WAVELENGTH",
+        "DEGREE"
+      ]
+    },
+    {
+      "id": "terraworkbench:cosine_rolloff_lowpass",
+      "name": "Paso bajo con transición cosenoidal",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "LONG_WAVELENGTH",
+        "SHORT_WAVELENGTH",
+        "DEGREE"
+      ]
+    },
+    {
+      "id": "terraworkbench:crossover_line_leveling",
+      "name": "Control de cruces y nivelación con líneas de amarre",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "VALUE_FIELD",
+        "LINE_FIELD",
+        "LINE_TYPE_FIELD",
+        "ORDER_FIELD",
+        "TIE_VALUES",
+        "OUTLIER_SIGMA",
+        "CORRECTION_ORDER",
+        "HIGH_ORDER_DAMPING",
+        "CORRECTED",
+        "CROSSOVERS",
+        "CORRECTIONS"
+      ]
+    },
+    {
+      "id": "terraworkbench:derivative_easting",
+      "name": "Derivada — Este (diferencia finita espacial)",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:derivative_northing",
+      "name": "Derivada — Norte (diferencia finita espacial)",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:derivative_upward",
+      "name": "Derivada — vertical ascendente (FFT)",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:directional_cosine_pass",
+      "name": "Coseno direccional — paso",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "AZIMUTH",
+        "DEGREE"
+      ]
+    },
+    {
+      "id": "terraworkbench:directional_cosine_reject",
+      "name": "Coseno direccional — rechazo",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "AZIMUTH",
+        "DEGREE"
+      ]
+    },
+    {
+      "id": "terraworkbench:downward_continuation",
+      "name": "Continuación descendente — estabilizada",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "HEIGHT",
+        "LOWPASS_WAVELENGTH",
+        "MAX_GAIN",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:drape_dem_quality_control",
+      "name": "QC de drape y altura sobre terreno contra DEM",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "ALTITUDE_FIELD",
+        "DEM",
+        "BAND",
+        "TARGET",
+        "TOLERANCE",
+        "MINIMUM",
+        "MAXIMUM",
+        "OUTPUT",
+        "SUMMARY"
+      ]
+    },
+    {
+      "id": "terraworkbench:equivalent_source_continuation",
+      "name": "Fuentes equivalentes — ajustar y continuar grilla regular",
+      "group": "Modelado y profundidad de campos potenciales",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "SOURCE_DEPTH",
+        "DAMPING",
+        "TARGET_HEIGHT",
+        "BLOCK_SIZE",
+        "MAX_CELLS",
+        "MAX_MATRIX_ELEMENTS",
+        "HOLDOUT_PERCENT"
+      ]
+    },
+    {
+      "id": "terraworkbench:fft_derivative_easting",
+      "name": "Derivada — Este (FFT)",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:fft_derivative_northing",
+      "name": "Derivada — Norte (FFT)",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:fft_derivative_upward",
+      "name": "Derivada — vertical ascendente (FFT)",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "ORDER"
+      ]
+    },
+    {
+      "id": "terraworkbench:field_direction_transform",
+      "name": "Transformar dirección del campo magnético",
+      "group": "Transformaciones de dirección del campo MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "FIELD_MODE",
+        "INCLINATION",
+        "DECLINATION",
+        "USE_METADATA_DATE",
+        "YEAR",
+        "MONTH",
+        "DAY",
+        "ALTITUDE_KM",
+        "MAGNETIZATION_INCLINATION",
+        "MAGNETIZATION_DECLINATION",
+        "MAX_GAIN",
+        "TARGET_INCLINATION",
+        "TARGET_DECLINATION"
+      ]
+    },
+    {
+      "id": "terraworkbench:flight_line_quality_control",
+      "name": "QC de líneas de vuelo — navegación, altura y tasa del canal",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "TIME_FIELD",
+        "LINE_FIELD",
+        "VALUE_FIELD",
+        "CLEARANCE_FIELD",
+        "MAX_TIME_GAP",
+        "MAX_SPACING",
+        "MIN_SPEED",
+        "MAX_SPEED",
+        "MAX_TURN",
+        "MIN_CLEARANCE",
+        "MAX_CLEARANCE",
+        "MAX_VALUE_RATE",
+        "OUTPUT",
+        "SUMMARY"
+      ]
+    },
+    {
+      "id": "terraworkbench:free_air_anomaly",
+      "name": "04 Anomalía de aire libre — gravedad observada + elevación",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "ELEVATION",
+        "ELEVATION_BAND",
+        "VERTICAL_GRADIENT"
+      ]
+    },
+    {
+      "id": "terraworkbench:free_air_correction",
+      "name": "03 Corrección de aire libre",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "VERTICAL_GRADIENT"
+      ]
+    },
+    {
+      "id": "terraworkbench:gaussian_highpass",
+      "name": "Filtro gaussiano de paso alto",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "WAVELENGTH"
+      ]
+    },
+    {
+      "id": "terraworkbench:gaussian_lowpass",
+      "name": "Filtro gaussiano de paso bajo",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "WAVELENGTH"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_dx",
+      "name": "01 [ESPACIAL] DX — Primera derivada horizontal X",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_dy",
+      "name": "02 [ESPACIAL] DY — Primera derivada horizontal Y",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_dz",
+      "name": "03 [FFT] DZ — Primera derivada vertical",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_dz2",
+      "name": "04 [FFT] DZ2 — Segunda derivada vertical",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_regional",
+      "name": "06 [FFT] Regional — Filtro gaussiano de paso bajo",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "WAVELENGTH"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_residual",
+      "name": "07 [FFT] Residual — Campo menos continuación ascendente",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "HEIGHT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_tga",
+      "name": "10 [MIXTO] TGA — Amplitud del gradiente total",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_thdr",
+      "name": "08 [ESPACIAL] THDR — Derivada horizontal total",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_tilt",
+      "name": "09 [MIXTO] Tilt — Ángulo tilt",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grav_upward_continuation",
+      "name": "05 [FFT] CA — Continuación ascendente (configurable)",
+      "group": "Filtros de exploración GRAV",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "HEIGHT"
+      ]
+    },
+    {
+      "id": "terraworkbench:gravity_disturbance_grs80",
+      "name": "02 Corrección de latitud — perturbación de gravedad (GRS80)",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:grid_survey_points",
+      "name": "Interpolar puntos de levantamiento a GeoTIFF",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "VALUE_FIELD",
+        "TARGET_CRS",
+        "METHOD",
+        "CELL_SIZE",
+        "POWER",
+        "NEIGHBORS",
+        "SEARCH_RADIUS",
+        "TPS_SMOOTHING",
+        "TPS_NEIGHBORS",
+        "RANGRID_TOLERANCE",
+        "RANGRID_PASS_TOLERANCE",
+        "RANGRID_MAX_ITERATIONS",
+        "RANGRID_TENSION",
+        "RANGRID_COARSE_GRID",
+        "RANGRID_SEARCH_RADIUS",
+        "RANGRID_BLANKING",
+        "RANGRID_DESAMPLE",
+        "RANGRID_WEIGHT_POWER",
+        "RANGRID_WEIGHT_SLOPE",
+        "SINC_RADIUS",
+        "SINC_SPACING",
+        "SINC_SPACING_Y",
+        "SINC_BLANKING",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:horizontal_integration_easting",
+      "name": "Integración horizontal — Este",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND"
+      ]
+    },
+    {
+      "id": "terraworkbench:horizontal_integration_northing",
+      "name": "Integración horizontal — Norte",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND"
+      ]
+    },
+    {
+      "id": "terraworkbench:ideal_band_reject",
+      "name": "Rechazo de banda ideal",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "LONG_WAVELENGTH",
+        "SHORT_WAVELENGTH"
+      ]
+    },
+    {
+      "id": "terraworkbench:ideal_bandpass",
+      "name": "Paso de banda ideal",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "LONG_WAVELENGTH",
+        "SHORT_WAVELENGTH"
+      ]
+    },
+    {
+      "id": "terraworkbench:interline_spacing_quality_control",
+      "name": "QC de espaciamiento y líneas de vuelo faltantes",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "LINE_FIELD",
+        "EXPECTED",
+        "TOLERANCE",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:invert_gravity_density_3d",
+      "name": "Inversión 3D de densidad gravimétrica (SimPEG)",
+      "group": "Inversión 3D de campos potenciales",
+      "parameters": [
+        "INPUT",
+        "DATA_FIELD",
+        "UNCERTAINTY_FIELD",
+        "ELEVATION_FIELD",
+        "TOPOGRAPHY_FIELD",
+        "CELL_XY",
+        "MESH_TYPE",
+        "REFINEMENT_LEVELS",
+        "CELL_Z",
+        "DEPTH",
+        "PADDING",
+        "MAX_CELLS",
+        "ITERATIONS",
+        "REGULARIZATION_NORM",
+        "IRLS_ITERATIONS",
+        "REFERENCE_VALUE",
+        "LOWER",
+        "UPPER",
+        "DISK_SENSITIVITIES",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:invert_joint_gravity_magnetics_3d",
+      "name": "Inversión conjunta 3D gravedad–magnetometría (gradiente cruzado)",
+      "group": "Inversión 3D de campos potenciales",
+      "parameters": [
+        "GRAVITY_INPUT",
+        "GRAVITY_DATA",
+        "GRAVITY_SIGMA",
+        "GRAVITY_ELEVATION",
+        "MAGNETIC_INPUT",
+        "MAGNETIC_DATA",
+        "MAGNETIC_SIGMA",
+        "MAGNETIC_ELEVATION",
+        "TOPOGRAPHY_FIELD",
+        "CELL_XY",
+        "CELL_Z",
+        "DEPTH",
+        "PADDING",
+        "MESH_TYPE",
+        "REFINEMENT_LEVELS",
+        "MAX_CELLS",
+        "ITERATIONS",
+        "COUPLING",
+        "DENSITY_MIN",
+        "DENSITY_MAX",
+        "SUSCEPTIBILITY_MIN",
+        "SUSCEPTIBILITY_MAX",
+        "FIELD_AMPLITUDE",
+        "FIELD_INCLINATION",
+        "FIELD_DECLINATION",
+        "DISK_SENSITIVITIES",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:invert_magnetic_susceptibility_3d",
+      "name": "Inversión 3D de susceptibilidad magnética (SimPEG)",
+      "group": "Inversión 3D de campos potenciales",
+      "parameters": [
+        "INPUT",
+        "DATA_FIELD",
+        "UNCERTAINTY_FIELD",
+        "ELEVATION_FIELD",
+        "TOPOGRAPHY_FIELD",
+        "CELL_XY",
+        "MESH_TYPE",
+        "REFINEMENT_LEVELS",
+        "CELL_Z",
+        "DEPTH",
+        "PADDING",
+        "MAX_CELLS",
+        "ITERATIONS",
+        "REGULARIZATION_NORM",
+        "IRLS_ITERATIONS",
+        "REFERENCE_VALUE",
+        "LOWER",
+        "UPPER",
+        "FIELD_AMPLITUDE",
+        "FIELD_INCLINATION",
+        "FIELD_DECLINATION",
+        "DISK_SENSITIVITIES",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:invert_magnetic_vector_3d",
+      "name": "Inversión vectorial magnética 3D — MVI (SimPEG)",
+      "group": "Inversión 3D de campos potenciales",
+      "parameters": [
+        "INPUT",
+        "DATA_FIELD",
+        "UNCERTAINTY_FIELD",
+        "ELEVATION_FIELD",
+        "TOPOGRAPHY_FIELD",
+        "CELL_XY",
+        "MESH_TYPE",
+        "REFINEMENT_LEVELS",
+        "CELL_Z",
+        "DEPTH",
+        "PADDING",
+        "MAX_CELLS",
+        "ITERATIONS",
+        "LOWER",
+        "UPPER",
+        "FIELD_AMPLITUDE",
+        "FIELD_INCLINATION",
+        "FIELD_DECLINATION",
+        "DISK_SENSITIVITIES",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_as",
+      "name": "10 [MIXTO] AS / ASA — Amplitud de señal analítica",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_directional_horizontal_gradient",
+      "name": "09 [ESPACIAL] GH — Gradiente horizontal direccional",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "AZIMUTH"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_dx",
+      "name": "01 [ESPACIAL] DX — Primera derivada horizontal X",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_dy",
+      "name": "02 [ESPACIAL] DY — Primera derivada horizontal Y",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_dz",
+      "name": "03 [FFT] DZ — Primera derivada vertical",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_dz2",
+      "name": "04 [FFT] DZ2 — Segunda derivada vertical",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_rs",
+      "name": "06 [FFT] RS — Realce residual",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "HEIGHT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_tdx",
+      "name": "11 [MIXTO] TDX — Ángulo tilt horizontal",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_thdr",
+      "name": "07 [ESPACIAL] THDR — Derivada horizontal total",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_theta",
+      "name": "12 [MIXTO] Theta — Mapa del ángulo theta",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_tilt",
+      "name": "08 [MIXTO] Tilt — Ángulo tilt",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:mag_upward_continuation",
+      "name": "05 [FFT] CA — Continuación ascendente (configurable)",
+      "group": "Filtros de exploración MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "HEIGHT"
+      ]
+    },
+    {
+      "id": "terraworkbench:magnetic_pseudogravity",
+      "name": "Pseudogravedad magnética — integración vertical de RTP/RTE",
+      "group": "Transformaciones de dirección del campo MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "SCALE"
+      ]
+    },
+    {
+      "id": "terraworkbench:microlevel_grid",
+      "name": "Micronivelación direccional",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "AZIMUTH",
+        "ACROSS_WAVELENGTH",
+        "ALONG_WAVELENGTH",
+        "CORRECTION"
+      ]
+    },
+    {
+      "id": "terraworkbench:normal_gravity_grs80",
+      "name": "01 Gravedad normal — campo de latitud GRS80",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_background",
+      "name": "08 Conteos crudos — fondo de aeronave, cósmico y radón",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "AIRCRAFT_BACKGROUND",
+        "COSMIC_BACKGROUND",
+        "RADON_BACKGROUND"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_channel_qc",
+      "name": "05 Informe de calidad del canal radiométrico",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "EXPECTED_MINIMUM",
+        "REPORT"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_correct_survey_channels",
+      "name": "Corrección de levantamiento radiométrico — ventanas crudas a K/eU/eTh",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "K_WINDOW_FIELD",
+        "U_WINDOW_FIELD",
+        "TH_WINDOW_FIELD",
+        "CLEARANCE_FIELD",
+        "TOTAL_COUNT_FIELD",
+        "DEAD_TIME_SECONDS",
+        "K_BACKGROUND",
+        "U_BACKGROUND",
+        "TH_BACKGROUND",
+        "K_FROM_U",
+        "K_FROM_TH",
+        "U_FROM_K",
+        "U_FROM_TH",
+        "TH_FROM_K",
+        "TH_FROM_U",
+        "REFERENCE_HEIGHT",
+        "K_ATTENUATION",
+        "U_ATTENUATION",
+        "TH_ATTENUATION",
+        "K_SENSITIVITY",
+        "U_SENSITIVITY",
+        "TH_SENSITIVITY",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_dead_time",
+      "name": "07 Conteos crudos — corrección por tiempo muerto",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "DEAD_TIME_SECONDS"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_despike",
+      "name": "06 Despike radiométrico — mediana/MAD local",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "RADIUS",
+        "MAD_THRESHOLD"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_dose_rate",
+      "name": "03 Tasa de dosis absorbida terrestre",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "URANIUM",
+        "URANIUM_BAND",
+        "THORIUM",
+        "THORIUM_BAND",
+        "K_COEFFICIENT",
+        "U_COEFFICIENT",
+        "TH_COEFFICIENT"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_f_parameter",
+      "name": "04 Parámetro F interpretativo — K × eU / eTh",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "URANIUM",
+        "URANIUM_BAND",
+        "THORIUM",
+        "THORIUM_BAND",
+        "MINIMUM_THORIUM"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_height_attenuation",
+      "name": "09 Conteos crudos — corrección de atenuación por altura",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "HEIGHT",
+        "HEIGHT_BAND",
+        "REFERENCE_HEIGHT",
+        "ATTENUATION_COEFFICIENT"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_ratio",
+      "name": "01 Razón radiométrica — canales configurables",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "DENOMINATOR",
+        "DENOMINATOR_BAND",
+        "MINIMUM_DENOMINATOR"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_sensitivity_calibration",
+      "name": "10 Conteos corregidos — calibración de sensibilidad",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "SENSITIVITY",
+        "OFFSET"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_spectral_unmix",
+      "name": "11 Ventanas crudas — stripping espectral calibrado",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "URANIUM_WINDOW",
+        "URANIUM_BAND",
+        "THORIUM_WINDOW",
+        "THORIUM_BAND",
+        "K_FROM_U",
+        "K_FROM_TH",
+        "U_FROM_K",
+        "U_FROM_TH",
+        "TH_FROM_K",
+        "TH_FROM_U"
+      ]
+    },
+    {
+      "id": "terraworkbench:radiometry_ternary",
+      "name": "02 Imagen ternaria — K/eTh/eU",
+      "group": "Espectrometría de rayos gamma",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "URANIUM",
+        "URANIUM_BAND",
+        "THORIUM",
+        "THORIUM_BAND",
+        "LOWER_PERCENTILE",
+        "UPPER_PERCENTILE",
+        "NORMALIZE"
+      ]
+    },
+    {
+      "id": "terraworkbench:reduction_to_equator",
+      "name": "RTE — IGRF-14 automático / manual (estabilizado)",
+      "group": "Transformaciones de dirección del campo MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "FIELD_MODE",
+        "INCLINATION",
+        "DECLINATION",
+        "USE_METADATA_DATE",
+        "YEAR",
+        "MONTH",
+        "DAY",
+        "ALTITUDE_KM",
+        "MAGNETIZATION_INCLINATION",
+        "MAGNETIZATION_DECLINATION",
+        "MAX_GAIN"
+      ]
+    },
+    {
+      "id": "terraworkbench:reduction_to_pole",
+      "name": "RTP — Harmonica manual",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "INCLINATION",
+        "DECLINATION",
+        "MAGNETIZATION_INCLINATION",
+        "MAGNETIZATION_DECLINATION"
+      ]
+    },
+    {
+      "id": "terraworkbench:reduction_to_pole_igrf",
+      "name": "RTP — IGRF-14 automático / manual (estabilizado)",
+      "group": "Transformaciones de dirección del campo MAG",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND",
+        "FIELD_MODE",
+        "INCLINATION",
+        "DECLINATION",
+        "USE_METADATA_DATE",
+        "YEAR",
+        "MONTH",
+        "DAY",
+        "ALTITUDE_KM",
+        "MAGNETIZATION_INCLINATION",
+        "MAGNETIZATION_DECLINATION",
+        "MAX_GAIN"
+      ]
+    },
+    {
+      "id": "terraworkbench:remove_igrf_main_field",
+      "name": "Anomalía magnética — retirar campo principal IGRF-14",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "VALUE_FIELD",
+        "ALTITUDE_FIELD",
+        "ALTITUDE_METRES",
+        "YEAR",
+        "MONTH",
+        "DAY",
+        "OUTPUT"
+      ]
+    },
+    {
+      "id": "terraworkbench:repeat_line_quality_control",
+      "name": "QC de líneas repetidas y corrección por offset mediano",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "VALUE_FIELD",
+        "LINE_FIELD",
+        "REPEAT_GROUP_FIELD",
+        "MAX_DISTANCE",
+        "APPLY_CORRECTION",
+        "OUTPUT",
+        "SUMMARY"
+      ]
+    },
+    {
+      "id": "terraworkbench:simple_bouguer_anomaly",
+      "name": "06 Anomalía de Bouguer simple",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "ELEVATION",
+        "ELEVATION_BAND",
+        "DENSITY_CRUST",
+        "DENSITY_WATER",
+        "VERTICAL_GRADIENT"
+      ]
+    },
+    {
+      "id": "terraworkbench:sinc_interpolation",
+      "name": "Interpolación de grilla sin(x)/x",
+      "group": "Preparación de datos de levantamiento",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FACTOR_X",
+        "FACTOR_Y",
+        "LOBES"
+      ]
+    },
+    {
+      "id": "terraworkbench:smooth_nine_point",
+      "name": "Suavizado binomial de nueve puntos",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "PASSES"
+      ]
+    },
+    {
+      "id": "terraworkbench:terrain_correction_prisms",
+      "name": "07 Corrección de terreno — prismas DEM",
+      "group": "Correcciones y anomalías gravimétricas",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "DENSITY_CRUST",
+        "DENSITY_WATER",
+        "CLEARANCE",
+        "MAX_CELLS"
+      ]
+    },
+    {
+      "id": "terraworkbench:upward_continuation",
+      "name": "Continuación ascendente",
+      "group": "Gravedad y magnetometría",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "HEIGHT"
+      ]
+    },
+    {
+      "id": "terraworkbench:vertical_integration",
+      "name": "Integración vertical",
+      "group": "Filtros en dominio de frecuencia",
+      "parameters": [
+        "INPUT",
+        "BAND",
+        "OUTPUT",
+        "FFT_DETREND_ORDER",
+        "FFT_PADDING_PERCENT",
+        "FFT_TAPER_PERCENT",
+        "FFT_RESTORE_TREND"
+      ]
+    }
+  ]
+}

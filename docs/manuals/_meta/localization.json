@@ -1,0 +1,1321 @@
+{
+  "schema_version": 1,
+  "scope": "28 complete chapters per locale; translated prose and editorial notes; original API docstrings and historical reports retain their language",
+  "hash_scheme": "sha256 of UTF-8 files normalized to LF",
+  "source_locale": "es",
+  "review": "Authored translations share chapter IDs, figures, implementation targets and scientific caveats. Structural checks detect drift; they do not certify translation semantics.",
+  "chapters": [
+    {
+      "file": "01_inicio.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "58fd140d05429932fd351b9acb6f323c472d12f54714aefd8bad6520cb685ffb",
+          "words": 455,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 9,
+          "source_modules": [
+            "__init__.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "12d08b7f0ee4cb5637ddf0e5d4a2c7e35468d6d4bd479231a301e9890b7724d3",
+          "words": 413,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 9,
+          "source_modules": [
+            "__init__.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "fa4d18655fcca1542c4f7c908b5dfe2588bd064c0a5097bf59c7a96db23d27a0",
+          "words": 444,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 9,
+          "source_modules": [
+            "__init__.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "02_instalacion.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "9d0ba326db58843b808bc19235423c202705e487fced5a672ce16491f48040cb",
+          "words": 684,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 11,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "cb54a416e898b4e210bca84b90006f7d2eec1cd239fa46442b3e24d1d369e283",
+          "words": 620,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 11,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "f7263a33146a54bfc0ace04c0e1c801d21755c1fde4aea52b3ef810fcccd0cd5",
+          "words": 654,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 11,
+          "source_modules": [],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "03_coordenadas.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "567fa3cee644a421d7670dc977aab07692f34a6185b99198b5f129d00a4fa235",
+          "words": 506,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 15,
+          "source_modules": [
+            "coordinates.py"
+          ],
+          "external_urls": [
+            "https://gdal.org/en/stable/user/raster_data_model.html",
+            "https://proj.org/en/stable/usage/transformation.html"
+          ]
+        },
+        "en": {
+          "sha256_lf": "f02d9dd64b18256eb5c779b40023fac5170eebe6fe49e759fd98f8775f731de1",
+          "words": 460,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 15,
+          "source_modules": [
+            "coordinates.py"
+          ],
+          "external_urls": [
+            "https://gdal.org/en/stable/user/raster_data_model.html",
+            "https://proj.org/en/stable/usage/transformation.html"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "fca16580d33a523569c970f8c119b2a2add339ec5ef75b45409922fd5c227629",
+          "words": 473,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 15,
+          "source_modules": [
+            "coordinates.py"
+          ],
+          "external_urls": [
+            "https://gdal.org/en/stable/user/raster_data_model.html",
+            "https://proj.org/en/stable/usage/transformation.html"
+          ]
+        }
+      }
+    },
+    {
+      "file": "04_importacion.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "e39733d3fcc41f2997a665ece8c39b93d400d19eb7278dddd1edb09653adfb73",
+          "words": 430,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "survey_text_import.py",
+            "text_import.py"
+          ],
+          "external_urls": [
+            "https://gdal.org/en/stable/user/raster_data_model.html"
+          ]
+        },
+        "en": {
+          "sha256_lf": "0af1a5212e089bc3d17dfb42b5bf73a6af91c1fe0b2e387bb6a95d451e258565",
+          "words": 388,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "survey_text_import.py",
+            "text_import.py"
+          ],
+          "external_urls": [
+            "https://gdal.org/en/stable/user/raster_data_model.html"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "ccc3bf5dab16b7839177d7e16ff7497ebebf826cc2d6bf844a50f0b655c3aa99",
+          "words": 394,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "survey_text_import.py",
+            "text_import.py"
+          ],
+          "external_urls": [
+            "https://gdal.org/en/stable/user/raster_data_model.html"
+          ]
+        }
+      }
+    },
+    {
+      "file": "05_bases_canales.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "d6cb3b5e9e63f3097666c30034b1714b989aa468363cc7d703bb7bfaa5daf658",
+          "words": 528,
+          "sections": 6,
+          "images": 1,
+          "table_rows": 0,
+          "source_modules": [
+            "survey_explorer.py",
+            "survey_recipes.py",
+            "survey_store.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "893c5c6a1d47be0d42c5d61a7e078430f344b874474a93ba590f7f1da7fab976",
+          "words": 456,
+          "sections": 6,
+          "images": 1,
+          "table_rows": 0,
+          "source_modules": [
+            "survey_explorer.py",
+            "survey_recipes.py",
+            "survey_store.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "d7ef30e70f0035a41535ca9bedaf932bcb5f3644b994d20dc77decefdb967bd5",
+          "words": 468,
+          "sections": 6,
+          "images": 1,
+          "table_rows": 0,
+          "source_modules": [
+            "survey_explorer.py",
+            "survey_recipes.py",
+            "survey_store.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "06_perfiles_qc.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "83fafa60b31a7814d2c42d665dad5c58b4137d024ba02d2aee746e8a93d9b331",
+          "words": 496,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 7,
+          "source_modules": [
+            "channel_filters.py",
+            "magnetic_compensation.py",
+            "preprocessing.py",
+            "profile_distance.py",
+            "profile_preparation.py",
+            "survey_correction_pipeline.py",
+            "survey_corrections.py"
+          ],
+          "external_urls": [
+            "https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.sosfiltfilt.html"
+          ]
+        },
+        "en": {
+          "sha256_lf": "8f818ed01d43dfa75991445118dbba4b8937c847a417e28aedb5bca111e81405",
+          "words": 427,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 7,
+          "source_modules": [
+            "channel_filters.py",
+            "magnetic_compensation.py",
+            "preprocessing.py",
+            "profile_distance.py",
+            "profile_preparation.py",
+            "survey_correction_pipeline.py",
+            "survey_corrections.py"
+          ],
+          "external_urls": [
+            "https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.sosfiltfilt.html"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "8ddbcd4f38d9729d00995a774cbc09b1a6cdf9af1b347c93b089cc24934da971",
+          "words": 442,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 7,
+          "source_modules": [
+            "channel_filters.py",
+            "magnetic_compensation.py",
+            "preprocessing.py",
+            "profile_distance.py",
+            "profile_preparation.py",
+            "survey_correction_pipeline.py",
+            "survey_corrections.py"
+          ],
+          "external_urls": [
+            "https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.sosfiltfilt.html"
+          ]
+        }
+      }
+    },
+    {
+      "file": "07_nivelacion_gridding.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "58639c07d4bc3501107766e8c7b9530c246a0434a3e485ac1f45fb4640778401",
+          "words": 487,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 10,
+          "source_modules": [
+            "equivalent_sources.py",
+            "geostatistics.py",
+            "gridding_methods.py",
+            "line_processing.py",
+            "survey_grid_pipeline.py",
+            "survey_processing.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "988f715abb2be52710f0de5ba6195830f181f346c4945b1f7bfca51e2afb2f06",
+          "words": 421,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 10,
+          "source_modules": [
+            "equivalent_sources.py",
+            "geostatistics.py",
+            "gridding_methods.py",
+            "line_processing.py",
+            "survey_grid_pipeline.py",
+            "survey_processing.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "26047624efbad8839b66cdce524253ab47d713bfa8894a0b3f6eacfb4e72a0d7",
+          "words": 430,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 10,
+          "source_modules": [
+            "equivalent_sources.py",
+            "geostatistics.py",
+            "gridding_methods.py",
+            "line_processing.py",
+            "survey_grid_pipeline.py",
+            "survey_processing.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "08_filtros_espaciales.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "f772b15ac11ee71a452eb9899824d59d734b9d22c85971a5851f083382f0a685",
+          "words": 371,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "basic_processing.py",
+            "grid_tools.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "ffe1ac5b2fb42bc14f9ab44fb7fb3d0f1827400c44e4a85b086e0814de1b56c1",
+          "words": 320,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "basic_processing.py",
+            "grid_tools.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "184ed916b04013d673ae2f9bc547626c495e1a66a229ed37623994ceac7a0333",
+          "words": 316,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "basic_processing.py",
+            "grid_tools.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "09_fft_espectros.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "05fd00630fed29a3d0f3a3ef8ccd0e80fef463843f9280e914704def35ea3fb7",
+          "words": 470,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 0,
+          "source_modules": [
+            "filter_recipes.py",
+            "oasis_style.py",
+            "radial_filters.py",
+            "spectral.py",
+            "spectral_analysis.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "b0c12c253b386d2ebac5ece45b686ea0077b6bcfc40645f0be8dab89232dfb57",
+          "words": 407,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 0,
+          "source_modules": [
+            "filter_recipes.py",
+            "oasis_style.py",
+            "radial_filters.py",
+            "spectral.py",
+            "spectral_analysis.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "c820fef8fa5d81862c37b479a2465f4e280736c481537e6f6507416bd97eb4bf",
+          "words": 414,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 0,
+          "source_modules": [
+            "filter_recipes.py",
+            "oasis_style.py",
+            "radial_filters.py",
+            "spectral.py",
+            "spectral_analysis.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "10_magnetometria.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "4ae6a86d0306791bec47adfba15c9a94db08c81dc9f585b5a8651ace703c21e0",
+          "words": 430,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 7,
+          "source_modules": [
+            "compact_magnetics.py",
+            "geomagnetism.py",
+            "magnetic_components.py",
+            "magnetic_pipeline.py",
+            "magnetic_products.py"
+          ],
+          "external_urls": [
+            "https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field"
+          ]
+        },
+        "en": {
+          "sha256_lf": "3fdc034a379be42c94c7cd1f6ff25da479a389db9cbdebdc1eb4fb1f387a92e7",
+          "words": 373,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 7,
+          "source_modules": [
+            "compact_magnetics.py",
+            "geomagnetism.py",
+            "magnetic_components.py",
+            "magnetic_pipeline.py",
+            "magnetic_products.py"
+          ],
+          "external_urls": [
+            "https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "5771bb17259042b352f5973eb0449bff0723e4cb41fc322d13cde8f20750ed21",
+          "words": 388,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 7,
+          "source_modules": [
+            "compact_magnetics.py",
+            "geomagnetism.py",
+            "magnetic_components.py",
+            "magnetic_pipeline.py",
+            "magnetic_products.py"
+          ],
+          "external_urls": [
+            "https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field"
+          ]
+        }
+      }
+    },
+    {
+      "file": "11_gravimetria.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "f1b2794eec694958a65ae6ed0c911a963117f391867de5af8dac9a114525dfea",
+          "words": 458,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "gravity_corrections.py",
+            "gravity_network.py",
+            "gravity_profiles.py"
+          ],
+          "external_urls": [
+            "https://www.fatiando.org/boule/latest/user_guide/normal_gravity.html"
+          ]
+        },
+        "en": {
+          "sha256_lf": "53f16345a44331d7ebf2c31678c71f238300464b4ab7f9ac4c130f8a9c6c60b7",
+          "words": 381,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "gravity_corrections.py",
+            "gravity_network.py",
+            "gravity_profiles.py"
+          ],
+          "external_urls": [
+            "https://www.fatiando.org/boule/latest/user_guide/normal_gravity.html"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "8bce9b1ba3f1e0f6f64bf7b5e0cd738821872cb22c54f9bf215306694716e984",
+          "words": 393,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "gravity_corrections.py",
+            "gravity_network.py",
+            "gravity_profiles.py"
+          ],
+          "external_urls": [
+            "https://www.fatiando.org/boule/latest/user_guide/normal_gravity.html"
+          ]
+        }
+      }
+    },
+    {
+      "file": "12_terreno_isostasia.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "8d610b797406bdef16afc3b2de25161c4e1062d594186f782b7c8488442b34c1",
+          "words": 414,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "adaptive_terrain.py",
+            "flexure.py",
+            "isostasy.py",
+            "potential_tensors.py",
+            "terrain_gravity.py",
+            "terrain_tree_walk.py"
+          ],
+          "external_urls": [
+            "https://docs.generic-mapping-tools.org/6.5/supplements/potential/grdflexure.html",
+            "https://www.fatiando.org/harmonica/latest/api/generated/harmonica.prism_gravity.html"
+          ]
+        },
+        "en": {
+          "sha256_lf": "0ddc7231f5a1d03f35de850de218ee9ce7d6dd7f6e94f4d1fb8b9ffa033e2d42",
+          "words": 354,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "adaptive_terrain.py",
+            "flexure.py",
+            "isostasy.py",
+            "potential_tensors.py",
+            "terrain_gravity.py",
+            "terrain_tree_walk.py"
+          ],
+          "external_urls": [
+            "https://docs.generic-mapping-tools.org/6.5/supplements/potential/grdflexure.html",
+            "https://www.fatiando.org/harmonica/latest/api/generated/harmonica.prism_gravity.html"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "6f974ffc67179a0b49a93caff1f14f8ee391353614bad226edaa536fead1af22",
+          "words": 364,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "adaptive_terrain.py",
+            "flexure.py",
+            "isostasy.py",
+            "potential_tensors.py",
+            "terrain_gravity.py",
+            "terrain_tree_walk.py"
+          ],
+          "external_urls": [
+            "https://docs.generic-mapping-tools.org/6.5/supplements/potential/grdflexure.html",
+            "https://www.fatiando.org/harmonica/latest/api/generated/harmonica.prism_gravity.html"
+          ]
+        }
+      }
+    },
+    {
+      "file": "13_radiometria.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "f73036837181b340f4f8abd10870c3615e73438db5cdb156b8e833913d324369",
+          "words": 430,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "radiometric_calibration.py",
+            "radiometric_radon.py",
+            "radiometric_spectra.py",
+            "radiometry.py",
+            "radon_corrections.py"
+          ],
+          "external_urls": [
+            "https://www-pub.iaea.org/MTCD/Publications/PDF/te_1363_web.pdf"
+          ]
+        },
+        "en": {
+          "sha256_lf": "f5db40a0119e589a44f0703713388ed3df04d55d22bafa5642310cd932be3187",
+          "words": 376,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "radiometric_calibration.py",
+            "radiometric_radon.py",
+            "radiometric_spectra.py",
+            "radiometry.py",
+            "radon_corrections.py"
+          ],
+          "external_urls": [
+            "https://www-pub.iaea.org/MTCD/Publications/PDF/te_1363_web.pdf"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "0502250a3266dd163a4bfc0afa33291f10eeb64be74628a0557ef1317b7ee272",
+          "words": 389,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "radiometric_calibration.py",
+            "radiometric_radon.py",
+            "radiometric_spectra.py",
+            "radiometry.py",
+            "radon_corrections.py"
+          ],
+          "external_urls": [
+            "https://www-pub.iaea.org/MTCD/Publications/PDF/te_1363_web.pdf"
+          ]
+        }
+      }
+    },
+    {
+      "file": "14_estructura_profundidad.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "836b13d7d091a3bf4c58260db80ce0966043c3137c2e5a063d9316c4d1387e44",
+          "words": 408,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "lineament_geometry.py",
+            "source_depth.py",
+            "structural_attributes.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "5892bad6d76486d15567f4153335aa960d98130924c6a8bb14d7dc8f18d0a536",
+          "words": 345,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "lineament_geometry.py",
+            "source_depth.py",
+            "structural_attributes.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "8f08e1d6f85727528c2d2ea8c5477ca9b1d242604704987678ebd562d32de4d0",
+          "words": 366,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "lineament_geometry.py",
+            "source_depth.py",
+            "structural_attributes.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "15_inversion_potencial.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "99dd7e9f220ef5640aa9d2064f7b031ac0503067b5a883c817c3dc028407e4af",
+          "words": 446,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "apparent_properties.py",
+            "inversion.py",
+            "inversion_workflows.py",
+            "prism_inversion.py",
+            "regularization_profiles.py",
+            "spatial_constraints.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        },
+        "en": {
+          "sha256_lf": "22946f85cae0ddcaaa8f45a77e8081ac5a42507e6a3ac4b28fc2b069de7a4e6e",
+          "words": 386,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "apparent_properties.py",
+            "inversion.py",
+            "inversion_workflows.py",
+            "prism_inversion.py",
+            "regularization_profiles.py",
+            "spatial_constraints.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "c09f6ab8d4a70ec49bb660648dbcdef47e48e1da0d751e98f0a1e39a0e254451",
+          "words": 393,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "apparent_properties.py",
+            "inversion.py",
+            "inversion_workflows.py",
+            "prism_inversion.py",
+            "regularization_profiles.py",
+            "spatial_constraints.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        }
+      }
+    },
+    {
+      "file": "16_mvi_conjunta.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "492fb421bcb68ca858ff7c2c6e72b91001a7688acee7ed331b4fef89e47de9b3",
+          "words": 408,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "spherical_mvi.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "3c2bc03e467269ae7ddb3ec265ea960ecc1fc68de97ab63e02211744f8022e59",
+          "words": 325,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "spherical_mvi.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "01cc93cf953f6315867ad75ac93bea3ec2b8fafdc3d2aa52acd4609420be7f50",
+          "words": 350,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "spherical_mvi.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "17_resolucion_incertidumbre.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "676a38668c44a33b9f1ff75c0de96e44eecbd957f3f9634ca66c05651c78969d",
+          "words": 470,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 6,
+          "source_modules": [
+            "_calibration.py",
+            "advanced_statistics.py",
+            "inversion_diagnostics.py",
+            "inversion_evidence.py",
+            "matrix_free_resolution.py",
+            "recovery_metrics.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "7bbbec6d4e287210bc0ddc8e67fc0f68eb120ca1bbffc333c36bb8e07e359730",
+          "words": 417,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 6,
+          "source_modules": [
+            "_calibration.py",
+            "advanced_statistics.py",
+            "inversion_diagnostics.py",
+            "inversion_evidence.py",
+            "matrix_free_resolution.py",
+            "recovery_metrics.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "1e7a122f03d48606f81a7b308728a240577fb1f0f3b04a8dc69bc60272788d7f",
+          "words": 422,
+          "sections": 5,
+          "images": 1,
+          "table_rows": 6,
+          "source_modules": [
+            "_calibration.py",
+            "advanced_statistics.py",
+            "inversion_diagnostics.py",
+            "inversion_evidence.py",
+            "matrix_free_resolution.py",
+            "recovery_metrics.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "18_electrica_dc.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "9cb60413c3a83581e81fefc7d3172c4782d98bb247db34a17d19886e6c3a3988",
+          "words": 398,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "electrical.py",
+            "electrical_pde.py",
+            "layered_electrical.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        },
+        "en": {
+          "sha256_lf": "9ae446c4f2c8ea301c0623126bd32c94838aecb4248b81be9c693f67459eedfa",
+          "words": 329,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "electrical.py",
+            "electrical_pde.py",
+            "layered_electrical.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "924ad491e741fa7b8cdbfc6566152434f79d7bd9aef42b55661cfe2ad585abc4",
+          "words": 333,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "electrical.py",
+            "electrical_pde.py",
+            "layered_electrical.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        }
+      }
+    },
+    {
+      "file": "19_ip_sip.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "a4e7f42d7bc0af954b290f9b021c8fc3824da589b32990c40add5bfff3302378",
+          "words": 386,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "dispersive_ip.py",
+            "ip_stacking.py",
+            "ip_waveform.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "39a34368e15b99986fff392e62e22e0190d0f7af88d8dba458820458f147c7a7",
+          "words": 311,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "dispersive_ip.py",
+            "ip_stacking.py",
+            "ip_waveform.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "3d9b828c17e763ffc01d05b29b475a63ff081ba0a19f40636e2fd54c43e32d06",
+          "words": 329,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "dispersive_ip.py",
+            "ip_stacking.py",
+            "ip_waveform.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "20_em_mt.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "999930ac18fa16e084b99678731ca2bacb08e3ded350bd15b73dacb768d9d3bc",
+          "words": 384,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "complex_calibration.py",
+            "fdem_3d.py",
+            "layered_em.py",
+            "magnetotellurics.py",
+            "transient_processing.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        },
+        "en": {
+          "sha256_lf": "6f28c28dd4fde4f36382bec51f1f2a2615fbcfb64f8dd841e6b1594fc1667582",
+          "words": 325,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "complex_calibration.py",
+            "fdem_3d.py",
+            "layered_em.py",
+            "magnetotellurics.py",
+            "transient_processing.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        },
+        "pt": {
+          "sha256_lf": "78b5c9107160bfc02c320f5c8cdc7d1612d0c01420734689c3453e6f27e66828",
+          "words": 336,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "complex_calibration.py",
+            "fdem_3d.py",
+            "layered_em.py",
+            "magnetotellurics.py",
+            "transient_processing.py"
+          ],
+          "external_urls": [
+            "https://simpeg.xyz/"
+          ]
+        }
+      }
+    },
+    {
+      "file": "21_potencial_espontaneo.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "7109f2a87184940516ba5a7930fb6c8ae0ae04335847002a281120a9bdd323fb",
+          "words": 377,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "self_potential.py",
+            "self_potential_pde.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "bfff0e6fc1ea402ab0b7003724235f16a1de43a328117aef673b4e8640f65b0c",
+          "words": 318,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "self_potential.py",
+            "self_potential_pde.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "334dc0b1805791b9be07b88e83b0f082695ccfb1b6a6af57e7aa32cfc0d32ffc",
+          "words": 332,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "self_potential.py",
+            "self_potential_pde.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "22_ondas_sondeos.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "ae4ba3ffda300ce9992d523a23b85778b718c65c24bb49ca9e4bb601e208e735",
+          "words": 414,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "borehole.py",
+            "waveform_processing.py",
+            "well_log_io.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "49ad72f48df6c8902e465c40cbc3b225905e5cd0158297f7b51424185cdae4d2",
+          "words": 325,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "borehole.py",
+            "waveform_processing.py",
+            "well_log_io.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "0e94ca2636ba9b0325c2b4de53ed16d193d4898bee4c00db8860df3dba05d640",
+          "words": 352,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "borehole.py",
+            "waveform_processing.py",
+            "well_log_io.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "23_integracion_experimentos.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "d22f5b782306cad64b2ee00c4e1c7ecdd7eb974dbb9934e6953be0ffb4594c7d",
+          "words": 395,
+          "sections": 4,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "archaeology.py",
+            "crossovers.py",
+            "multisensor_fusion.py",
+            "multisensor_project.py",
+            "paired_flights.py",
+            "process_effect.py",
+            "terrain_analysis.py",
+            "vector_grid_audit.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "d277dda44885465a10c60dcb05b53d75a7a98c9b3488ed41b70e2bc7103f3131",
+          "words": 317,
+          "sections": 4,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "archaeology.py",
+            "crossovers.py",
+            "multisensor_fusion.py",
+            "multisensor_project.py",
+            "paired_flights.py",
+            "process_effect.py",
+            "terrain_analysis.py",
+            "vector_grid_audit.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "60fec10d4bec0d99652414f2095edd71cbb9ec56da74f5819ccd02c1715b0e2c",
+          "words": 344,
+          "sections": 4,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [
+            "archaeology.py",
+            "crossovers.py",
+            "multisensor_fusion.py",
+            "multisensor_project.py",
+            "paired_flights.py",
+            "process_effect.py",
+            "terrain_analysis.py",
+            "vector_grid_audit.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "24_gui_qgis.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "26de13025997f08c2d252b078db74976d5fbce0504b8593653106167560b827e",
+          "words": 546,
+          "sections": 4,
+          "images": 2,
+          "table_rows": 0,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "3743a6e0bf9db90cecddd3903b814e6997425b5d020dd8d425b7b84b4bd154af",
+          "words": 450,
+          "sections": 4,
+          "images": 2,
+          "table_rows": 0,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "b53996636968464d5046db7f5988c45a4d4a958baf4221580f7e4b263a32e9bb",
+          "words": 471,
+          "sections": 4,
+          "images": 2,
+          "table_rows": 0,
+          "source_modules": [],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "25_api_workflows.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "0ab65420ff9aea4aeefcf1872db938b471908b1469e043166b20893e3193cc86",
+          "words": 417,
+          "sections": 4,
+          "images": 0,
+          "table_rows": 5,
+          "source_modules": [
+            "operation_jobs.py",
+            "operation_workflows.py",
+            "operations.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "efd041f79d8ac71518b9e58f1c9f7fdc81365bf2a0c5a53b656e7e67e2abe083",
+          "words": 338,
+          "sections": 4,
+          "images": 0,
+          "table_rows": 5,
+          "source_modules": [
+            "operation_jobs.py",
+            "operation_workflows.py",
+            "operations.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "d80cff28a9da042ae5a2f8bf45d135bae7dcc51cf6bf3b841998cfb7ee526d85",
+          "words": 351,
+          "sections": 4,
+          "images": 0,
+          "table_rows": 5,
+          "source_modules": [
+            "operation_jobs.py",
+            "operation_workflows.py",
+            "operations.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "26_recursos_desarrollo.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "aa52cfd6cf3a85a7a6673d61e61e1747dfd144669a632c328bf0f8961b7e30fa",
+          "words": 466,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 11,
+          "source_modules": [
+            "_array_contract.py"
+          ],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "da2746e848916f0a9a6be8deff9bee957f3c842c38fd7a2045c3c849a0e7f589",
+          "words": 372,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 11,
+          "source_modules": [
+            "_array_contract.py"
+          ],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "a07d1e85081d48690d7090557bf10aa0fc950328a347f01243bc0144b307c863",
+          "words": 389,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 11,
+          "source_modules": [
+            "_array_contract.py"
+          ],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "27_tutoriales.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "59a2b66c466e29c1c4ea5d7cd309cc5934eea9476cb716c86e62a52a819fc561",
+          "words": 478,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "0bed2a2054370b5bf3fe995642e8c39a9844814079bba48cd31653d78ef5a83b",
+          "words": 390,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "049aff473243f83ec836638d09c43ae36236e78451c077e08f37862fb769b655",
+          "words": 390,
+          "sections": 6,
+          "images": 0,
+          "table_rows": 0,
+          "source_modules": [],
+          "external_urls": []
+        }
+      }
+    },
+    {
+      "file": "28_evidencia_publicacion.md",
+      "versions": {
+        "es": {
+          "sha256_lf": "4f964077c03307c195be47ed19bdb995734c40cce4548b21dc5761f703122516",
+          "words": 510,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 9,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "en": {
+          "sha256_lf": "b5d25fc7bf81f12c10dede998d1e5da45dcf6eec35ba8a8021c9242cebfbf46c",
+          "words": 416,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 9,
+          "source_modules": [],
+          "external_urls": []
+        },
+        "pt": {
+          "sha256_lf": "6cf3390c61beb99183a3b3c8517c0f714a9d4189b9b068dc9b5f71fac633f563",
+          "words": 440,
+          "sections": 5,
+          "images": 0,
+          "table_rows": 9,
+          "source_modules": [],
+          "external_urls": []
+        }
+      }
+    }
+  ],
+  "supporting_documents": {
+    "es/README.md": "1090585eb7d09d5c2f4f6f1de7a1848c15ec1256189392d465124f036ce447b6",
+    "es/fuentes.md": "9013e4fbbbb50202d59303af2b2721fc9d3cd76b40d8e964d1a4b8b6baf8e202",
+    "en/README.md": "0de88bcc76f06f9b650abc28f8fcf825696709d7a934e67729fd15a74ac95485",
+    "en/fuentes.md": "b0715a7e89fd972cbf7970db4105357338a3e590c97053958420a5de1bd5720a",
+    "pt/README.md": "c90e576821dc12b65a55850a3586fda4ee74fc308c7f1b91718af7d2cd231c08",
+    "pt/fuentes.md": "9fe6ae86b5f18f9c5fb3b9939b56cbaa725c9f27b48bdf580e3c9d27e51b654b"
+  }
+}

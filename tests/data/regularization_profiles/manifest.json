@@ -1,0 +1,26 @@
+{
+  "hash_convention": "LF-normalized text for .msh; unchanged binary bytes for .npz",
+  "scope": "Authored deterministic synthetic grids; no real survey or geological model",
+  "versions": {
+    "SimPEG": "0.15.0",
+    "discretize": "0.7.0",
+    "numpy": "1.20.3",
+    "scipy": "1.6.3"
+  },
+  "source_sha256": {
+    "sparse.py": "1167bb741983ea17f9e834867c935583e5ad308ea661c792b6c911b55b85305f",
+    "regularization_mesh.py": "5c8f09dc44d4aac3a86588efe23eee237c3eb6bfd27dd17f9d3a9169fa387e45"
+  },
+  "files_sha256": {
+    "nonuniform_l1_active.npz": "6e968e5c458ca93fc4e9cc6e47fe49597b635eaecda97bf170033439d5eb455e",
+    "nonuniform_l2.npz": "0b873d2a58e84a3b3f85085db8a450ba9b026c873fb347d49a37ae9ce49e95e6",
+    "nonuniform_mixed_active.npz": "60bf39be13b1d6b91d0aa09f4f1bd2a2d0f49431525b5347a7d1b2750fb1b3fc",
+    "tree.msh": "83026699a3c68096b16f2e11fd1b33096ff402724ef6569c3686b9a322c49db2",
+    "tree_l1_active.npz": "873e5dc24c46cc91eb21df488e63b28b9096b073d060f3a4db1726003a0f2d08",
+    "tree_l2.npz": "107515a67cf22e94f7521f63451e5828a61b0907f577ff48262339373574f71b",
+    "tree_mixed_active.npz": "6a5d14a1e52b1c720530e918ad243615e38ebf7303c614c6665cf52105289d58",
+    "uniform_l1_active.npz": "b9486cba4ed724769ac9b68250d3b08e2e9bbb4d14094caae6855866c9d56aef",
+    "uniform_l2.npz": "5070208dd1ed69cb91e455fa91e61599cbe166cdd9381e575dce39a179d59d56",
+    "uniform_mixed_active.npz": "bfc45ac5528236a82107f046146bdf8eead628a4bda3dbfecd556ef57330626c"
+  }
+}

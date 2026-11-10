@@ -1,0 +1,24 @@
+{
+  "scope": "conceptual diagrams and controlled numerical figures; real-data captures have a separate manifest",
+  "locale": "es",
+  "fft": {
+    "kind": "synthetic periodic operator check",
+    "spacing_m": 10.0,
+    "height_m": 50.0,
+    "wavelengths_m": [
+      640.0,
+      160.0
+    ],
+    "max_error": 1.6375789613221059e-15,
+    "field_data": false
+  },
+  "linear_null_error": 0.0,
+  "hash_scheme": "sha256: SVG text normalized to LF; PNG exact bytes",
+  "files": {
+    "arquitectura.svg": "89543855369181ebca72a87e26d524fd695657a5b35dea93622c518013d58737",
+    "arquitectura_compacta.svg": "cc87a4b03bca25508ac8b1ddf41c735a774acec00a30e121757602ab4d97403f",
+    "continuacion.png": "d26c64cbd8283ea361a20cb3a003ed7f26222a33e123d594f96515205096ea68",
+    "linaje.svg": "df797dd8210f3ca824b131c34cdf255ae7291ce368772068eadc067d6b569297",
+    "no_unicidad.png": "c52ce0dab11afe1f7f373aaae7c66d774104918b88ca10e2462b1b2aa3d9cb7e"
+  }
+}

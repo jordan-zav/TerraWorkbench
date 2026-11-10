@@ -1,0 +1,3336 @@
+{
+  "scope": "Spherical MVI numerical safeguards and adaptive/lagged controls; not field recovery certification",
+  "previous_adaptive": {
+    "state": "complete",
+    "utc": "2026-11-02T20:02:40.588221+00:00",
+    "commit": "0303697375892886d13789b75e3d4a1906417c87",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 5,
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 40,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": null,
+      "cg_maxiter": 200,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 1.0889810024913895,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 13,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 1,
+              "distance_m": 7.872880573253356
+            }
+          ],
+          "maximum_location_error_m": 7.872880573253356,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 18375.0,
+          "volume_relative_error": 0.80859375,
+          "support_dice": 0.2273224043715847,
+          "model_relative_error": 1.6934001889973866,
+          "maximum_contrast_relative_error": 0.6111116441837343,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.01944441779081329,
+              "contrast_relative_error": 0.6111116441837343,
+              "direction_error_deg": 3.49285504795691
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 5347831.96926889,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 1.0889810024913895,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 200,
+          "cg_relative_residual": 0.0017844835692425176,
+          "cg_tolerance_met": false,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 0.0017844835692424695,
+          "cg_true_tolerance_met": false,
+          "cg_audited_solves": 31,
+          "cg_failed_true_tolerance_count": 13,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": false,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 0.4854310135002298,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 20,
+          "iterations": 31,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 200,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 26,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 40,
+          "total_iteration_budget": 60,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": true,
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 137,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_safeguard_events": [],
+          "angular_line_search_retries": [],
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 1012,
+          "zero_amplitude_chart_events": [
+            {
+              "iteration": 16,
+              "reoriented_cells": 1012
+            }
+          ],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 3118,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": false,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "frozen_only": {
+    "state": "complete",
+    "utc": "2026-11-02T23:30:37.779421+00:00",
+    "commit": "704b56b305b5be281392d2ecef7a78abf4b89d65",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 5,
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 40,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": null,
+      "cg_maxiter": 200,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 1.0229198809532265,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 0,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 0.0,
+          "volume_relative_error": 1.0,
+          "support_dice": 0.0,
+          "model_relative_error": 1.0005234903041202,
+          "maximum_contrast_relative_error": 0.8766229620147954,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.006168851899260235,
+              "contrast_relative_error": 0.8766229620147954,
+              "direction_error_deg": 16.016069482839296
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 73622081.77941416,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 1.0229198809532265,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": true,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 169,
+          "cg_relative_residual": 8.792412600434798e-05,
+          "cg_tolerance_met": true,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 8.792412600444385e-05,
+          "cg_true_tolerance_met": true,
+          "cg_audited_solves": 45,
+          "cg_failed_true_tolerance_count": 3,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": false,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 5931.84834499291,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 0,
+          "iterations": 45,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 200,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 40,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 40,
+          "total_iteration_budget": 60,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": false,
+          "irls_update_mode": "frozen_subproblem",
+          "irls_inner_relative_tolerance": 0.001,
+          "irls_subproblems": [],
+          "irls_inner_history": {
+            "items_in_development_archive": 41,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "irls_stop_reason": "newton_budget",
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 0,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_safeguard_events": [],
+          "angular_line_search_retries": [],
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "zero_amplitude_chart_events": [],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 0,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": true,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "frozen_Jacobi": {
+    "state": "complete",
+    "utc": "2026-11-02T23:41:40.483196+00:00",
+    "commit": "704b56b305b5be281392d2ecef7a78abf4b89d65",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 5,
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 40,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": null,
+      "cg_maxiter": 200,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 0.9658251409090566,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 0,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 0.0,
+          "volume_relative_error": 1.0,
+          "support_dice": 0.0,
+          "model_relative_error": 1.000879061604897,
+          "maximum_contrast_relative_error": 0.8755470409511669,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.006222647952441655,
+              "contrast_relative_error": 0.8755470409511669,
+              "direction_error_deg": 16.06137246720677
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 74003815.80903448,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 0.9658251409090566,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": true,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 179,
+          "cg_relative_residual": 9.824562495174737e-05,
+          "cg_tolerance_met": true,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 9.824562495179635e-05,
+          "cg_true_tolerance_met": true,
+          "cg_audited_solves": 45,
+          "cg_failed_true_tolerance_count": 4,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": true,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 5931.84834499291,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 0,
+          "iterations": 45,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 200,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 40,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 40,
+          "total_iteration_budget": 60,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": false,
+          "irls_update_mode": "frozen_subproblem",
+          "irls_inner_relative_tolerance": 0.001,
+          "irls_subproblems": [],
+          "irls_inner_history": {
+            "items_in_development_archive": 41,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "irls_stop_reason": "newton_budget",
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 0,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_safeguard_events": [],
+          "angular_line_search_retries": [],
+          "spherical_bound_step_scaling": "component_Jacobi",
+          "spherical_bound_step_events": [
+            {
+              "iteration": 2,
+              "coordinates": 56,
+              "sdk_max_abs": 0.41989437852560174,
+              "jacobi_max_abs": 11.354512061670093,
+              "angular_cg_max_abs": 41.98943785256017
+            },
+            {
+              "iteration": 9,
+              "coordinates": 65,
+              "sdk_max_abs": 0.3103778161303656,
+              "jacobi_max_abs": 32.303545629756854,
+              "angular_cg_max_abs": 32.303545629756854
+            },
+            {
+              "iteration": 10,
+              "coordinates": 1,
+              "sdk_max_abs": 0.3208359147171148,
+              "jacobi_max_abs": 0.013501209045942628,
+              "angular_cg_max_abs": 32.08359147171148
+            },
+            {
+              "iteration": 11,
+              "coordinates": 6,
+              "sdk_max_abs": 0.27309262232686077,
+              "jacobi_max_abs": 1.106765889638915,
+              "angular_cg_max_abs": 27.309262232686077
+            },
+            {
+              "iteration": 13,
+              "coordinates": 6,
+              "sdk_max_abs": 0.20789585792357282,
+              "jacobi_max_abs": 0.7441412322359102,
+              "angular_cg_max_abs": 20.789585792357283
+            },
+            {
+              "iteration": 15,
+              "coordinates": 5,
+              "sdk_max_abs": 0.18166896516721712,
+              "jacobi_max_abs": 0.5820925429919492,
+              "angular_cg_max_abs": 18.16689651672171
+            },
+            {
+              "iteration": 17,
+              "coordinates": 6,
+              "sdk_max_abs": 0.18535789955552073,
+              "jacobi_max_abs": 0.310241938135447,
+              "angular_cg_max_abs": 18.535789955552072
+            },
+            {
+              "iteration": 21,
+              "coordinates": 1,
+              "sdk_max_abs": 0.17847379701751406,
+              "jacobi_max_abs": 0.02119599213063546,
+              "angular_cg_max_abs": 17.847379701751407
+            }
+          ],
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "zero_amplitude_chart_events": [],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 0,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": true,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "bounded_before_rescue": {
+    "state": "complete",
+    "utc": "2026-11-02T23:50:25.913162+00:00",
+    "commit": "704b56b305b5be281392d2ecef7a78abf4b89d65",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 5,
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 40,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": null,
+      "cg_maxiter": 200,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 0.8172121306230787,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 0,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 0.0,
+          "volume_relative_error": 1.0,
+          "support_dice": 0.0,
+          "model_relative_error": 1.0214851998563126,
+          "maximum_contrast_relative_error": 0.8674517721014449,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.006627411394927755,
+              "contrast_relative_error": 0.8674517721014449,
+              "direction_error_deg": 15.711450988264973
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 78373391.9671496,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 0.8172121306230787,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 200,
+          "cg_relative_residual": 0.00021403649613277033,
+          "cg_tolerance_met": false,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 0.000214036496133515,
+          "cg_true_tolerance_met": false,
+          "cg_audited_solves": 24,
+          "cg_failed_true_tolerance_count": 13,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": true,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 5931.84834499291,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 0,
+          "iterations": 24,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 200,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 19,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 40,
+          "total_iteration_budget": 60,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": false,
+          "irls_update_mode": "frozen_subproblem",
+          "irls_inner_relative_tolerance": 0.001,
+          "irls_subproblems": [],
+          "irls_inner_history": {
+            "items_in_development_archive": 20,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "irls_stop_reason": "line_search_failed",
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 0,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_mode": "bounded_each_step",
+          "angular_step_safeguard_events": {
+            "items_in_development_archive": 20,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "angular_line_search_retries": [],
+          "spherical_bound_step_scaling": "component_Jacobi",
+          "spherical_bound_step_events": [
+            {
+              "iteration": 2,
+              "coordinates": 9,
+              "sdk_max_abs": 0.14898805700531184,
+              "jacobi_max_abs": 0.6985564374120826,
+              "angular_cg_max_abs": 14.898805700531184
+            },
+            {
+              "iteration": 6,
+              "coordinates": 1,
+              "sdk_max_abs": 0.17401348522329638,
+              "jacobi_max_abs": 0.006029656120745613,
+              "angular_cg_max_abs": 17.401348522329638
+            }
+          ],
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "zero_amplitude_chart_events": [],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 0,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": false,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "projected_rescue_before_scaled_CG": {
+    "state": "complete",
+    "utc": "2026-11-03T00:04:40.863111+00:00",
+    "commit": "704b56b305b5be281392d2ecef7a78abf4b89d65",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 5,
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 40,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": null,
+      "cg_maxiter": 200,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 0.830626667215858,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 0,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 0.0,
+          "volume_relative_error": 1.0,
+          "support_dice": 0.0,
+          "model_relative_error": 1.0326937198654618,
+          "maximum_contrast_relative_error": 0.8698119637667523,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.006509401811662388,
+              "contrast_relative_error": 0.8698119637667523,
+              "direction_error_deg": 16.31801309712636
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 87019716.4568939,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 0.830626667215858,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": true,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 199,
+          "cg_relative_residual": 9.90590965517221e-05,
+          "cg_tolerance_met": true,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 9.905909655201409e-05,
+          "cg_true_tolerance_met": true,
+          "cg_audited_solves": 45,
+          "cg_failed_true_tolerance_count": 31,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": true,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 5931.84834499291,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 0,
+          "iterations": 45,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 200,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 40,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 40,
+          "total_iteration_budget": 60,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": false,
+          "irls_update_mode": "frozen_subproblem",
+          "irls_inner_relative_tolerance": 0.001,
+          "irls_subproblems": [],
+          "irls_inner_history": {
+            "items_in_development_archive": 41,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "irls_stop_reason": "newton_budget",
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 0,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_mode": "bounded_each_step",
+          "angular_step_safeguard_events": {
+            "items_in_development_archive": 40,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "angular_line_search_retries": [
+            {
+              "iteration": 22,
+              "kind": "projected_Jacobi",
+              "original_backtracks": 20,
+              "retry_backtracks": 5,
+              "accepted": true
+            }
+          ],
+          "spherical_bound_step_scaling": "component_Jacobi",
+          "spherical_bound_step_events": [
+            {
+              "iteration": 2,
+              "coordinates": 9,
+              "sdk_max_abs": 0.14898805700531184,
+              "jacobi_max_abs": 0.6985564374120826,
+              "angular_cg_max_abs": 14.898805700531184
+            }
+          ],
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "zero_amplitude_chart_events": [],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 0,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": true,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "scaled_CG_lagged_experiment": {
+    "state": "complete",
+    "utc": "2026-11-03T00:35:06.808718+00:00",
+    "commit": "704b56b305b5be281392d2ecef7a78abf4b89d65",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 5,
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 40,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": null,
+      "cg_maxiter": 200,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 0.8322562551934615,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 0,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 0.0,
+          "volume_relative_error": 1.0,
+          "support_dice": 0.0,
+          "model_relative_error": 1.0337822910502519,
+          "maximum_contrast_relative_error": 0.8698219735740462,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.006508901321297687,
+              "contrast_relative_error": 0.8698219735740462,
+              "direction_error_deg": 16.31888065132034
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 87357385.94897828,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 0.8322562551934615,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": true,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 200,
+          "cg_relative_residual": 0.00012253380509443933,
+          "cg_tolerance_met": false,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 0.00012253380509443933,
+          "cg_true_tolerance_met": false,
+          "cg_audited_solves": 45,
+          "cg_failed_true_tolerance_count": 32,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": true,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 5931.84834499291,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 0,
+          "iterations": 45,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 200,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 40,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 40,
+          "total_iteration_budget": 60,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": false,
+          "irls_update_mode": "frozen_subproblem",
+          "irls_inner_relative_tolerance": 0.001,
+          "irls_subproblems": [],
+          "irls_inner_history": {
+            "items_in_development_archive": 41,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "irls_stop_reason": "newton_budget",
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 0,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_mode": "bounded_each_step",
+          "angular_step_safeguard_events": {
+            "items_in_development_archive": 40,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "angular_line_search_retries": [
+            {
+              "iteration": 23,
+              "kind": "projected_Jacobi",
+              "original_backtracks": 20,
+              "retry_backtracks": 5,
+              "accepted": true
+            }
+          ],
+          "spherical_bound_step_scaling": "component_Jacobi",
+          "spherical_bound_step_events": [
+            {
+              "iteration": 2,
+              "coordinates": 9,
+              "sdk_counterfactual_max_abs": 0.14979287206870903,
+              "jacobi_max_abs": 0.6984791206721792,
+              "angular_cg_max_abs": 14.979287206870904
+            }
+          ],
+          "cg_residual_metric": "raw_and_Jacobi_energy",
+          "cg_scaled_relative_residual": 0.0003165231035156433,
+          "cg_scaled_tolerance_met": false,
+          "cg_breakdown": null,
+          "cg_residual_replacements": 0,
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "pole_chart_reorientations": 0,
+          "zero_amplitude_chart_events": [],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 0,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": false,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "frozen_only_source_snapshot_sha256": "a864a0a53714154b510e4d0c11c385555e262128335954e5721d6d49ffcf9685",
+  "interrupted_control": {
+    "state": "interrupted",
+    "reason": "Mixed-unit active-bound step identified; preserve frozen-only matched control and fix analytic defect before spending 160 iterations",
+    "process": 7052
+  },
+  "interrupted_Jacobi_control": {
+    "state": "interrupted",
+    "reason": "Large angular steps recorded; retain forty-step frozen/Jacobi control and test bounded angular first steps before extended run",
+    "process": 5588
+  },
+  "interrupted_bounded_control": {
+    "state": "interrupted",
+    "reason": "Forty-step bounded angular control exposed line-search failure; add projected Jacobi rescue and rerun final source",
+    "processes": [
+      38600,
+      6860
+    ]
+  },
+  "interrupted_rescue_control": {
+    "state": "interrupted",
+    "reason": "Audit mixed-unit CG stopping norm before increasing nonlinear budget",
+    "process": 46996
+  },
+  "interrupted_lagged_control": {
+    "state": "interrupted",
+    "reason": "Retain frozen-objective strategy as explicit diagnostic option; validate reference adaptive processing with numerical fixes as default",
+    "process": 20964
+  },
+  "corrected_matched": {
+    "state": "complete",
+    "utc": "2026-11-03T00:53:49.419583+00:00",
+    "commit": "704b56b305b5be281392d2ecef7a78abf4b89d65",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 6,
+      "mvi_irls_update": "adaptive",
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 40,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": null,
+      "cg_maxiter": 200,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 0.9944619098720423,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": false,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "model"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 7.67390962214756
+            }
+          ],
+          "maximum_location_error_m": 7.67390962214756,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 90000.0,
+          "volume_relative_error": 0.0625,
+          "support_dice": 0.7956989247311828,
+          "model_relative_error": 0.637010196781623,
+          "maximum_contrast_relative_error": 0.3031999394886561,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.0348400030255672,
+              "contrast_relative_error": 0.3031999394886561,
+              "direction_error_deg": 0.48949138555205124
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 263239.90170453954,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 0.9944619098720423,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 200,
+          "cg_relative_residual": 0.0005766826388167327,
+          "cg_tolerance_met": false,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 0.0005766826388167327,
+          "cg_true_tolerance_met": false,
+          "cg_audited_solves": 28,
+          "cg_failed_true_tolerance_count": 10,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": true,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 594.6207305630855,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 20,
+          "iterations": 28,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 200,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 23,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 40,
+          "total_iteration_budget": 60,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": true,
+          "irls_update_mode": "adaptive_per_step",
+          "mvi_irls_update": "adaptive",
+          "irls_inner_relative_tolerance": null,
+          "irls_subproblems": [],
+          "irls_inner_history": [],
+          "irls_stop_reason": "irls_budget",
+          "irls_threshold_fallbacks": [],
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 7,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_mode": "bounded_each_step",
+          "angular_step_safeguard_events": {
+            "items_in_development_archive": 23,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "angular_line_search_retries": [],
+          "spherical_bound_step_scaling": "component_Jacobi",
+          "spherical_bound_step_events": {
+            "items_in_development_archive": 14,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "cg_residual_metric": "raw_and_Jacobi_energy",
+          "cg_scaled_relative_residual": 0.001290469314472134,
+          "cg_scaled_tolerance_met": false,
+          "cg_breakdown": null,
+          "cg_residual_replacements": 0,
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "pole_chart_reorientations": 62,
+          "zero_amplitude_chart_events": [
+            {
+              "iteration": 16,
+              "reoriented_cells": 0,
+              "reoriented_poles": 1
+            },
+            {
+              "iteration": 23,
+              "reoriented_cells": 0,
+              "reoriented_poles": 61
+            }
+          ],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 8932,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": false,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "corrected_extended": {
+    "state": "complete",
+    "utc": "2026-11-03T01:00:57.303496+00:00",
+    "commit": "704b56b305b5be281392d2ecef7a78abf4b89d65",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 6,
+      "mvi_irls_update": "adaptive",
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 80,
+      "irls_iterations": 20,
+      "budget_adjustment_reason": "reference_adaptive_with_more_cg_precision_and_outer_budget",
+      "cg_maxiter": 800,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 0.9948546791054447,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": false,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "model"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 7.67390962214756
+            }
+          ],
+          "maximum_location_error_m": 7.67390962214756,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 90000.0,
+          "volume_relative_error": 0.0625,
+          "support_dice": 0.7956989247311828,
+          "model_relative_error": 0.6367688075697001,
+          "maximum_contrast_relative_error": 0.3030952209723011,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.03484523895138495,
+              "contrast_relative_error": 0.3030952209723011,
+              "direction_error_deg": 0.485727995329832
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 268629.27255824517,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 0.9948546791054447,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 800,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 294,
+          "cg_relative_residual": 4.7173458617483844e-05,
+          "cg_tolerance_met": true,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 4.7173458617483844e-05,
+          "cg_true_tolerance_met": true,
+          "cg_audited_solves": 28,
+          "cg_failed_true_tolerance_count": 0,
+          "all_audited_cg_tolerances_met": true,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": true,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 595.8439857468654,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 20,
+          "iterations": 28,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 800,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 23,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 80,
+          "total_iteration_budget": 100,
+          "irls_iteration_budget": 20,
+          "irls_limit_reached": true,
+          "irls_update_mode": "adaptive_per_step",
+          "mvi_irls_update": "adaptive",
+          "irls_inner_relative_tolerance": null,
+          "irls_subproblems": [],
+          "irls_inner_history": [],
+          "irls_stop_reason": "irls_budget",
+          "irls_threshold_fallbacks": [],
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 7,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_mode": "bounded_each_step",
+          "angular_step_safeguard_events": {
+            "items_in_development_archive": 23,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "angular_line_search_retries": [],
+          "spherical_bound_step_scaling": "component_Jacobi",
+          "spherical_bound_step_events": {
+            "items_in_development_archive": 14,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "cg_residual_metric": "raw_and_Jacobi_energy",
+          "cg_scaled_relative_residual": 9.716190456122178e-05,
+          "cg_scaled_tolerance_met": true,
+          "cg_breakdown": null,
+          "cg_residual_replacements": 0,
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "pole_chart_reorientations": 68,
+          "zero_amplitude_chart_events": [
+            {
+              "iteration": 16,
+              "reoriented_cells": 0,
+              "reoriented_poles": 1
+            },
+            {
+              "iteration": 23,
+              "reoriented_cells": 0,
+              "reoriented_poles": 67
+            }
+          ],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 8218,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": true,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "regression": {
+    "junit": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "855",
+      "time": "748.994",
+      "timestamp": "2026-11-02T19:48:19.565612-05:00"
+    },
+    "exit_status": {
+      "tests": 0,
+      "matched": 0,
+      "extended": 0
+    },
+    "packaging_repair": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "3.577",
+      "timestamp": "2026-11-05T01:30:38.532069-05:00"
+    },
+    "previous_draft_junit": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "0",
+      "tests": "841",
+      "time": "617.006",
+      "timestamp": "2026-11-02T18:34:20.034141-05:00"
+    },
+    "repair_reason": "New report JSON was referenced before creation; final full suite and isolated packaging regression rerun with file present"
+  },
+  "budget_model_relative_difference": 0.004284560633438572,
+  "precision_assessment": {
+    "matched": {
+      "required_solves": 28,
+      "failed_required_tolerances": 11,
+      "both_final_norms_met": false
+    },
+    "extended": {
+      "required_solves": 28,
+      "failed_required_tolerances": 0,
+      "both_final_norms_met": true
+    },
+    "irls40": {
+      "required_solves": 48,
+      "failed_required_tolerances": 0,
+      "both_final_norms_met": true
+    }
+  },
+  "previous_irls40": {
+    "state": "complete",
+    "utc": "2026-11-02T18:51:17.687195+00:00",
+    "commit": "abff909e695354f7582864068054b81d03186e58",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 5,
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 80,
+      "irls_iterations": 40,
+      "budget_adjustment_reason": "observed_irls20_exhaustion_no_truth_tuning",
+      "cg_maxiter": 800,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 2.2506768734724796,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 125,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 1634875.0,
+          "volume_relative_error": 16.029947916666668,
+          "support_dice": 0.0,
+          "model_relative_error": 10.040143542216335,
+          "maximum_contrast_relative_error": 0.8050388651349228,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.009748056743253863,
+              "contrast_relative_error": 0.8050388651349228,
+              "direction_error_deg": 17.31032788668827
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 5588814.302293574,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 2.2506768734724796,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 800,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 179,
+          "cg_relative_residual": 9.880520068965917e-05,
+          "cg_tolerance_met": true,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 9.880520068967557e-05,
+          "cg_true_tolerance_met": true,
+          "cg_audited_solves": 51,
+          "cg_failed_true_tolerance_count": 6,
+          "all_audited_cg_tolerances_met": false,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": false,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 4.645836197530887e-09,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 40,
+          "iterations": 51,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 800,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 46,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 80,
+          "total_iteration_budget": 100,
+          "irls_iteration_budget": 40,
+          "irls_limit_reached": true,
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 18111,
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 3703,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": true,
+        "data_fit_passed": false
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "corrected_irls40": {
+    "state": "complete",
+    "utc": "2026-11-05T06:48:51.253002+00:00",
+    "commit": "696d8ec461bd2b2ce3ec0f3db5a6b5a88c86ef34",
+    "repository_dirty": true,
+    "protocol": {
+      "schema_version": 6,
+      "mvi_irls_update": "adaptive",
+      "cartesian_initialization": "componentwise_l2",
+      "sensitivity_prior": "component_approximation",
+      "directive_order": [
+        "angle_scale",
+        "canonical_projection",
+        "IRLS",
+        "sensitivity",
+        "preconditioner"
+      ],
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "paper": "https://doi.org/10.1190/geo2019-0244.1",
+      "scale": "published",
+      "seed": 7112,
+      "cartesian_iterations": 20,
+      "spherical_iterations": 80,
+      "irls_iterations": 40,
+      "budget_adjustment_reason": "repeat_previously_failed_40_cycle_control_without_truth_tuning",
+      "cg_maxiter": 800,
+      "cg_rtol": 0.0001,
+      "amplitude_norms": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "angle_norms": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "amplitude_max": 10.0,
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "data_wrms_max": 2.0,
+      "variants": [
+        "core_spherical"
+      ],
+      "truth_in_fit": [
+        "core_spherical_support_oracle"
+      ],
+      "scope": "Native and Core share Cartesian initialization and the component-approximation sensitivity prior. Core uses an exact zero map and full mapped diagonal for the solver. Fixed choices before generating data; no parameter tuning from truth."
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "core_spherical",
+        "truth_in_fit": false,
+        "weighted_rms": 1.0446347352432916,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": false,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "model"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 3.528311152922419
+            }
+          ],
+          "maximum_location_error_m": 3.528311152922419,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 70000.0,
+          "volume_relative_error": 0.2708333333333333,
+          "support_dice": 0.8433734939759037,
+          "model_relative_error": 0.5000840733743356,
+          "maximum_contrast_relative_error": 0.21352782864233807,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.039323608567883105,
+              "contrast_relative_error": 0.21352782864233807,
+              "direction_error_deg": 4.635611539294943
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 136725.97695835662,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 1.0446347352432916,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 800,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 365,
+          "cg_relative_residual": 9.524643827168761e-05,
+          "cg_tolerance_met": true,
+          "cg_solver_mode": "projected_cg",
+          "cg_true_relative_residual": 9.524643827168761e-05,
+          "cg_true_tolerance_met": true,
+          "cg_audited_solves": 48,
+          "cg_failed_true_tolerance_count": 0,
+          "all_audited_cg_tolerances_met": true,
+          "bound_descent_step_count": 0,
+          "stationary_no_cg_step_count": 0,
+          "target_reached": false,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi with exact mapped J.T Wd**2 J diagonal",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": false,
+          "mvi_regularization": "separate_amplitude_and_periodic_angles",
+          "mvi_parameterization": "spherical",
+          "final_beta": 488.5787526719963,
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 40,
+          "iterations": 48,
+          "cartesian_stage": {
+            "weighted_rms": 1.1060354540379955,
+            "target_chi": 2.0,
+            "gravity_component": null,
+            "bound_start_restarts": 0,
+            "iteration_limit_reached": false,
+            "cg_maxiter": 800,
+            "cg_rtol": 0.0001,
+            "cg_iterations": 22,
+            "cg_relative_residual": 7.551641618291361e-05,
+            "cg_tolerance_met": true,
+            "cg_solver_mode": "projected_cg",
+            "cg_true_relative_residual": 7.551641618291886e-05,
+            "cg_true_tolerance_met": true,
+            "cg_audited_solves": 5,
+            "cg_failed_true_tolerance_count": 0,
+            "all_audited_cg_tolerances_met": true,
+            "bound_descent_step_count": 0,
+            "stationary_no_cg_step_count": 0,
+            "target_reached": true,
+            "init_bfgs": false,
+            "preconditioner": "Jacobi",
+            "optimizer_tolerances": {
+              "f": 1e-06,
+              "x": 1e-08,
+              "g": 1e-06
+            },
+            "beta_seed": 0,
+            "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+            "regularization_norms": [
+              2.0,
+              2.0,
+              2.0,
+              2.0
+            ],
+            "regularization_convention": "physical_gradient",
+            "regularization_weights": [
+              1.0,
+              25.0,
+              25.0,
+              25.0
+            ],
+            "reference_in_smooth": false,
+            "mvi_regularization": "componentwise",
+            "mvi_parameterization": "cartesian",
+            "final_beta": 5931.84834499291,
+            "model_units": "effective susceptibility SI",
+            "fixed_parameter_count": 0,
+            "free_parameter_count": 83913,
+            "geological_cell_weights_supplied": false,
+            "geological_cell_weight_range": null,
+            "mvi_layout": "component-major x,y,z; positive-up z",
+            "magnetization_a_per_m_per_si": 39.78873577822725,
+            "sensitivity_bytes": 268521600,
+            "sensitivity_mode": "ram",
+            "stored_sensitivity_bytes": 268521600,
+            "field": {
+              "amplitude": 50000.0,
+              "inclination": 90.0,
+              "declination": 0.0
+            },
+            "irls_iterations": 0,
+            "iterations": 5
+          },
+          "spherical_iterations": 43,
+          "cartesian_iteration_budget": 20,
+          "spherical_iteration_budget": 80,
+          "total_iteration_budget": 100,
+          "irls_iteration_budget": 40,
+          "irls_limit_reached": true,
+          "irls_update_mode": "adaptive_per_step",
+          "mvi_irls_update": "adaptive",
+          "irls_inner_relative_tolerance": null,
+          "irls_subproblems": [],
+          "irls_inner_history": [],
+          "irls_stop_reason": "irls_budget",
+          "irls_threshold_fallbacks": [],
+          "mapped_solver_diagonal_cross_terms": true,
+          "mvi_sensitivity_weights": "component_approximation",
+          "jacobi_floor_max_count": 5948,
+          "angular_retry_step_limit_rad": 0.7853981633974483,
+          "angular_step_mode": "bounded_each_step",
+          "angular_step_safeguard_events": {
+            "items_in_development_archive": 43,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "angular_line_search_retries": [],
+          "spherical_bound_step_scaling": "component_Jacobi",
+          "spherical_bound_step_events": {
+            "items_in_development_archive": 34,
+            "summary": "Full iteration trace retained in development archive."
+          },
+          "cg_residual_metric": "raw_and_Jacobi_energy",
+          "cg_scaled_relative_residual": 8.842524759702186e-05,
+          "cg_scaled_tolerance_met": true,
+          "cg_breakdown": null,
+          "cg_residual_replacements": 0,
+          "gradient_critical_tolerance": 1e-06,
+          "zero_amplitude_chart_reorientations": 0,
+          "pole_chart_reorientations": 898,
+          "zero_amplitude_chart_events": [
+            {
+              "iteration": 16,
+              "reoriented_cells": 0,
+              "reoriented_poles": 1
+            },
+            {
+              "iteration": 23,
+              "reoriented_cells": 0,
+              "reoriented_poles": 65
+            },
+            {
+              "iteration": 27,
+              "reoriented_cells": 0,
+              "reoriented_poles": 78
+            },
+            {
+              "iteration": 31,
+              "reoriented_cells": 0,
+              "reoriented_poles": 36
+            },
+            {
+              "iteration": 33,
+              "reoriented_cells": 0,
+              "reoriented_poles": 59
+            },
+            {
+              "iteration": 40,
+              "reoriented_cells": 0,
+              "reoriented_poles": 659
+            }
+          ],
+          "spherical_angle_norms": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mapped_gram_bytes": 2013912,
+          "spherical_directive_order": [
+            "angle_scale",
+            "canonical_projection",
+            "IRLS_or_beta_schedule",
+            "zero_amplitude_chart_recovery",
+            "sensitivity",
+            "exact_Jacobi",
+            "trace"
+          ],
+          "undefined_direction_cell_count": 2625,
+          "spherical_internal_layout": "amplitude SI, elevation angle from horizontal, azimuth from +east toward +north; radians",
+          "warm_amplitude_projection_count": 0,
+          "amplitude_max_range": [
+            10.0,
+            10.0
+          ]
+        },
+        "numerical_passed": true,
+        "data_fit_passed": true
+      }
+    ],
+    "input_sha256": "73aee3e82181b09d64be23b8b01030e4f62377a884691f2ec8ff72c6e4c78351"
+  },
+  "original_record_sha256_lf": "87d198b7620a268bc82338101b3df5550f4d1c0a53bee9c238a8973a9a556805",
+  "provenance": "Evidence retained in the project development archive, run lagged_irls_20261102",
+  "scope_note": "Public summary; original numerical outcomes, criteria and limitations retained. Long iteration traces and local execution metadata remain in the development archive."
+}

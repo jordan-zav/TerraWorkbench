@@ -1,0 +1,21 @@
+# Reference
+
+[Documentation index](../README.md)
+
+- [English API](api/en.md)
+- [API en español](api/es.md)
+- [API em português](api/pt.md)
+- [QGIS catalogue](catalogues/qgis.md)
+- [Regularization conventions](methods/regularization_conventions.md)
+- [adaptive terrain](methods/adaptive_terrain.md)
+- [apparent properties](methods/apparent_properties.md)
+- [compact magnetics](methods/compact_magnetics.md)
+- [dispersive ip mvi](methods/dispersive_ip_mvi.md)
+- [interpolation methods](methods/interpolation_methods.md)
+- [ip current history](methods/ip_current_history.md)
+- [ip stacking](methods/ip_stacking.md)
+- [isostasy](methods/isostasy.md)
+- [magnetic component api](methods/magnetic_component_api.md)
+- [source depth](methods/source_depth.md)
+- [spherical mvi](methods/spherical_mvi.md)
+- [structural attributes](methods/structural_attributes.md)

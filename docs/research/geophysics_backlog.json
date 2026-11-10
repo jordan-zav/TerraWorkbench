@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-22",
+  "scope": "Research backlog, not an implementation or validation certificate",
+  "candidate_status": "proposal_requires_method_specification_and_validation",
+  "source_note": "Sources establish relevant capabilities or method families. A family reference does not imply every candidate is implemented by that library.",
+  "license_policy": "Verify the exact selected release, redistribution obligations and data/model licenses before integration. No dependencies installed by this research.",
+  "priority_definitions": {"P1": "Extend and validate existing potential-field/radiometric workflows", "P2": "First new electrical and EM engines", "P3": "Additional geophysical families and advanced regional workflows"},
+  "sources": {
+    "kovesi": "https://peterkovesi.github.io/ImagePhaseCongruency.jl/stable/functions/",
+    "skimage": "https://scikit-image.org/docs/stable/api/skimage.morphology.html",
+    "harmonica": "https://www.fatiando.org/harmonica/latest/api/index.html",
+    "choclo": "https://github.com/fatiando/choclo",
+    "boule": "https://www.fatiando.org/boule/latest/",
+    "gmt": "https://docs.generic-mapping-tools.org/latest/grdfft.html",
+    "simpeg": "https://docs.simpeg.xyz/latest/content/api/index.html",
+    "pygimli": "https://www.pygimli.org/_examples_auto/index.html",
+    "pygmi": "https://github.com/Patrick-Cole/pygmi",
+    "iaea": "https://www-pub.iaea.org/mtcd/publications/pdf/te_1363_web.pdf",
+    "empymod": "https://github.com/emsig/empymod",
+    "emg3d": "https://github.com/emsig/emg3d",
+    "mtpy": "https://mtpy-v2.readthedocs.io/en/latest/",
+    "aurora": "https://github.com/simpeg/aurora",
+    "obspy": "https://docs.obspy.org/",
+    "pylops": "https://pylops.readthedocs.io/en/latest/tutorials/",
+    "pyrocko": "https://pyrocko.org/docs/current/",
+    "geopsy": "https://geopsy.org/",
+    "hvsrpy": "https://hvsrpy.readthedocs.io/en/latest/",
+    "swprocess": "https://swprocess.readthedocs.io/en/latest/",
+    "gprpy": "https://github.com/NSGeophysics/GPRPy",
+    "gprmax": "https://docs.gprmax.com/en/latest/",
+    "lasio": "https://lasio.readthedocs.io/en/latest/",
+    "dlisio": "https://dlisio.readthedocs.io/en/latest/",
+    "shtools": "https://shtools.github.io/SHTOOLS/",
+    "pytmd": "https://pytmd.readthedocs.io/en/latest/",
+    "gempy": "https://www.gempy.org/",
+    "loopstructural": "https://loop3d.org/LoopStructural/"
+  },
+  "families": [
+    {
+      "id": "STR", "name": "Structural grid attributes", "priority": "P1",
+      "existing_evidence": ["terraworkbench_core/structural_attributes.py", "terraworkbench_core/lineament_geometry.py"],
+      "existing_note": "Basic mathematical attributes and pixel graph paths are implemented; geological classification and CET equivalence are not established.",
+      "sources": ["kovesi", "skimage"],
+      "required_data": "Explicit grid axes, projected spacing, wavelengths, noise threshold, quantization and feature mask",
+      "minimum_benchmark": "Known orientations, analytic modes, topology and sensitivity to scale/noise/thresholds",
+      "candidates": [
+        "Multiscale log-Gabor/Riesz phase attributes with explicit noise assumptions",
+        "Local histogram texture with declared quantization and missing-data support",
+        "Axial orientation diversity with explicit bin origin and support",
+        "Skeleton graph paths with branches, cycles and pixel geometry provenance"
+      ]
+    },
+    {
+      "id": "POT", "name": "Potential-field interpretation", "priority": "P1",
+      "existing_evidence": ["terraworkbench_core/source_depth.py", "terraworkbench_core/spectral.py"],
+      "existing_note": "Euler 2D/3D, profile Werner/SPI and radial power spectrum exist; field validation and advanced extensions remain separate.",
+      "sources": ["harmonica", "choclo", "gmt", "pygmi"],
+      "required_data": "Projected grids/profiles, heights, units, derivative provenance and noise estimates",
+      "minimum_benchmark": "Known single/multiple sources, several sampling intervals, windows, noise levels and height references",
+      "candidates": [
+        "Spectral depth estimation with explicit fit ranges and uncertainty",
+        "Directional spectra and anisotropy diagnostics",
+        "Full potential-field gradient tensors and invariants",
+        "Noise-aware Wiener regularization for spectral transforms",
+        "Matched-filter separation with explicit source-layer assumptions",
+        "Multiscale persistence and clustering of depth solutions",
+        "Confidence diagnostics for interfering sources and incorrect structural indices",
+        "Spatially varying observation-surface continuation through equivalent sources",
+        "Bounded planar ordinary kriging and empirical variograms with explicit uncertainty assumptions"
+      ]
+    },
+    {
+      "id": "MAG", "name": "Magnetics", "priority": "P1",
+      "existing_evidence": ["terraworkbench_core/magnetic_pipeline.py", "terraworkbench_core/magnetic_compensation.py", "algorithms/magnetic_transforms.py"],
+      "existing_note": "RTP/field transforms, derivatives, leveling and compensation already have implementations; do not duplicate them.",
+      "sources": ["harmonica", "simpeg", "pygmi", "choclo"],
+      "required_data": "Magnetic anomalies, sensor positions, inducing field, calibration metadata and optional vector components",
+      "minimum_benchmark": "Induced and remanent prisms/dipoles, low-latitude fields and independent holdout lines",
+      "candidates": [
+        "Apparent susceptibility with documented geometry and field assumptions",
+        "Joint estimation of total magnetization direction for compact sources",
+        "Vector-component prediction and comparison against measured vector data",
+        "Spatially varying inducing-field transformations for large regions",
+        "Low-latitude RTP sensitivity and gain-selection diagnostics",
+        "Cross-survey magnetic datum harmonization with uncertainty",
+        "Independent recovery tests for vector and platform compensation",
+        "Compact magnetic-source fitting with positional and height uncertainty"
+      ]
+    },
+    {
+      "id": "GRAV", "name": "Gravity and gradiometry", "priority": "P1",
+      "existing_evidence": ["terraworkbench_core/gravity_corrections.py", "terraworkbench_core/isostasy.py", "terraworkbench_core/survey_corrections.py", "algorithms/gravity_corrections.py"],
+      "existing_note": "Normal gravity, Bouguer/Airy and correction primitives exist. Some complete workflows remain QGIS adapters; external tide inputs are not an internal tide engine.",
+      "sources": ["harmonica", "choclo", "boule", "pytmd", "pygimli"],
+      "required_data": "Observed gravity, station loops/times, calibration, elevation and vertical datum, terrain/bathymetry and density",
+      "minimum_benchmark": "Closed loops, reference station ties, analytic bodies, terrain refinement and independent observed gravity",
+      "candidates": [
+        "Internal solid-Earth gravity tide calculation with validated units and conventions",
+        "Ocean-loading gravity correction distinct from ocean surface-height prediction",
+        "Gravity tensor modeling and gradiometer orientation handling",
+        "Polygonal-body forward modeling and 2D/2.5D interpretation",
+        "Spherical tesseroid modeling for regional and global surveys",
+        "Nettleton/Parasnis-style density estimation with terrain-correlation diagnostics",
+        "Network adjustment of gravity loops, drift and instrument scale",
+        "Combined land/marine/borehole correction recipes with explicit datums"
+      ]
+    },
+    {
+      "id": "RAD", "name": "Gamma-ray spectrometry", "priority": "P1",
+      "existing_evidence": ["terraworkbench_core/radiometry.py", "algorithms/radiometric_survey.py"],
+      "existing_note": "Concentration products and parametrized correction primitives exist; they are not a complete calibrated spectrometer pipeline.",
+      "sources": ["iaea"],
+      "required_data": "Full count spectra, energy channels, live time, upward detector and cosmic channels, heights and calibration surveys",
+      "minimum_benchmark": "Reference peaks, pads/ranges, Poisson spectra and independent calibrated channel products",
+      "candidates": [
+        "Energy gain/offset stabilization from spectral peaks",
+        "Noise-adjusted SVD spectrum denoising",
+        "Maximum-noise-fraction spectral denoising as a separate method",
+        "Temporal radon estimation from upward/downward detectors",
+        "Pad/range calibration fitting with coefficient uncertainty",
+        "Full-spectrum fitting and calibrated window integration",
+        "Propagation of count and stripping covariance into concentrations and ratios",
+        "Cross-survey calibration and mosaic QC without hiding detector differences"
+      ]
+    },
+    {
+      "id": "ERT", "name": "DC resistivity and ERT", "priority": "P2",
+      "existing_evidence": [], "existing_note": "No dedicated ERT engine identified in the reviewed core modules.",
+      "sources": ["simpeg", "pygimli"],
+      "required_data": "A/B/M/N electrodes, current, voltage, coordinates/topography and acquisition errors",
+      "minimum_benchmark": "Homogeneous half-space, reciprocal pairs, two-layer earth and a topographic inclusion model",
+      "candidates": [
+        "ABMN survey schema and electrode geometry validation",
+        "Geometric factors and apparent resistivity with polarity conventions",
+        "Reciprocal-error and repeatability QC",
+        "Injected-current/contact-resistance QC and error models",
+        "1D sounding inversion and equivalence diagnostics",
+        "2.5D ERT inversion with topography",
+        "3D surface and crosshole ERT inversion",
+        "Time-lapse ERT with baseline and electrode-position uncertainty"
+      ]
+    },
+    {
+      "id": "IP", "name": "Induced and spectral polarization", "priority": "P2",
+      "existing_evidence": [], "existing_note": "No dedicated IP/SIP engine identified in the reviewed core modules.",
+      "sources": ["simpeg", "pygimli"],
+      "required_data": "IP decay gates/waveforms or complex impedances, timing, source waveform, electrode geometry and errors",
+      "minimum_benchmark": "Synthetic decays/complex spectra, known gate integrals and electrode-coupling controls",
+      "candidates": [
+        "TDIP gate integration and chargeability normalization",
+        "Full-waveform despiking and stacking with retained uncertainty",
+        "Decay QC including sign, late-time noise and coupling artifacts",
+        "2D/3D chargeability inversion coupled to a resistivity background",
+        "Complex resistivity and frequency-domain phase conventions",
+        "Cole-Cole parameter estimation with parameter tradeoff diagnostics",
+        "Debye relaxation distributions with regularization selection",
+        "Joint spectral/spatial IP inversion and interpretation limits"
+      ]
+    },
+    {
+      "id": "FDEM", "name": "Frequency-domain electromagnetics", "priority": "P2",
+      "existing_evidence": [], "existing_note": "No dedicated FDEM engine identified in the reviewed core modules.",
+      "sources": ["simpeg", "empymod", "emg3d"],
+      "required_data": "Complex responses, frequencies, coil orientation/separation, altitude, phase convention and calibration",
+      "minimum_benchmark": "Analytic half-space, layered models, coil rotation and independently computed responses",
+      "candidates": [
+        "Instrument complex-response units and in-phase/quadrature normalization",
+        "Coil geometry, altitude and orientation QC",
+        "Primary/secondary field and phase calibration",
+        "Layered anisotropic-earth EM forward modeling",
+        "1D conductivity inversion with thickness/resistivity tradeoffs",
+        "Laterally constrained multi-sounding inversion",
+        "3D diffusive EM forward and inversion adapters",
+        "Multi-frequency calibration drift and noise-covariance handling"
+      ]
+    },
+    {
+      "id": "TEM", "name": "Time-domain and airborne EM", "priority": "P2",
+      "existing_evidence": [], "existing_note": "No dedicated TEM/AEM engine identified in the reviewed core modules.",
+      "sources": ["simpeg", "empymod"],
+      "required_data": "Time gates, transmitter waveform/current, receiver response, loop geometry, altitude and stacking errors",
+      "minimum_benchmark": "Half-space/layered decays with finite gate integration and measured transmitter waveform",
+      "candidates": [
+        "Raw transient stacking and gate-wise noise estimation",
+        "Transmitter-waveform and finite turn-off modeling",
+        "Receiver-response and finite time-gate convolution",
+        "Layered-earth transient forward modeling",
+        "1D conductivity-depth inversion",
+        "Spatially constrained multi-sounding inversion",
+        "3D TEM inversion with memory and solver budgets",
+        "DOI and waveform/height sensitivity diagnostics"
+      ]
+    },
+    {
+      "id": "MT", "name": "Magnetotellurics", "priority": "P3",
+      "existing_evidence": [], "existing_note": "No dedicated MT engine identified in the reviewed core modules.",
+      "sources": ["mtpy", "aurora", "simpeg"],
+      "required_data": "Electric/magnetic time series or transfer functions, sensor orientation, timing, response metadata and errors",
+      "minimum_benchmark": "Known impedance tensors, rotated layered earth, coherent remote reference and response convention checks",
+      "candidates": [
+        "EDI/MTH5 transfer-function import with metadata preservation",
+        "Impedance tensor, apparent resistivity and phase conventions",
+        "Robust transfer-function estimation from time series",
+        "Remote-reference processing and coherence QC",
+        "Phase-tensor and dimensionality/strike diagnostics",
+        "Galvanic-distortion and static-shift sensitivity",
+        "Layered and 2D MT inversion adapters",
+        "3D MT inversion and uncertainty-aware survey design"
+      ]
+    },
+    {
+      "id": "SEIS", "name": "Active seismic processing", "priority": "P3",
+      "existing_evidence": [], "existing_note": "No dedicated seismic engine identified; generic channel filters are not a complete seismic processor.",
+      "sources": ["obspy", "pylops", "pygimli", "pyrocko"],
+      "required_data": "Trace samples, sampling interval, source/receiver geometry, timing, component and instrument metadata",
+      "minimum_benchmark": "Synthetic arrivals/reflections, field picks, adjoint dot tests and travel-time/velocity recovery",
+      "candidates": [
+        "SEG-Y/SU acquisition geometry and trace-header validation",
+        "Trace/sampling/timing/polarity QC",
+        "Seismic filtering, deconvolution and f-k/Radon operators",
+        "First-arrival picking with uncertainty and editable picks",
+        "Refraction and travel-time tomography",
+        "Velocity analysis, NMO and stacking",
+        "Kirchhoff and least-squares migration adapters",
+        "Post-stack/pre-stack inversion with explicit wavelet and well-tie assumptions"
+      ]
+    },
+    {
+      "id": "PASS", "name": "Passive seismic and surface waves", "priority": "P3",
+      "existing_evidence": [], "existing_note": "No dedicated ambient-noise/surface-wave engine identified.",
+      "sources": ["obspy", "geopsy", "hvsrpy", "swprocess", "pyrocko"],
+      "required_data": "Waveforms, calibrated three-component sensor orientation, array geometry and recording metadata",
+      "minimum_benchmark": "Known spectral ratios and layered dispersion models with repeated windows/array configurations",
+      "candidates": [
+        "miniSEED/StationXML ingestion and response removal",
+        "HVSR processing with window rejection and azimuthal checks",
+        "Ambient-noise correlation and station-pair QC",
+        "SPAC/f-k/beamforming array processing",
+        "MASW dispersion imaging and picking",
+        "Surface-wave dispersion inversion for Vs structure",
+        "Dispersion and resonance uncertainty with multiple modes/windows",
+        "Event detection, phase picks and location as a separate passive-seismic workflow"
+      ]
+    },
+    {
+      "id": "GPR", "name": "Ground-penetrating radar", "priority": "P3",
+      "existing_evidence": [], "existing_note": "No dedicated radar-trace processor or GPR forward engine identified.",
+      "sources": ["gprpy", "gprmax", "pylops"],
+      "required_data": "Raw radar traces, time-zero, antenna geometry/frequency, positions, calibration and velocity constraints",
+      "minimum_benchmark": "Known reflectors/hyperbolas, layered FDTD examples and measured time/position calibration",
+      "candidates": [
+        "GPR format import with antenna and positioning metadata",
+        "Time-zero correction and dewow",
+        "Bandpass and background-removal processing with signal-retention QC",
+        "Explicit gain models with quantitative-amplitude preservation options",
+        "Hyperbola/CMP velocity analysis with uncertainty",
+        "Migration and topographic correction",
+        "Time/depth slices with velocity-model provenance",
+        "FDTD forward-model adapter for benchmark generation"
+      ]
+    },
+    {
+      "id": "BORE", "name": "Borehole and petrophysical support", "priority": "P3",
+      "existing_evidence": [], "existing_note": "General text ingestion does not establish dedicated well-log or borehole geophysical support.",
+      "sources": ["lasio", "dlisio", "pygimli", "simpeg"],
+      "required_data": "Log curves, tool response, depth datum, deviation surveys, calibration and laboratory measurements",
+      "minimum_benchmark": "Round-trip log metadata, known depth shifts and controlled laboratory/forward-response models",
+      "candidates": [
+        "LAS and DLIS/LIS log ingestion with retained metadata",
+        "Log units, missing codes and depth-datum QC",
+        "Depth alignment and deviation-aware spatial positioning",
+        "Density/susceptibility/conductivity laboratory-data harmonization",
+        "Calibrated petrophysical relations with uncertainty and lithology groups",
+        "Crosshole electrical/seismic survey geometry adapters",
+        "Borehole EM response and coupling evaluation",
+        "NMR model feasibility and data-contract research before any implementation commitment"
+      ]
+    },
+    {
+      "id": "SP", "name": "Self potential", "priority": "P3",
+      "existing_evidence": [], "existing_note": "No dedicated self-potential engine identified in the reviewed core modules.",
+      "sources": ["simpeg", "pygimli"],
+      "required_data": "Potential differences, electrode/reference geometry, time/base records, drift/contact checks and explanatory geological/hydrological data",
+      "minimum_benchmark": "Known electrical sources, reference-electrode changes, drift loops and independently predicted potential differences",
+      "candidates": [
+        "Self-potential survey schema and reference-electrode conventions",
+        "Electrode drift and closed-loop adjustment",
+        "Time-variable background and telluric-noise QC",
+        "Potential-difference forward response for prescribed electrical sources",
+        "Source-current inversion with explicit boundary conditions",
+        "Electrokinetic interpretation feasibility with independent hydraulic constraints",
+        "Joint interpretation with resistivity without equating their physical parameters",
+        "Repeat-survey uncertainty and source-nonuniqueness diagnostics"
+      ]
+    },
+    {
+      "id": "REG", "name": "Regional and geological context", "priority": "P3",
+      "existing_evidence": ["terraworkbench_core/isostasy.py", "terraworkbench_core/gravity_corrections.py"],
+      "existing_note": "Airy and normal-gravity functions exist; global harmonics, flexure and geological-prior interfaces are different capabilities.",
+      "sources": ["shtools", "boule", "harmonica", "gempy", "loopstructural"],
+      "required_data": "Global/regional field coefficients, reference ellipsoid, datum, bathymetry/topography and explicit geological constraints",
+      "minimum_benchmark": "Known spherical-harmonic coefficients, synthetic flexure and independently checked geological surfaces",
+      "candidates": [
+        "Global gravity/magnetic spherical-harmonic evaluation",
+        "Reference ellipsoid and vertical-datum-aware field comparisons",
+        "Flexural isostasy alternatives to Airy",
+        "Gravity-topography admittance and coherence",
+        "Localized/multitaper spherical spectral analysis",
+        "Fault/contact surface exchange with geological-modeling engines",
+        "Geological-prior rasterization onto inversion meshes with uncertainty",
+        "Consistent regional-to-local model and background transfer"
+      ]
+    },
+    {
+      "id": "INV", "name": "Inversion quality and joint interpretation", "priority": "P1",
+      "existing_evidence": ["terraworkbench_core/inversion.py", "docs/standalone_inversion.md"],
+      "existing_note": "Density/susceptibility/MVI, scalar IRLS and cross-gradient functions exist; advanced diagnostics are separate work.",
+      "sources": ["simpeg", "pygimli", "pylops", "gempy"],
+      "required_data": "Forward operators, parameterization, errors/covariances, priors, bounds and repeatable solver settings",
+      "minimum_benchmark": "Analytic/independent forward checks, adjoint tests, incompatible-prior cases and held-out observations",
+      "candidates": [
+        "Sensitivity, resolution and depth-of-investigation diagnostics",
+        "Ensemble and posterior-approximation uncertainty workflows",
+        "Petrophysically guided multi-physics inversion",
+        "Shared-interface and cooperative alternatives to cross-gradient coupling",
+        "Time-lapse inversion with baseline and repeatability errors",
+        "Matrix-free/blocked/distributed forward and inverse execution",
+        "Systematic beta, bounds, regularization and mesh sensitivity suites",
+        "Independent benchmark catalog with scientific and software acceptance gates"
+      ]
+    }
+  ]
+}

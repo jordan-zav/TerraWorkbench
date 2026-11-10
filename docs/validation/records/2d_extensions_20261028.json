@@ -1,0 +1,421 @@
+{
+  "utc": "2026-10-28T15:42:23.798973+00:00",
+  "status": "passed",
+  "datasets": {
+    "lightning": {
+      "filename": "lightning-creek-magnetic-grid.nc",
+      "url": "https://github.com/fatiando-data/lightning-creek-magnetic-grid/releases/download/v1/lightning-creek-magnetic-grid.nc",
+      "sha256": "d83f5d89f82cee128227746e2edab4498d37a3904c4770752135b7972d64629f",
+      "bytes": 183298,
+      "reference": "https://doi.org/10.5281/zenodo.7079711",
+      "attribution": "Queensland Government/Geoscience Australia P1029; Fatiando a Terra Datasets",
+      "license": "CC BY 4.0",
+      "pin_basis": "Ensaio v0.7.1 published MD5 verified; SHA-256 recorded from verified bytes"
+    },
+    "spectra": {
+      "filename": "data_v1_1_0.zip",
+      "url": "https://zenodo.org/records/20032395/files/data_v1_1_0.zip?download=1",
+      "sha256": "63ccfd3bc72cc7f26dd4e880a137f8a717fbe9a23a1273af71edc955518ea280",
+      "bytes": 706783,
+      "reference": "https://doi.org/10.5281/zenodo.20032395",
+      "attribution": "Breitenmoser, Stabilini, Kasprzak and Mayer; Quantitative mobile gamma-ray spectrometry through Bayesian inference, dataset v1.1.0 and arXiv:2512.18769",
+      "license": "Consult publisher record before redistribution; source bytes are not bundled",
+      "pin_basis": "Zenodo published MD5 b5b720db2b79d3502e81886ef5c39297 verified; SHA-256 recorded from verified bytes"
+    }
+  },
+  "versions": {
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "xarray": "2026.9.0",
+    "pandas": "2.3.3",
+    "pykrige": "1.7.3"
+  },
+  "cases": {
+    "public_kriging": {
+      "status": "passed",
+      "training_points": 404,
+      "withheld_cells": 361,
+      "comparisons": {
+        "spherical": {
+          "prediction": {
+            "samples": 361,
+            "max_abs_error": 1.7053025658242404e-13,
+            "rms_error": 4.847203395366888e-14,
+            "atol": 1e-07,
+            "rtol": 1e-10,
+            "passed": true
+          },
+          "variance": {
+            "samples": 361,
+            "max_abs_error": 2.2737367544323206e-12,
+            "rms_error": 8.637845718695974e-13,
+            "atol": 1e-07,
+            "rtol": 1e-10,
+            "passed": true
+          },
+          "withheld_rms_nt": 2.1052927067485863,
+          "core_range_m": 1000.0,
+          "reference_range_m": 1000.0,
+          "partial_sill_nt2": 3437.7615421033092,
+          "recipe": {
+            "method": "local ordinary kriging",
+            "model": "spherical",
+            "range_m": 1000.0,
+            "partial_sill": 3437.7615421033092,
+            "nugget": 0.0,
+            "neighbors": 32,
+            "search_radius_m": 0.0,
+            "distinct_neighborhoods": 299,
+            "coordinate_unit": "projected metres",
+            "exact_at_observations": true,
+            "uncertainty": "Conditional on fixed isotropic variogram and local constant mean; no parameter/CRS/geological uncertainty"
+          }
+        },
+        "exponential": {
+          "prediction": {
+            "samples": 361,
+            "max_abs_error": 1.1368683772161603e-13,
+            "rms_error": 2.7501408960524228e-14,
+            "atol": 1e-07,
+            "rtol": 1e-10,
+            "passed": true
+          },
+          "variance": {
+            "samples": 361,
+            "max_abs_error": 2.2737367544323206e-12,
+            "rms_error": 7.242775777680154e-13,
+            "atol": 1e-07,
+            "rtol": 1e-10,
+            "passed": true
+          },
+          "withheld_rms_nt": 2.6941380855377433,
+          "core_range_m": 1000.0,
+          "reference_range_m": 1000.0,
+          "partial_sill_nt2": 3437.7615421033092,
+          "recipe": {
+            "method": "local ordinary kriging",
+            "model": "exponential",
+            "range_m": 1000.0,
+            "partial_sill": 3437.7615421033092,
+            "nugget": 0.0,
+            "neighbors": 32,
+            "search_radius_m": 0.0,
+            "distinct_neighborhoods": 299,
+            "coordinate_unit": "projected metres",
+            "exact_at_observations": true,
+            "uncertainty": "Conditional on fixed isotropic variogram and local constant mean; no parameter/CRS/geological uncertainty"
+          }
+        },
+        "gaussian": {
+          "prediction": {
+            "samples": 361,
+            "max_abs_error": 9.634959496906959e-12,
+            "rms_error": 2.082828825065008e-12,
+            "atol": 1e-07,
+            "rtol": 1e-10,
+            "passed": true
+          },
+          "variance": {
+            "samples": 361,
+            "max_abs_error": 3.527134140313137e-11,
+            "rms_error": 1.053420217518811e-11,
+            "atol": 1e-07,
+            "rtol": 1e-10,
+            "passed": true
+          },
+          "withheld_rms_nt": 2.2773577004971934,
+          "core_range_m": 1000.0,
+          "reference_range_m": 1010.3629710818451,
+          "partial_sill_nt2": 3437.7615421033092,
+          "recipe": {
+            "method": "local ordinary kriging",
+            "model": "gaussian",
+            "range_m": 1000.0,
+            "partial_sill": 3437.7615421033092,
+            "nugget": 0.0,
+            "neighbors": 32,
+            "search_radius_m": 0.0,
+            "distinct_neighborhoods": 299,
+            "coordinate_unit": "projected metres",
+            "exact_at_observations": true,
+            "uncertainty": "Conditional on fixed isotropic variogram and local constant mean; no parameter/CRS/geological uncertainty"
+          }
+        }
+      },
+      "empirical_variogram": {
+        "lag_edges_m": [
+          0.0,
+          250.0,
+          500.0,
+          750.0,
+          1000.0,
+          1250.0,
+          1500.0,
+          1750.0,
+          2000.0,
+          2250.0,
+          2500.0,
+          2750.0,
+          3000.0,
+          3250.0,
+          3500.0,
+          3750.0,
+          4000.0,
+          4250.0,
+          4500.0,
+          4750.0,
+          5000.0
+        ],
+        "semivariance": [
+          null,
+          80.7792532247115,
+          270.1986434977569,
+          498.4604751865077,
+          757.0069211606116,
+          1109.1250272851294,
+          1447.282376644738,
+          1843.1670408761947,
+          2245.0257219152854,
+          2626.275197461214,
+          3054.669379329197,
+          3455.516673895082,
+          4001.3654681440603,
+          4600.552484891593,
+          5255.9574509803915,
+          5959.273013437846,
+          6737.581479904183,
+          7644.398092966178,
+          8627.167250351598,
+          9445.393802816903
+        ],
+        "pair_count": [
+          0,
+          1473,
+          2676,
+          3083,
+          3412,
+          5131,
+          4256,
+          5113,
+          5430,
+          4963,
+          5486,
+          4842,
+          5415,
+          5626,
+          4743,
+          4465,
+          3757,
+          3668,
+          2844,
+          2201
+        ]
+      },
+      "scope": "Independent PyKrige moving-neighborhood reference on the pinned public grid; withheld accuracy diagnostic is not raw-survey validation."
+    },
+    "public_spectral_radon": {
+      "status": "passed",
+      "fits": {
+        "HF_Cs": {
+          "coefficients": [
+            265.3434128534161,
+            55.43251956189986,
+            26.732270038307778,
+            -4.113226566678958,
+            8.52776413348595
+          ],
+          "template_density_units": {
+            "K": "Counts_kg_per_s_per_keV_per_Bq",
+            "U": "Counts_kg_per_s_per_keV_per_Bq",
+            "Th": "Counts_kg_per_s_per_keV_per_Bq",
+            "Rn": "Counts_cubic_m_per_s_per_keV_per_Bq",
+            "Cs": "Counts_per_s_per_keV_per_GBq"
+          },
+          "radon_coefficient": -4.1132265666791294,
+          "negative_components": [
+            false,
+            false,
+            false,
+            true,
+            false
+          ],
+          "corrected_reference": {
+            "samples": 891,
+            "max_abs_error": 2.9103830456733704e-11,
+            "rms_error": 5.102858416668675e-12,
+            "atol": 1e-06,
+            "rtol": 1e-09,
+            "passed": true
+          },
+          "coefficient_reference": {
+            "samples": 5,
+            "max_abs_error": 2.5579538487363607e-12,
+            "rms_error": 1.277574128424247e-12,
+            "atol": 1e-07,
+            "rtol": 1e-09,
+            "passed": true
+          },
+          "minimum_propagated_variance": 7.000103511048788,
+          "reduced_chi_squared": 7.362163783162643
+        },
+        "HF_Ba": {
+          "coefficients": [
+            266.31309909273745,
+            36.19375727617392,
+            28.780848041544765,
+            0.472377071149445,
+            0.46748807531381387
+          ],
+          "template_density_units": {
+            "K": "Counts_kg_per_s_per_keV_per_Bq",
+            "U": "Counts_kg_per_s_per_keV_per_Bq",
+            "Th": "Counts_kg_per_s_per_keV_per_Bq",
+            "Rn": "Counts_cubic_m_per_s_per_keV_per_Bq",
+            "Ba": "Counts_per_s_per_keV_per_GBq"
+          },
+          "radon_coefficient": 0.4723770711494406,
+          "negative_components": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "corrected_reference": {
+            "samples": 897,
+            "max_abs_error": 1.8189894035458565e-12,
+            "rms_error": 2.445574764734193e-13,
+            "atol": 1e-06,
+            "rtol": 1e-09,
+            "passed": true
+          },
+          "coefficient_reference": {
+            "samples": 5,
+            "max_abs_error": 3.808509063674137e-12,
+            "rms_error": 1.7033296976175284e-12,
+            "atol": 1e-07,
+            "rtol": 1e-09,
+            "passed": true
+          },
+          "minimum_propagated_variance": 8.000010418411348,
+          "reduced_chi_squared": 2.128663321540029
+        }
+      },
+      "scope": "Signed GLS, declared sqrt-count noise floor; source templates are geometry-specific. Negative coefficients/model misfit remain reported, not clipped or promoted to atmospheric concentration."
+    },
+    "analytic_polygon": {
+      "status": "passed",
+      "cylinder_reference": {
+        "samples": 101,
+        "max_abs_error": 3.3266525907849065e-06,
+        "rms_error": 1.834702070425289e-06,
+        "atol": 1e-08,
+        "rtol": 3e-05,
+        "passed": true
+      },
+      "estimated_density_kg_m3": 500.0000000000001,
+      "estimated_offset_mgal": 0.3,
+      "scope": "Analytic infinite horizontal cylinder approximated by 720 vertices, plus synthetic density/offset recovery. No measured profile geometry was invented."
+    }
+  },
+  "source_sha256": {
+    "terraworkbench_core/spectral.py": "2421f46d446d6c72547191d870b04ed21e49ac5ed4285f5e78e9d4b849a2a21f",
+    "terraworkbench_core/electrical_pde.py": "8c760ddeaf3056d107bbdc5ee9ac4b03ca70f8ad48e119713c63ada6ca5e8503",
+    "terraworkbench_core/transient_processing.py": "57583e641d891e39e431a7160ad5cae6090c0f90363152f0b5f00ee4ae95264f",
+    "terraworkbench_core/lineament_geometry.py": "2a78175d258fb30e632e4143541e8814bc714981acdc3d754124488a0ec8e452",
+    "terraworkbench_core/equivalent_sources.py": "b55494a0bc4c6d6b6c9f6d76a1a58915aafb8cd0a13211fb7da342097ea34d40",
+    "terraworkbench_core/basic_processing.py": "481f750bd9a2b2ca35fa9b41a060a12c41cef0079ac37581abd1f68ca78cc351",
+    "terraworkbench_core/radon_corrections.py": "0b7fe2d23883463d88ba58309ae9ba6a90d13463327a265d016cbd1deea679e9",
+    "terraworkbench_core/crossovers.py": "517e6104ce6ae7a9edba740b070faac3f4dac7c8bfd9f07ac956c6dae6803e82",
+    "terraworkbench_core/gravity_network.py": "9fc482bdb03ffb6caaa6d226c43c60976ad4e3d118788e0ad43f9d78ed5471fe",
+    "terraworkbench_core/radiometric_spectra.py": "6e5cdee5250b9930c15f560db7d1ae1e9c9e6abc7ea011d163706725eef94d9e",
+    "terraworkbench_core/geomagnetism.py": "c48c40ca004b6e6a907b914cd44e60ef633036c97606c80d75428230f392e927",
+    "terraworkbench_core/survey_corrections.py": "b621e613c53b2af369d78cf25871287e4dfe89fce8b41799178f3add4e8cd937",
+    "terraworkbench_core/gridding_methods.py": "02fab0fceed2f24331a9fa98d4b24dd921d7b2e21c040d29356aad3e44820adf",
+    "terraworkbench_core/radiometry.py": "e0164930cbc2eec09834b0d35e4bd0015d3db2880e6cae945f49a0a409976f7b",
+    "terraworkbench_core/paired_flights.py": "e0448b7f8e3c1f16c9698c050ec55163009107948d47055d694e3f2b5e9623d6",
+    "terraworkbench_core/inversion_diagnostics.py": "47f4e249513a7e2805a268acbb0552a281178612fd9606195873f54fd768ffcd",
+    "terraworkbench_core/profile_distance.py": "ca5e1ae2792551750b32508824be1ef60554dc0fab2af894840c01e2262fe322",
+    "terraworkbench_core/survey_text_import.py": "e164ad526a82c0675aed4cc4e4f9f95f0d5dd2d68880799c34dc8bc6be08edc2",
+    "terraworkbench_core/borehole.py": "3d5c709703acc7a6526e3997078b5971212a5a222d55b7c07c8e02697142ba2e",
+    "terraworkbench_core/structural_attributes.py": "7c1166e18cf2f61f45b95a36646b46fb820ee1979fcaeb381ed985fd2ac478fd",
+    "terraworkbench_core/text_import.py": "8b452079feab0652ef6220677ba4e8b326ca140ea8d3e6fa59f8a3c556bc94cc",
+    "terraworkbench_core/magnetic_components.py": "ee6144609bc7ba3cf588bf8ea235061a4e4df9ecbcaef1fc55fc56d142d7c0fd",
+    "terraworkbench_core/isostasy.py": "f0b34279d69adf8f3ba846d140d0c4de1b9fc74d6850baac972514fe7bd8deb1",
+    "terraworkbench_core/electrical.py": "e013080f89f4ef476e76b573efa219cda3a51930bd9264d29e648a913fb5c13b",
+    "terraworkbench_core/grid_tools.py": "dee61c5be9990e90904d19f8e4f5530370f01dad0e975b9ed0ef7aca26480ffd",
+    "terraworkbench_core/terrain_tree_walk.py": "d0da31a9249099919fdd3b7c7fc91d83d1f80d17e503083c3cec13d349875b72",
+    "terraworkbench_core/fdem_3d.py": "9d16b3e065bd94eab4d6ff3bde162aefb93529d68c35440888e5d79ff85b378c",
+    "terraworkbench_core/channel_filters.py": "5eef083005ccd66c3b5545fc2dc0394ba5eb39415e1884d22f694f768a7c67ff",
+    "terraworkbench_core/adaptive_terrain.py": "c7ed306bd45770f24e16c11c59876c9ad5d06377ecdb1539c2009fb206a1fffd",
+    "terraworkbench_core/archaeology.py": "ac6ce8b621c377c0ff92fbe71e787e3e36155ef37af1bc3d02af321902e49025",
+    "terraworkbench_core/survey_processing.py": "d25baf997c06424d32df83e0765d587d29ba3cd2b50caee82727b54239421587",
+    "terraworkbench_core/_calibration.py": "f5b4479dfceac7593719addea72c8dd3ced80b3904e875632a84c30139daacb1",
+    "terraworkbench_core/process_effect.py": "bbce4d95c7400de575dafab63f19f090cad49eb45be62e3316eec2903604739a",
+    "terraworkbench_core/survey_recipes.py": "4b5a921d78a00bf7ff06c028d84f6105c0a6449c1d994a6021cf70045a4865f9",
+    "terraworkbench_core/apparent_properties.py": "d05e405b256367fdf2e85dfc0e1623ffcb447c21aa5987f2dc61c41105e2fad4",
+    "terraworkbench_core/terrain_gravity.py": "3ad223d84ba09a72860975ed99e46efb804dfd605f59134ec765135b6482c700",
+    "terraworkbench_core/radial_filters.py": "3813f64b96e534c1349a2ba513a7e7824ee6d980a1e2818d2e6a7bf90735f9f3",
+    "terraworkbench_core/gravity_profiles.py": "68ef6f2cb700871a85e8ee0cbf4b24923663ae6f3a0d0076eb7c6b9982fc5037",
+    "terraworkbench_core/advanced_statistics.py": "dc0ee271171d6091b4462c041b3ea9a03e431ce9cd89aad8a419b8d5971e4882",
+    "terraworkbench_core/filter_recipes.py": "28becf94762084110bb46bb88db82e41f9ce7497a97f3494820b70ce03a0be35",
+    "terraworkbench_core/layered_em.py": "e808c3749c3cb7409f9abf9b36278fc49a9e8ad1c6c82f7c823fba539a0cf0cc",
+    "terraworkbench_core/source_depth.py": "6292f8db1c28efacd670545d2f4ceb1055d3e300dbb87b89e4645bae0d2a9eb9",
+    "terraworkbench_core/gravity_corrections.py": "51ad12c274776499c8468f360e0d1329413e8ca65064de8a64eb3acdde8d71f4",
+    "terraworkbench_core/inversion.py": "0420a6fa14544b343395910c4533a3da7b4542761bb5ed229bb142975fc93b1e",
+    "terraworkbench_core/survey_explorer.py": "373f7b9907a6765c8b8c3c4df3fce5b1b937ac737fb8b41321986fa885997a4f",
+    "terraworkbench_core/preprocessing.py": "4e68aeddabed6207233799429b502a868c0dbbe32c7ca46cf615198ee92160f3",
+    "terraworkbench_core/magnetotellurics.py": "7c3cdc179b04790deb6f3da81a81ab6e76b5d29fa3af452803bd7d0204170a04",
+    "terraworkbench_core/operations.py": "249f4a06805649356e266eded3f967edbef19ba8df9f2cb9f3ae5cf0740b3179",
+    "terraworkbench_core/magnetic_products.py": "5a0c4eaa28fe629b63b1b3a9c9db529e27d27cdbe606a5f4147ecbbb4c4f2c71",
+    "terraworkbench_core/geostatistics.py": "58a9750595597378c9303e7b23998ac1b116704c69560cae017af0280d72760a",
+    "terraworkbench_core/waveform_processing.py": "ce8722f0bd7828ae8567b1bbd5abd084b968178c861e963dd7d29a569e71e2d3",
+    "terraworkbench_core/profile_preparation.py": "da1181562555f41e003eb8562ab7a47175a2bbd1865ba9d3d6f641a13fc67952",
+    "terraworkbench_core/operation_jobs.py": "70aac16f2dc6d660bcc89a11bee7161cb67a74ac99c35093349fc05fec4e1566",
+    "terraworkbench_core/magnetic_pipeline.py": "e2f58754a30aebba619185618571f1b73ea7a5e3c65fc3182f18f6c926854f3c",
+    "terraworkbench_core/operation_workflows.py": "5e25ac9e9cd387df0e9b294e6150cb99c069eda94d20f5c2f2a2486c42628b91",
+    "terraworkbench_core/spectral_analysis.py": "0cc17c93a05747897c3a1fd49106e73c507a4859c6203e6f52aa79cc1b18df3f",
+    "terraworkbench_core/survey_correction_pipeline.py": "7f066cf4d3b31df79d27f27cddba8dcc5331bbcf5239a7f8df03c3df3284cc9c",
+    "terraworkbench_core/survey_store.py": "046d74c95a42eb52ef543756ea8f05a9c7b0549fcc57bd90453217e15eb8d864",
+    "terraworkbench_core/dispersive_ip.py": "3f9789541f5ae49fd0aa133c1dd256ba71c2a93b7d5a6f5777a6dcef08a43fd6",
+    "terraworkbench_core/coordinates.py": "70f01cf5b70dbcc1904bb136738479e1a738810d9da533fc5b498ecad0f007da",
+    "terraworkbench_core/_array_contract.py": "2a7db88c0c6abbf65019a4983af5628deb909e91444de6e8f6bd1b33b79cbb05",
+    "terraworkbench_core/radiometric_calibration.py": "a5db44b376bf3d6bfa27f35fa5f705c5106b59022b00f911598c7c0b10438512",
+    "terraworkbench_core/__init__.py": "1fa70283d5cf9a12d780bcbd4b59d6fda35d61634e389bb571fba9a781d28b78",
+    "terraworkbench_core/terrain_analysis.py": "ca32da47c5d2408cacc304f93791735ea549e418d97a74527bd4ad951aaf32a2",
+    "terraworkbench_core/line_processing.py": "c198d551747097b426d0fa36fe079722b5f6e2ae0881e47d3b9f9e80ed07b011",
+    "terraworkbench_core/survey_grid_pipeline.py": "1cb5812adf91ac86dc0e5097192af85f1cc2b51f70a480d35a30e32b03f2e484",
+    "terraworkbench_core/flexure.py": "8a5b4d59f48ee57539b143d33ff600f3ad55c080b83f18def40baa1bcf9e95c9",
+    "terraworkbench_core/radiometric_radon.py": "1abad0e7e0f83e70cd63d8b11ee49d6708ac0c17c63212c9bd30d8c62c6860f3",
+    "terraworkbench_core/potential_tensors.py": "218a5a0c74bf688e6ce52923e5ed7d71bd00bcb3b811a358c9177186e9745df7",
+    "terraworkbench_core/complex_calibration.py": "0ca4dba30e856cf080c161f8357a4fc554312b01c853005c860abd6882363135",
+    "terraworkbench_core/ip_stacking.py": "cf7bf8f17cddb7194ac76bfc9f6b8e5c51b4a3569ce76ef2a025c27adf67ce83",
+    "terraworkbench_core/compact_magnetics.py": "bd9e0fdf6964fe6991556bd4f86d510f668e85ff4b5fe932150e5d1a8a1b6e6a",
+    "terraworkbench_core/oasis_style.py": "fca027541efc61942f61e15ef5aaa7706fe6d5ff2dc9d3c91fbf16c0257c1be0",
+    "terraworkbench_core/multisensor_project.py": "7852d00013afeead0ebe2e8289320419dcb834ea1064d5a39aba1cb28fb429be",
+    "terraworkbench_core/layered_electrical.py": "3316b0eb897b4361ba62c1274fe9adfedcd1a944dbcd4bd83cfa8dd2788120c7",
+    "terraworkbench_core/well_log_io.py": "8ee1306812582dc5396f2db91ba363c57b8f82288576478d97ddce9aaed758b7",
+    "terraworkbench_core/magnetic_compensation.py": "5a300037256d92cad7af3493f7bfb72d4be569f1525656712e1377a030ba148e",
+    "terraworkbench_core/self_potential_pde.py": "570b2c88620b3c9af445d1719e28831cc02a98c2d1771f32d3d4f09422bca7c0",
+    "terraworkbench_core/self_potential.py": "b58fa508960de653f78d9123c2b764119fca5bceee8969b07d965b78315b77d2",
+    "terraworkbench_core/vector_grid_audit.py": "c3459b25a6065f53d424341edeb5fc0393c9d1c1c69e784d45ef155f8043fbef",
+    "terraworkbench_core/multisensor_fusion.py": "e18d6c2ba8dd3b268d90739fbb9c87108ad91ab184ffa4280f3783c430e47153",
+    "terraworkbench_core/ip_waveform.py": "d1fb7308d37b0ad1439c31f2fac5b2d545956eff5f94fda60349bf5eb2e97cdf"
+  },
+  "runner_sha256": "ae12cff59a2fba01e72d5113764c7646cf7a36257715a3083bb8d0f28f4e9917",
+  "git_head": "f2674ead2f5db2ca90f391e80a5807a543906fd9",
+  "git_dirty": false,
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "limits": [
+    "Kriging variograms are declared stress-case models, not validated geological covariance.",
+    "Full-spectrum fitting uses published simulated templates and measured spectra, not an airborne calibration transfer.",
+    "Polygon gravity is an infinite-strike 2-D model; no finite-strike or geological uniqueness claim."
+  ],
+  "ci_evidence": {
+    "conclusion": "success",
+    "headSha": "f2674ead2f5db2ca90f391e80a5807a543906fd9",
+    "status": "completed",
+    "url": "https://github.com/jordan-zav/TerraWorkbench/actions/runs/40718409619"
+  },
+  "evidence_scope": "Independent numerical agreement and analytic checks. Atmospheric field calibration and geological uniqueness are not established."
+}

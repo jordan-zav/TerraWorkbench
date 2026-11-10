@@ -1,0 +1,30 @@
+{
+  "steps": [
+    {
+      "id": "response",
+      "operation": "potential.layer_response",
+      "parameters": {
+        "values": [[-50, 100, -50], [-50, 100, -50], [-50, 100, -50]],
+        "spacing": [25, 25],
+        "kind": "density",
+        "top_depth_m": 10,
+        "thickness_m": 50
+      }
+    },
+    {
+      "id": "recover",
+      "operation": "potential.apparent_property",
+      "parameters": {
+        "values": {"$result": ["response", "predicted"]},
+        "spacing": [25, 25],
+        "kind": "density",
+        "top_depth_m": 10,
+        "thickness_m": 50,
+        "background": 0,
+        "regularization_response": 0,
+        "max_inverse_gain": 1000000,
+        "minimum_wavelength_m": 50
+      }
+    }
+  ]
+}

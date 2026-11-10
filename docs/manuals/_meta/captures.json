@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "captured_date": "2026-11-10",
+  "dataset": "TerraWorkbench bundled synthetic CC0 survey",
+  "license": "CC0-1.0",
+  "scope": "Actual offscreen widgets showing artificial sample data; no real survey, inversion or field validation. Historical image filenames retained for link compatibility.",
+  "runtime": {
+    "qgis": "3.44.12",
+    "qt_platform": "offscreen",
+    "desktop_input": false,
+    "settings": "isolated per locale"
+  },
+  "original_sources_unchanged": true,
+  "source_sha256": {
+    "sample_data/synthetic/synthetic_survey_points.csv": "6445980af8231f8467f9efa7dedc6dddbfdc1ce4625dc4a84de7b56296afeb58"
+  },
+  "distribution": "Synthetic public documentation; no third-party survey values.",
+  "files": {
+    "docs/manuals/assets/en/workspace_canada.png": "2574945bb83eb30ec2e3a131250d34d4d7c146315b6f87f5ca32a128b399931c",
+    "docs/manuals/assets/en/manual_completo.png": "5360bc252064de0e9cbb2af30802a46a16279404431cd9ca71ef78e85da5e616",
+    "docs/manuals/assets/es/workspace_canada.png": "571272d1502f2791ebab1aa4941c85b6efc439a838a5272aca7440cb7e8b712f",
+    "docs/manuals/assets/es/manual_completo.png": "c8d92b3d0ef8e786f4407072a96f2c10e848892eaa349781adcab5ea6c7c2302",
+    "docs/manuals/assets/pt/workspace_canada.png": "48a48e9672b03b8692b1423c95e47a40032fc88db407db0e849ae5594d1938cf",
+    "docs/manuals/assets/pt/manual_completo.png": "60d0f58fb9f160bc3abdd8755c134b357335266e37c41cb4b493fc9c0ab78a4c"
+  },
+  "ui_sources_sha256_lf": {
+    "ui/full_manual.py": "d087b53b6c82dbc98a2358e91909c1826f47215b1c7291ad80033d9873b71287",
+    "ui/evidence_api.py": "c0310caef6dd488c50a24c0a5cedbc1406c368afd0e6b907c3caf9430f0f7d3d",
+    "ui/workflow_dock.py": "94674758a87b8292e39a1c8b39c01874d07523997fe378df17532d7749e37dde",
+    "scripts/capture_documentation.py": "e5bb7e06bede0a68e80048bb2a4b5861a54d9815e296b23438b1d107e49ad712",
+    "scripts/capture_manual_ui.py": "3a8bfe0fcbc8df707fb0cdca282381ac7d8a256f47f156db1a37abcd8d17b084"
+  },
+  "database_rows": 2304
+}

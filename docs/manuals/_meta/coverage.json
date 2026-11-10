@@ -1,0 +1,396 @@
+[
+  {
+    "file": "01_inicio.md",
+    "title": "Qué es TerraWorkbench y cómo empezar",
+    "modules": [
+      "__init__"
+    ],
+    "titles": {
+      "es": "Qué es TerraWorkbench y cómo empezar",
+      "en": "What TerraWorkbench is and where to start",
+      "pt": "O que é o TerraWorkbench e como começar"
+    }
+  },
+  {
+    "file": "02_instalacion.md",
+    "title": "Instalación, dependencias y entorno",
+    "modules": [],
+    "titles": {
+      "es": "Instalación, dependencias y entorno",
+      "en": "Installation, dependencies and environment",
+      "pt": "Instalação, dependências e ambiente"
+    }
+  },
+  {
+    "file": "03_coordenadas.md",
+    "title": "Coordenadas, unidades, alturas y convenciones",
+    "modules": [
+      "coordinates"
+    ],
+    "titles": {
+      "es": "Coordenadas, unidades, alturas y convenciones",
+      "en": "Coordinates, units, heights and conventions",
+      "pt": "Coordenadas, unidades, alturas e convenções"
+    }
+  },
+  {
+    "file": "04_importacion.md",
+    "title": "Importación de texto, GRD y datos geoespaciales",
+    "modules": [
+      "survey_text_import",
+      "text_import"
+    ],
+    "titles": {
+      "es": "Importación de texto, GRD y datos geoespaciales",
+      "en": "Importing text, GRD and geospatial data",
+      "pt": "Importação de texto, GRD e dados geoespaciais"
+    }
+  },
+  {
+    "file": "05_bases_canales.md",
+    "title": "Workspaces, canales, versiones y linaje",
+    "modules": [
+      "survey_store",
+      "survey_explorer",
+      "survey_recipes"
+    ],
+    "titles": {
+      "es": "Workspaces, canales, versiones y linaje",
+      "en": "Workspaces, channels, versions and lineage",
+      "pt": "Workspaces, canais, versões e linhagem"
+    }
+  },
+  {
+    "file": "06_perfiles_qc.md",
+    "title": "QC, trayectoria, tiempos y correcciones de adquisición",
+    "modules": [
+      "channel_filters",
+      "profile_distance",
+      "profile_preparation",
+      "preprocessing",
+      "survey_corrections",
+      "survey_correction_pipeline",
+      "magnetic_compensation"
+    ],
+    "titles": {
+      "es": "QC, trayectoria, tiempos y correcciones de adquisición",
+      "en": "QC, trajectory, timing and acquisition corrections",
+      "pt": "QC, trajetória, tempos e correções de aquisição"
+    }
+  },
+  {
+    "file": "07_nivelacion_gridding.md",
+    "title": "Cruces, nivelación e interpolación",
+    "modules": [
+      "line_processing",
+      "gridding_methods",
+      "survey_processing",
+      "survey_grid_pipeline",
+      "equivalent_sources",
+      "geostatistics"
+    ],
+    "titles": {
+      "es": "Cruces, nivelación e interpolación",
+      "en": "Crossovers, levelling and interpolation",
+      "pt": "Cruzamentos, nivelamento e interpolação"
+    }
+  },
+  {
+    "file": "08_filtros_espaciales.md",
+    "title": "Filtros espaciales, máscaras y mosaicos",
+    "modules": [
+      "basic_processing",
+      "grid_tools"
+    ],
+    "titles": {
+      "es": "Filtros espaciales, máscaras y mosaicos",
+      "en": "Spatial filters, masks and mosaics",
+      "pt": "Filtros espaciais, máscaras e mosaicos"
+    }
+  },
+  {
+    "file": "09_fft_espectros.md",
+    "title": "FFT, continuación, derivadas y análisis espectral",
+    "modules": [
+      "spectral",
+      "spectral_analysis",
+      "radial_filters",
+      "filter_recipes",
+      "oasis_style"
+    ],
+    "titles": {
+      "es": "FFT, continuación, derivadas y análisis espectral",
+      "en": "FFT, continuation, derivatives and spectral analysis",
+      "pt": "FFT, continuação, derivadas e análise espectral"
+    }
+  },
+  {
+    "file": "10_magnetometria.md",
+    "title": "Magnetometría, campo principal y fuentes compactas",
+    "modules": [
+      "geomagnetism",
+      "magnetic_components",
+      "magnetic_pipeline",
+      "magnetic_products",
+      "compact_magnetics"
+    ],
+    "titles": {
+      "es": "Magnetometría, campo principal y fuentes compactas",
+      "en": "Magnetometry, the main field and compact sources",
+      "pt": "Magnetometria, campo principal e fontes compactas"
+    }
+  },
+  {
+    "file": "11_gravimetria.md",
+    "title": "Gravimetría terrestre, redes y modelos 2D",
+    "modules": [
+      "gravity_corrections",
+      "gravity_network",
+      "gravity_profiles"
+    ],
+    "titles": {
+      "es": "Gravimetría terrestre, redes y modelos 2D",
+      "en": "Land gravity, networks and 2D models",
+      "pt": "Gravimetria terrestre, redes e modelos 2D"
+    }
+  },
+  {
+    "file": "12_terreno_isostasia.md",
+    "title": "Terreno, isostasia, flexura y tensores",
+    "modules": [
+      "terrain_gravity",
+      "adaptive_terrain",
+      "terrain_tree_walk",
+      "isostasy",
+      "flexure",
+      "potential_tensors"
+    ],
+    "titles": {
+      "es": "Terreno, isostasia, flexura y tensores",
+      "en": "Terrain, isostasy, flexure and tensors",
+      "pt": "Terreno, isostasia, flexura e tensores"
+    }
+  },
+  {
+    "file": "13_radiometria.md",
+    "title": "Radiometría gamma, espectros y radón",
+    "modules": [
+      "radiometry",
+      "radiometric_calibration",
+      "radiometric_spectra",
+      "radiometric_radon",
+      "radon_corrections"
+    ],
+    "titles": {
+      "es": "Radiometría gamma, espectros y radón",
+      "en": "Gamma radiometry, spectra and radon",
+      "pt": "Radiometria gama, espectros e radônio"
+    }
+  },
+  {
+    "file": "14_estructura_profundidad.md",
+    "title": "Atributos estructurales y profundidad de fuentes",
+    "modules": [
+      "source_depth",
+      "structural_attributes",
+      "lineament_geometry"
+    ],
+    "titles": {
+      "es": "Atributos estructurales y profundidad de fuentes",
+      "en": "Structural attributes and source depth",
+      "pt": "Atributos estruturais e profundidade de fontes"
+    }
+  },
+  {
+    "file": "15_inversion_potencial.md",
+    "title": "Modelado e inversión de gravedad y susceptibilidad",
+    "modules": [
+      "inversion",
+      "inversion_workflows",
+      "spatial_constraints",
+      "regularization_profiles",
+      "prism_inversion",
+      "apparent_properties"
+    ],
+    "titles": {
+      "es": "Modelado e inversión de gravedad y susceptibilidad",
+      "en": "Gravity and susceptibility modelling and inversion",
+      "pt": "Modelagem e inversão de gravidade e suscetibilidade"
+    }
+  },
+  {
+    "file": "16_mvi_conjunta.md",
+    "title": "MVI, inversión conjunta y supuestos estructurales",
+    "modules": [
+      "spherical_mvi"
+    ],
+    "titles": {
+      "es": "MVI, inversión conjunta y supuestos estructurales",
+      "en": "MVI, joint inversion and structural assumptions",
+      "pt": "MVI, inversão conjunta e hipóteses estruturais"
+    }
+  },
+  {
+    "file": "17_resolucion_incertidumbre.md",
+    "title": "Convergencia, resolución, incertidumbre y validación",
+    "modules": [
+      "inversion_diagnostics",
+      "inversion_evidence",
+      "matrix_free_resolution",
+      "recovery_metrics",
+      "advanced_statistics",
+      "_calibration"
+    ],
+    "titles": {
+      "es": "Convergencia, resolución, incertidumbre y validación",
+      "en": "Convergence, resolution, uncertainty and validation",
+      "pt": "Convergência, resolução, incerteza e validação"
+    }
+  },
+  {
+    "file": "18_electrica_dc.md",
+    "title": "Resistividad DC, geometría ABMN y PDE",
+    "modules": [
+      "electrical",
+      "layered_electrical",
+      "electrical_pde"
+    ],
+    "titles": {
+      "es": "Resistividad DC, geometría ABMN y PDE",
+      "en": "DC resistivity, ABMN geometry and PDE",
+      "pt": "Resistividade DC, geometria ABMN e PDE"
+    }
+  },
+  {
+    "file": "19_ip_sip.md",
+    "title": "IP, SIP, Cole–Cole e historial de corriente",
+    "modules": [
+      "dispersive_ip",
+      "ip_waveform",
+      "ip_stacking"
+    ],
+    "titles": {
+      "es": "IP, SIP, Cole–Cole e historial de corriente",
+      "en": "IP, SIP, Cole–Cole and current history",
+      "pt": "IP, SIP, Cole–Cole e histórico de corrente"
+    }
+  },
+  {
+    "file": "20_em_mt.md",
+    "title": "FDEM, TEM, transitorios y magnetotelúrica",
+    "modules": [
+      "layered_em",
+      "fdem_3d",
+      "magnetotellurics",
+      "transient_processing",
+      "complex_calibration"
+    ],
+    "titles": {
+      "es": "FDEM, TEM, transitorios y magnetotelúrica",
+      "en": "FDEM, TEM, transients and magnetotellurics",
+      "pt": "FDEM, TEM, transientes e magnetotelúrica"
+    }
+  },
+  {
+    "file": "21_potencial_espontaneo.md",
+    "title": "Potencial espontáneo y redes de referencia",
+    "modules": [
+      "self_potential",
+      "self_potential_pde"
+    ],
+    "titles": {
+      "es": "Potencial espontáneo y redes de referencia",
+      "en": "Self-potential and reference networks",
+      "pt": "Potencial espontâneo e redes de referência"
+    }
+  },
+  {
+    "file": "22_ondas_sondeos.md",
+    "title": "GPR, sísmica, procesamiento de trazas y sondeos",
+    "modules": [
+      "waveform_processing",
+      "well_log_io",
+      "borehole"
+    ],
+    "titles": {
+      "es": "GPR, sísmica, procesamiento de trazas y sondeos",
+      "en": "GPR, seismic traces and boreholes",
+      "pt": "GPR, traços sísmicos e sondagens"
+    }
+  },
+  {
+    "file": "23_integracion_experimentos.md",
+    "title": "Integración multifuente y métodos experimentales",
+    "modules": [
+      "multisensor_fusion",
+      "multisensor_project",
+      "terrain_analysis",
+      "vector_grid_audit",
+      "process_effect",
+      "archaeology",
+      "paired_flights",
+      "crossovers"
+    ],
+    "titles": {
+      "es": "Integración multifuente y métodos experimentales",
+      "en": "Multisource integration and experimental methods",
+      "pt": "Integração multifonte e métodos experimentais"
+    }
+  },
+  {
+    "file": "24_gui_qgis.md",
+    "title": "Interfaz QGIS, formularios, idiomas y capturas",
+    "modules": [],
+    "titles": {
+      "es": "Interfaz QGIS, formularios, idiomas y capturas",
+      "en": "QGIS interface, forms, languages and captures",
+      "pt": "Interface QGIS, formulários, idiomas e capturas"
+    }
+  },
+  {
+    "file": "25_api_workflows.md",
+    "title": "API Python, trabajos y workflows reproducibles",
+    "modules": [
+      "operations",
+      "operation_jobs",
+      "operation_workflows"
+    ],
+    "titles": {
+      "es": "API Python, trabajos y workflows reproducibles",
+      "en": "Python API, jobs and reproducible workflows",
+      "pt": "API Python, trabalhos e workflows reproduzíveis"
+    }
+  },
+  {
+    "file": "26_recursos_desarrollo.md",
+    "title": "Recursos, pruebas, empaquetado y mantenimiento",
+    "modules": [
+      "_array_contract"
+    ],
+    "titles": {
+      "es": "Recursos, pruebas, empaquetado y mantenimiento",
+      "en": "Resources, tests, packaging and maintenance",
+      "pt": "Recursos, testes, empacotamento e manutenção"
+    }
+  },
+  {
+    "file": "27_tutoriales.md",
+    "title": "Tutoriales reproducibles desde cero",
+    "modules": [],
+    "titles": {
+      "es": "Tutoriales reproducibles desde cero",
+      "en": "Reproducible tutorials from scratch",
+      "pt": "Tutoriais reproduzíveis desde o início"
+    }
+  },
+  {
+    "file": "28_evidencia_publicacion.md",
+    "title": "Evidencia científica, capítulos de resultados y publicación",
+    "modules": [],
+    "titles": {
+      "es": "Evidencia científica, capítulos de resultados y publicación",
+      "en": "Scientific evidence, results chapters and publication",
+      "pt": "Evidência científica, capítulos de resultados e publicação"
+    }
+  }
+]

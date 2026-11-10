@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "scope": "Method context, not independent validation or license audit",
+  "references": {
+    "ip_stack": {
+      "title": "Understanding the Fate of H2S Injected in Basalts by Means of Time-Domain Induced Polarization Geophysical Logging",
+      "url": "https://doi.org/10.1029/2023JB028316"
+    },
+    "ip_waveform": {
+      "title": "Spectral induced polarization: frequency domain versus time domain laboratory data, Appendix C",
+      "url": "https://doi.org/10.1093/gji/ggab071"
+    },
+    "flexure": {
+      "title": "GMT grdflexure: elastic and rheological plate models",
+      "url": "https://docs.generic-mapping-tools.org/6.5/supplements/potential/grdflexure.html"
+    },
+    "prism_gravity": {
+      "title": "Harmonica prism gravity: units and coordinate conventions",
+      "url": "https://www.fatiando.org/harmonica/latest/api/generated/harmonica.prism_gravity.html"
+    },
+    "prism_magnetic": {
+      "title": "Harmonica prism magnetic field: conventions",
+      "url": "https://www.fatiando.org/harmonica/latest/api/generated/harmonica.prism_magnetic.html"
+    },
+    "ndimage": {
+      "title": "SciPy multidimensional image processing",
+      "url": "https://docs.scipy.org/doc/scipy/reference/ndimage.html"
+    },
+    "microleveling": {
+      "title": "Minty (1991): Simple Micro-Levelling for Aeromagnetic Data",
+      "url": "https://doi.org/10.1071/EG991591"
+    },
+    "werner": {
+      "title": "Ku and Sharp (1983): Werner deconvolution",
+      "url": "https://doi.org/10.1190/1.1441505"
+    },
+    "spi": {
+      "title": "Thurston and Smith (1997): SPI method",
+      "url": "https://doi.org/10.1190/1.1444190"
+    },
+    "spectral_depth": {
+      "title": "Spector and Grant (1970): statistical aeromagnetic models",
+      "url": "https://doi.org/10.1190/1.1440092"
+    },
+    "well_survey": {
+      "title": "Taylor (1972): well surveying calculations",
+      "url": "https://doi.org/10.2118/3362-PA"
+    },
+    "treecode": {
+      "title": "Barnes and Hut: hierarchical force calculation",
+      "url": "https://doi.org/10.1038/324446a0"
+    },
+    "kovesi": {
+      "title": "Monogenic phase attributes",
+      "url": "https://peterkovesi.github.io/ImagePhaseCongruency.jl/stable/functions/"
+    },
+    "skimage": {
+      "title": "scikit-image morphology",
+      "url": "https://scikit-image.org/docs/stable/api/skimage.morphology.html"
+    },
+    "harmonica": {
+      "title": "Harmonica transformations",
+      "url": "https://www.fatiando.org/harmonica/latest/user_guide/transformations.html"
+    },
+    "upward": {
+      "title": "Harmonica upward continuation",
+      "url": "https://www.fatiando.org/harmonica/latest/api/generated/harmonica.upward_continuation.html"
+    },
+    "verde": {
+      "title": "Verde spatial cross-validation",
+      "url": "https://www.fatiando.org/verde/latest/tutorials/model_selection.html"
+    },
+    "gdal": {
+      "title": "GDAL raster data model",
+      "url": "https://gdal.org/en/stable/user/raster_data_model.html"
+    },
+    "gravity": {
+      "title": "Boule normal gravity",
+      "url": "https://www.fatiando.org/boule/latest/user_guide/normal_gravity.html"
+    },
+    "iaea": {
+      "title": "IAEA-TECDOC-1363",
+      "url": "https://www-pub.iaea.org/MTCD/Publications/PDF/te_1363_web.pdf"
+    },
+    "simpeg": {
+      "title": "SimPEG",
+      "url": "https://docs.simpeg.xyz/latest/"
+    },
+    "mvi_spherical": {
+      "title": "Fournier, Heagy and Oldenburg (2020), Sparse magnetic vector inversion in spherical coordinates",
+      "url": "https://doi.org/10.1190/geo2019-0244.1"
+    },
+    "misfit": {
+      "title": "SimPEG L2 data misfit",
+      "url": "https://docs.simpeg.xyz/latest/content/api/generated/simpeg.data_misfit.L2DataMisfit.html"
+    },
+    "electrical": {
+      "title": "SimPEG DC resistivity",
+      "url": "https://docs.simpeg.xyz/latest/content/api/simpeg.electromagnetics.static.resistivity.html"
+    },
+    "em": {
+      "title": "SimPEG electromagnetic methods",
+      "url": "https://docs.simpeg.xyz/latest/content/api/simpeg.electromagnetics.html"
+    },
+    "scipy": {
+      "title": "SciPy signal processing",
+      "url": "https://docs.scipy.org/doc/scipy/reference/signal.html"
+    },
+    "las": {
+      "title": "lasio documentation",
+      "url": "https://lasio.readthedocs.io/en/latest/"
+    },
+    "euler": {
+      "title": "Harmonica Euler deconvolution",
+      "url": "https://www.fatiando.org/harmonica/latest/api/generated/harmonica.EulerDeconvolution.html"
+    }
+  },
+  "methods": {
+    "adaptive_terrain": [
+      "treecode",
+      "prism_gravity"
+    ],
+    "finite_layer_properties": [
+      "prism_gravity",
+      "prism_magnetic"
+    ],
+    "magnetic_components": [
+      "harmonica"
+    ],
+    "compact_dipoles": [
+      "harmonica",
+      "simpeg"
+    ],
+    "structural_attributes": [
+      "kovesi",
+      "skimage"
+    ],
+    "derivatives": [
+      "harmonica"
+    ],
+    "edge_attributes": [
+      "harmonica"
+    ],
+    "field_transforms": [
+      "harmonica"
+    ],
+    "normal_gravity": [
+      "gravity"
+    ],
+    "bouguer_chain": [
+      "gravity"
+    ],
+    "isostasy_flexure": [
+      "flexure",
+      "prism_gravity"
+    ],
+    "fft_conditioning": [
+      "scipy"
+    ],
+    "spectral_passbands": [
+      "scipy"
+    ],
+    "continuation_integration": [
+      "upward"
+    ],
+    "spatial_nonlinear": [
+      "ndimage",
+      "skimage"
+    ],
+    "grid_methods": [
+      "verde"
+    ],
+    "survey_corrections": [
+      "harmonica"
+    ],
+    "leveling": [
+      "microleveling"
+    ],
+    "source_depth_qc": [
+      "euler"
+    ],
+    "werner_spi_spectrum": [
+      "werner",
+      "spi",
+      "spectral_depth"
+    ],
+    "inversion_models": [
+      "simpeg",
+      "misfit"
+    ],
+    "spherical_mvi": [
+      "mvi_spherical",
+      "simpeg"
+    ],
+    "regularization": [
+      "simpeg"
+    ],
+    "raw_radiometry": [
+      "iaea"
+    ],
+    "spectral_radiometry": [
+      "iaea"
+    ],
+    "electrical_polarity": [
+      "electrical",
+      "ip_waveform",
+      "ip_stack"
+    ],
+    "pde_boundaries": [
+      "electrical"
+    ],
+    "em_geometry": [
+      "em"
+    ],
+    "tem_mt": [
+      "em"
+    ],
+    "waveform_processing": [
+      "scipy"
+    ],
+    "borehole_depth": [
+      "las",
+      "well_survey"
+    ]
+  }
+}
