@@ -33,6 +33,8 @@ include-package-data = false
 [tool.ruff]
 target-version = "py39"
 line-length = 88
+# Archived replay packages are frozen evidence and are not linted or edited.
+extend-exclude = ["reproducibility"]
 
 [tool.ruff.lint]
 # Keep the CI contract explicit so Ruff default-rule changes do not create

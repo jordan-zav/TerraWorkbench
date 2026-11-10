@@ -1,0 +1,820 @@
+{
+  "scope": "All native, Core, exact-support and uniform-geometry outcomes; oracle controls are not unconstrained recovery certification",
+  "quick": {
+    "state": "complete",
+    "utc": "2026-10-29T23:50:14.046101+00:00",
+    "commit": "68cbb424ad2fa26c2f69a24dd60282da83cdfeeb",
+    "protocol": {
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "source_license": "SimPEG MIT",
+      "source_snapshot_sha256": "703c1254a9e6a0b44a17cbbdf4fbb75b524695ad66fe761c0575bedef0c2570a",
+      "scale": "quick",
+      "seed": 7112,
+      "field": [
+        50000.0,
+        90.0,
+        0.0
+      ],
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "numerical_changes_from_example": "Pinned seed; independent data integration; 50 outer / 200 CG iterations and explicit zero reference; no plotting",
+      "variants": [
+        "native_simpeg",
+        "core",
+        "core_known_support_control",
+        "uniform_geometry_control"
+      ],
+      "control_warning": "Exact support is an oracle and excluded from claims about unconstrained recovery"
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1",
+      "harmonica": "0.7.0"
+    },
+    "mesh_cells": 100,
+    "active_cells": 100,
+    "observations": 121,
+    "cases": [
+      {
+        "variant": "native_simpeg",
+        "exact_support_in_fit": false,
+        "weighted_rms": 0.9935541642766492,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 0,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 1000000.0,
+          "recovered_volume_m3": 0.0,
+          "volume_relative_error": 1.0,
+          "support_dice": 0.0,
+          "model_relative_error": 0.992752536634821,
+          "maximum_contrast_relative_error": 0.9838429955859843,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05,
+              "recovered_contrast": 0.0008078502207007846,
+              "contrast_relative_error": 0.9838429955859843,
+              "direction_error_deg": 5.6786389121407055
+            }
+          ],
+          "true_effective_volume_m3": 1000000.0,
+          "recovered_effective_volume_m3": 63290948.51843667,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "independent_forward_max_nt": 4.4497738826976274e-13
+        }
+      },
+      {
+        "variant": "core",
+        "exact_support_in_fit": false,
+        "weighted_rms": 0.9935537600258237,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": false,
+            "volume": false,
+            "support": false,
+            "contrast": false,
+            "model": false,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "location",
+            "volume",
+            "support",
+            "contrast",
+            "model"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 0,
+          "matched_centroids": [],
+          "maximum_location_error_m": null,
+          "true_volume_m3": 1000000.0,
+          "recovered_volume_m3": 0.0,
+          "volume_relative_error": 1.0,
+          "support_dice": 0.0,
+          "model_relative_error": 0.9927525231304768,
+          "maximum_contrast_relative_error": 0.9838429649917753,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05,
+              "recovered_contrast": 0.0008078517504112408,
+              "contrast_relative_error": 0.9838429649917753,
+              "direction_error_deg": 5.678627482401846
+            }
+          ],
+          "true_effective_volume_m3": 1000000.0,
+          "recovered_effective_volume_m3": 63290900.600758664,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 0.9935537600258237,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 33,
+          "cg_relative_residual": 9.473475474239525e-05,
+          "cg_tolerance_met": true,
+          "target_reached": true,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "reference_in_smooth": true,
+          "mvi_regularization": "amplitude",
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 300,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 290400,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 290400,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 5,
+          "iterations": 16
+        }
+      },
+      {
+        "variant": "core_known_support_control",
+        "exact_support_in_fit": true,
+        "weighted_rms": 1.0582861918919986,
+        "recovery": {
+          "recovery_status": "recovery_passed",
+          "recovery_passed": true,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": true,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 0.0
+            }
+          ],
+          "maximum_location_error_m": 0.0,
+          "true_volume_m3": 1000000.0,
+          "recovered_volume_m3": 1000000.0,
+          "volume_relative_error": 0.0,
+          "support_dice": 1.0,
+          "model_relative_error": 0.006154753585592339,
+          "maximum_contrast_relative_error": 0.0008681118825158707,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05,
+              "recovered_contrast": 0.04995659440587421,
+              "contrast_relative_error": 0.0008681118825158707,
+              "direction_error_deg": 0.3492681695055075
+            }
+          ],
+          "true_effective_volume_m3": 1000000.0,
+          "recovered_effective_volume_m3": 1000000.0,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 1.0582861918919986,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 1,
+          "cg_relative_residual": 3.012409032915035e-16,
+          "cg_tolerance_met": true,
+          "target_reached": false,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "reference_in_smooth": true,
+          "mvi_regularization": "amplitude",
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 297,
+          "free_parameter_count": 3,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 290400,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 290400,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 0,
+          "iterations": 40
+        }
+      },
+      {
+        "variant": "uniform_geometry_control",
+        "exact_support_in_fit": true,
+        "weighted_rms": 1.058286191891992,
+        "recovery": {
+          "recovery_status": "recovery_passed",
+          "recovery_passed": true,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": true,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 0.0
+            }
+          ],
+          "maximum_location_error_m": 0.0,
+          "true_volume_m3": 1000000.0,
+          "recovered_volume_m3": 1000000.0,
+          "volume_relative_error": 0.0,
+          "support_dice": 1.0,
+          "model_relative_error": 0.00615475325387068,
+          "maximum_contrast_relative_error": 0.0008681109998082137,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05,
+              "recovered_contrast": 0.04995659445000959,
+              "contrast_relative_error": 0.0008681109998082137,
+              "direction_error_deg": 0.34926815735271816
+            }
+          ],
+          "true_effective_volume_m3": 1000000.0,
+          "recovered_effective_volume_m3": 1000000.0,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "chi_squared": 135.51632933785967,
+          "degrees_of_freedom": 118,
+          "design_condition": 1.0000000000000002,
+          "condition_basis": "noise-whitened, column-normalized design; unit-scale invariant",
+          "noise_model": "Independent records, supplied full within-record Gaussian covariance; no residual rescaling",
+          "free_parameters": 3,
+          "prior": "Exact prism and uniform magnetization; truth in fitting"
+        }
+      }
+    ],
+    "input_sha256": "eb2dcf47918fe33ba7db0e105ae89c5e4908ed9667eff17b5f0c8a69840f51a1",
+    "script_sha256": "f53c0371a7a35ea5ad805c94dee3a1d931b3aff6aa45f049f7646ba9291e641b",
+    "core_source_sha256": "9655c7231063f90cde5fe970c3171c6f754c559427db78941c1f83803c521088",
+    "supporting_sources_sha256": {
+      "terraworkbench_core/recovery_metrics.py": "e299f709322eda6c541736f0e6e828af964d53850068d0bce04461ef2497b289",
+      "scripts/benchmark_voxel_recovery.py": "b3458420f330e0910dcface445ccd8b9033f63640392fb651a1bfbc4804fd1aa"
+    },
+    "repository_dirty": true,
+    "core_vs_native_model_relative_l2": 3.5003507660811647e-06
+  },
+  "published": {
+    "state": "complete",
+    "utc": "2026-10-29T21:24:00.251445+00:00",
+    "commit": "68cbb424ad2fa26c2f69a24dd60282da83cdfeeb",
+    "protocol": {
+      "source": "https://github.com/simpeg/simpeg/blob/v0.25.0/examples/03-magnetics/plot_inv_mag_MVI_VectorAmplitude.py",
+      "source_license": "SimPEG MIT",
+      "source_snapshot_sha256": "703c1254a9e6a0b44a17cbbdf4fbb75b524695ad66fe761c0575bedef0c2570a",
+      "scale": "published",
+      "seed": 7112,
+      "field": [
+        50000.0,
+        90.0,
+        0.0
+      ],
+      "criteria": {
+        "location_tolerance_m": 100.0,
+        "volume_relative_tolerance": 0.35,
+        "contrast_relative_tolerance": 0.35,
+        "support_dice_min": 0.6,
+        "direction_tolerance_deg": 15.0,
+        "model_relative_tolerance": 0.5
+      },
+      "numerical_changes_from_example": "Pinned seed; independent data integration; 50 outer / 200 CG iterations and explicit zero reference; no plotting",
+      "variants": [
+        "native_simpeg",
+        "core",
+        "core_known_support_control",
+        "uniform_geometry_control"
+      ],
+      "control_warning": "Exact support is an oracle and excluded from claims about unconstrained recovery"
+    },
+    "versions": {
+      "numpy": "1.26.4",
+      "scipy": "1.17.0",
+      "simpeg": "0.25.0",
+      "discretize": "0.12.0",
+      "choclo": "0.3.2",
+      "geoana": "0.8.1",
+      "harmonica": "0.7.0"
+    },
+    "mesh_cells": 39516,
+    "active_cells": 27971,
+    "observations": 400,
+    "cases": [
+      {
+        "variant": "native_simpeg",
+        "exact_support_in_fit": false,
+        "weighted_rms": 1.0327304744225894,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 14.720428503941859
+            }
+          ],
+          "maximum_location_error_m": 14.720428503941859,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 74000.0,
+          "volume_relative_error": 0.22916666666666666,
+          "support_dice": 0.611764705882353,
+          "model_relative_error": 0.9101605683769489,
+          "maximum_contrast_relative_error": 0.23630420964956608,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.0381847895175217,
+              "contrast_relative_error": 0.23630420964956608,
+              "direction_error_deg": 19.533783014376894
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 934126.1893925508,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "independent_forward_max_nt": 1.892885848064907e-11
+        }
+      },
+      {
+        "variant": "core",
+        "exact_support_in_fit": false,
+        "weighted_rms": 1.0327306063632165,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": false,
+            "direction": false
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "model",
+            "direction"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 14.720428503941859
+            }
+          ],
+          "maximum_location_error_m": 14.720428503941859,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 74000.0,
+          "volume_relative_error": 0.22916666666666666,
+          "support_dice": 0.611764705882353,
+          "model_relative_error": 0.9101609106167273,
+          "maximum_contrast_relative_error": 0.23630414067581146,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.038184792966209434,
+              "contrast_relative_error": 0.23630414067581146,
+              "direction_error_deg": 19.53379871134436
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 934128.1922991682,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 1.0327306063632165,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 15,
+          "cg_relative_residual": 7.257550202898922e-05,
+          "cg_tolerance_met": true,
+          "target_reached": false,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": true,
+          "mvi_regularization": "amplitude",
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 0,
+          "free_parameter_count": 83913,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 8,
+          "iterations": 14
+        }
+      },
+      {
+        "variant": "core_known_support_control",
+        "exact_support_in_fit": true,
+        "weighted_rms": 1.0411235826398932,
+        "recovery": {
+          "recovery_status": "recovery_failed",
+          "recovery_passed": false,
+          "checks": {
+            "location": true,
+            "volume": false,
+            "support": true,
+            "contrast": true,
+            "model": false,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [
+            "volume",
+            "model"
+          ],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 6.632626594132231
+            }
+          ],
+          "maximum_location_error_m": 6.632626594132231,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 55000.0,
+          "volume_relative_error": 0.4270833333333333,
+          "support_dice": 0.7284768211920529,
+          "model_relative_error": 0.9963655689378814,
+          "maximum_contrast_relative_error": 0.015134081521471218,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.05075670407607357,
+              "contrast_relative_error": 0.015134081521471218,
+              "direction_error_deg": 6.404090885473791
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 52400.84914025194,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "weighted_rms": 1.0411235826398932,
+          "target_chi": 1.0,
+          "gravity_component": null,
+          "bound_start_restarts": 0,
+          "iteration_limit_reached": false,
+          "cg_maxiter": 200,
+          "cg_rtol": 0.0001,
+          "cg_iterations": 12,
+          "cg_relative_residual": 2.610770549240407e-05,
+          "cg_tolerance_met": true,
+          "target_reached": false,
+          "init_bfgs": false,
+          "preconditioner": "Jacobi",
+          "optimizer_tolerances": {
+            "f": 1e-06,
+            "x": 1e-08,
+            "g": 1e-06
+          },
+          "beta_seed": 0,
+          "preconditioner_hessian": "2 J.T Wd^2 J + beta R''; current weights",
+          "regularization_norms": [
+            0.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "regularization_convention": "physical_gradient",
+          "regularization_weights": [
+            1.0,
+            25.0,
+            25.0,
+            25.0
+          ],
+          "reference_in_smooth": true,
+          "mvi_regularization": "amplitude",
+          "model_units": "effective susceptibility SI",
+          "fixed_parameter_count": 83625,
+          "free_parameter_count": 288,
+          "geological_cell_weights_supplied": false,
+          "geological_cell_weight_range": null,
+          "mvi_layout": "component-major x,y,z; positive-up z",
+          "magnetization_a_per_m_per_si": 39.78873577822725,
+          "sensitivity_bytes": 268521600,
+          "sensitivity_mode": "ram",
+          "stored_sensitivity_bytes": 268521600,
+          "field": {
+            "amplitude": 50000.0,
+            "inclination": 90.0,
+            "declination": 0.0
+          },
+          "irls_iterations": 6,
+          "iterations": 17
+        }
+      },
+      {
+        "variant": "uniform_geometry_control",
+        "exact_support_in_fit": true,
+        "weighted_rms": 0.9682840469632676,
+        "recovery": {
+          "recovery_status": "recovery_passed",
+          "recovery_passed": true,
+          "checks": {
+            "location": true,
+            "volume": true,
+            "support": true,
+            "contrast": true,
+            "model": true,
+            "direction": true
+          },
+          "connectivity": "explicit_cell_adjacency",
+          "failed_criteria": [],
+          "criteria": {
+            "location_tolerance_m": 100.0,
+            "volume_relative_tolerance": 0.35,
+            "contrast_relative_tolerance": 0.35,
+            "support_dice_min": 0.6,
+            "direction_tolerance_deg": 15.0,
+            "model_relative_tolerance": 0.5
+          },
+          "support_threshold": 0.025000000000000005,
+          "support_fraction": 0.5,
+          "truth_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_centroids": [
+            {
+              "truth_component": 0,
+              "predicted_component": 0,
+              "distance_m": 0.0
+            }
+          ],
+          "maximum_location_error_m": 0.0,
+          "true_volume_m3": 96000.0,
+          "recovered_volume_m3": 96000.0,
+          "volume_relative_error": 0.0,
+          "support_dice": 1.0,
+          "model_relative_error": 0.005514799591505054,
+          "maximum_contrast_relative_error": 0.00033868627353605957,
+          "body_metrics": [
+            {
+              "component": 0,
+              "true_contrast": 0.05000000000000001,
+              "recovered_contrast": 0.04998306568632321,
+              "contrast_relative_error": 0.00033868627353605957,
+              "direction_error_deg": 0.3154321185745972
+            }
+          ],
+          "true_effective_volume_m3": 96000.0,
+          "recovered_effective_volume_m3": 96000.0,
+          "scope": "Truth-based, declared-threshold validation; not a posterior or production prior"
+        },
+        "diagnostics": {
+          "chi_squared": 375.02959824142545,
+          "degrees_of_freedom": 397,
+          "design_condition": 1.0000000000000007,
+          "condition_basis": "noise-whitened, column-normalized design; unit-scale invariant",
+          "noise_model": "Independent records, supplied full within-record Gaussian covariance; no residual rescaling",
+          "free_parameters": 3,
+          "prior": "Exact prism and uniform magnetization; truth in fitting"
+        }
+      }
+    ],
+    "input_sha256": "1702f10cad97de6f7cddb2d53bb37b4e98a667bd54f9da2025a9484fdcf20480",
+    "script_sha256": "f53c0371a7a35ea5ad805c94dee3a1d931b3aff6aa45f049f7646ba9291e641b",
+    "core_source_sha256": "9655c7231063f90cde5fe970c3171c6f754c559427db78941c1f83803c521088",
+    "supporting_sources_sha256": {
+      "terraworkbench_core/recovery_metrics.py": "e299f709322eda6c541736f0e6e828af964d53850068d0bce04461ef2497b289",
+      "scripts/benchmark_voxel_recovery.py": "b3458420f330e0910dcface445ccd8b9033f63640392fb651a1bfbc4804fd1aa"
+    },
+    "repository_dirty": true,
+    "core_vs_native_model_relative_l2": 1.6236378650646166e-06
+  }
+}

@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "terraworkbench-core"
+version = "0.1.0"
+description = "QGIS-independent scientific kernels for TerraWorkbench"
+requires-python = ">=3.10"
+license = {text = "GPL-3.0-or-later"}
+dependencies = ["numpy>=1.23,<3", "scipy>=1.8,<2"]
+
+[project.optional-dependencies]
+documentation = ["matplotlib>=3.6,<4"]
+validation = ["psutil>=5.9,<8"]
+inversion = ["simpeg>=0.25,<0.26; python_version >= '3.11'", "discretize>=0.12,<0.13; python_version >= '3.11'", "choclo>=0.3,<0.4; python_version >= '3.11'"]
+em = ["simpeg>=0.25,<0.26; python_version >= '3.11'", "discretize>=0.12,<0.13; python_version >= '3.11'", "choclo>=0.3,<0.4; python_version >= '3.11'"]
+electrical = ["simpeg>=0.25,<0.26; python_version >= '3.11'", "discretize>=0.12,<0.13; python_version >= '3.11'", "choclo>=0.3,<0.4; python_version >= '3.11'"]
+prisms = ["harmonica>=0.7,<0.8", "numba>=0.58,<1"]
+borehole = ["lasio>=0.31,<0.33"]
+storage = ["pyarrow>=16,<26"]
+coordinates = ["pyproj>=3.5,<4"]
+geomagnetism = ["ppigrf>=2.1,<3"]
+structure = ["scikit-image>=0.21,<1"]
+tables = ["pandas>=1.5,<3"]
+multisensor = ["rasterio>=1.3,<2", "geopandas>=0.14,<2", "pyogrio>=0.7,<1", "pyproj>=3.5,<4", "shapely>=2,<3"]
+archaeology = ["scikit-image>=0.21,<1", "PyWavelets>=1.6,<2"]
+
+[tool.setuptools]
+packages = ["terraworkbench_core"]
+include-package-data = false
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.ruff.lint]
+# Keep the CI contract explicit so Ruff default-rule changes do not create
+# platform-dependent failures. Import sorting is handled separately when the
+# plugin-wide import layout is normalized.
+select = ["E4", "E7", "E9", "F"]

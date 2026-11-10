@@ -18,9 +18,9 @@ import time
 from zipfile import ZipFile
 
 try:
-    from scripts.public_files import content_findings, forbidden_path, read_manifest
+    from scripts.public_files import ARCHIVED_PACKAGES, content_findings, forbidden_path, read_manifest
 except ModuleNotFoundError:
-    from public_files import content_findings, forbidden_path, read_manifest
+    from public_files import ARCHIVED_PACKAGES, content_findings, forbidden_path, read_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,6 +32,7 @@ def check_imports(root, files):
     for relative in files:
         if not relative.endswith(".py"):
             continue
+        base = next((p for p in ARCHIVED_PACKAGES if relative.startswith(p)), "")
         try:
             tree = ast.parse((root / relative).read_text(encoding="utf-8-sig"))
         except SyntaxError as error:
@@ -43,12 +44,12 @@ def check_imports(root, files):
                     parent = relative.split("/")[:-1]
                     module = "/".join(parent[:len(parent) - node.level + 1] + (node.module or "").split(".")).rstrip("/")
                 elif node.module and node.module.split(".")[0] in local:
-                    module = node.module.replace(".", "/")
+                    module = base + node.module.replace(".", "/")
                 else:
                     continue
                 if not module:
                     continue
-                if module == "scripts":
+                if module == base + "scripts":
                     modules = [module + "/" + alias.name for alias in node.names]
                 else:
                     modules = [module]

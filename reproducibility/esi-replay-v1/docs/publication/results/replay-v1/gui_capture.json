@@ -1,0 +1,22 @@
+{
+  "role": "Read-only post-analysis preview of a workspace processed by the frozen standalone Core campaign; capture did not rerun smoothing or inversion.",
+  "dataset": "Britain digitized total-field magnetic anomaly",
+  "source_url": "https://github.com/fatiando-data/britain-magnetic",
+  "source_sha256": "4e00894c2e0fa5b9c547719c8ac08adb6e788a7074c0dae9fb1b2767cf494b38",
+  "runtime": "QGIS 3.44.12 installed Python launcher, isolated settings profile",
+  "summary": {
+    "platform": "offscreen",
+    "rows": 541508,
+    "language": "en",
+    "algorithms": 95,
+    "manual_chapters": null
+  },
+  "git_head": "e014c1094abb9442c53b7fe4c6e0190d66d448d3",
+  "desktop_input": false,
+  "licence_attribution": "Prepared dataset CC-BY-4.0; original BGS source under OGL. Contains British Geological Survey materials, UKRI 2021.",
+  "ui_sources_sha256_lf": {
+    "scripts/capture_documentation.py": "264ee3c16fe79e08f0181a4fcd670c8f720142ad3fe3e6edf3d1060eed8c056d",
+    "ui/evidence_api.py": "c0310caef6dd488c50a24c0a5cedbc1406c368afd0e6b907c3caf9430f0f7d3d",
+    "ui/survey_workspace_dialog.py": "e2885d1358be1498778cbb1c22de122f821698c9e245d03ed8538f48708b9b36"
+  }
+}

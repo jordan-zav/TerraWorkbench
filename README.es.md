@@ -4,7 +4,7 @@
 # TerraWorkbench
 
 [![Status: internal testing](https://img.shields.io/badge/status-internal%20testing-f59e0b)](#project-status)
-[![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-2563eb)](metadata.txt)
+[![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-2563eb)](metadata.txt)
 [![QGIS 3.28–3.x](https://img.shields.io/badge/QGIS-3.28%E2%80%933.x-589632?logo=qgis&logoColor=white)](metadata.txt)
 [![Python Core ≥3.10; inversion ≥3.11](https://img.shields.io/badge/Python-Core%203.10%2B%20%7C%20inversion%203.11%2B-3776ab)](pyproject.toml)
 [![2D dependencies](https://img.shields.io/badge/2D-requirements%2Fbase.txt-3776ab)](requirements/base.txt)
@@ -264,7 +264,7 @@ Desde una copia del repositorio, genera el ZIP con el empaquetador de lista expl
 python scripts/package_plugin.py
 ~~~
 
-Valida fuentes/metadatos y crea <code>dist/TerraWorkbench-1.0.0.zip</code>. En QGIS, abre **Plugins → Manage and Install Plugins → Install from ZIP** y selecciona ese archivo. La alternativa interactiva Windows es <code>scripts/build_dist.bat</code>; pide una versión, por lo que debes conservar la actual si solo empaquetas.
+Valida fuentes/metadatos y crea <code>dist/TerraWorkbench-1.0.1.zip</code>. En QGIS, abre **Plugins → Manage and Install Plugins → Install from ZIP** y selecciona ese archivo. La alternativa interactiva Windows es <code>scripts/build_dist.bat</code>; pide una versión, por lo que debes conservar la actual si solo empaquetas.
 
 El instalador Windows actual comprueba la detección y después instala/actualiza el perfil activo:
 
@@ -338,7 +338,7 @@ Los requisitos y límites científicos permanecen en los desplegables de procesa
 
 ## Cómo citar
 
-Usa [CITATION.cff](CITATION.cff) para citar el software y registra la revisión exacta utilizada. DOI archivístico del software para 1.0.0: [10.5281/zenodo.24119094](https://doi.org/10.5281/zenodo.24119094). El archivo deja como comentarios los identificadores aún sin asignar, como el ORCID.
+Usa [CITATION.cff](CITATION.cff) para citar el software y registra la revisión exacta utilizada. DOI archivístico del software para todas las versiones: [10.5281/zenodo.24119093](https://doi.org/10.5281/zenodo.24119093); cada versión tiene además su DOI propio en Zenodo (1.0.0: [10.5281/zenodo.24119094](https://doi.org/10.5281/zenodo.24119094)). El archivo deja como comentarios los identificadores aún sin asignar, como el ORCID.
 
 ## Contribuir
 
@@ -352,7 +352,7 @@ TerraWorkbench usa [GPL-3.0-or-later](LICENSE). Las bibliotecas de terceros cons
 
 ## Estado del proyecto
 
-El plugin **1.0.0** es la versión publicada actual; el paquete Core independiente es **0.1.0**. Las correcciones se publican como versiones 1.0.x. Los métodos documentados como experimentales conservan esa condición.
+El plugin **1.0.1** es la versión publicada actual; el paquete Core independiente es **0.1.0**. Las correcciones se publican como versiones 1.0.x. Los métodos documentados como experimentales conservan esa condición.
 
 La [campaña pública de procesamiento](docs/validation/reports/public_processing_benchmark.md) registra entradas fijadas y referencias numéricas independientes; los [informes de inversión](docs/validation/README.md) distinguen ejecución, convergencia y recuperación. Las comprobaciones históricas de QGIS 3.44, Processing/Filter Stack y estructura ZIP son evidencia de sus revisiones registradas.
 

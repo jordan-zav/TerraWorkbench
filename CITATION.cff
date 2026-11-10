@@ -1,14 +1,14 @@
 cff-version: 1.2.0
-message: "Please cite TerraWorkbench and record the source revision used. DOI: 10.5281/zenodo.24119094."
+message: "Please cite TerraWorkbench and record the source revision used. Concept DOI (all versions): 10.5281/zenodo.24119093."
 type: software
 title: TerraWorkbench
 authors:
   - family-names: Zavaleta
     given-names: Jordan
     # orcid: "[ORCID PENDIENTE]"
-version: "1.0.0"
+version: "1.0.1"
 date-released: "2026-11-10"
 license: GPL-3.0-or-later
 url: "https://github.com/jordan-zav/TerraWorkbench"
 repository-code: "https://github.com/jordan-zav/TerraWorkbench"
-doi: "10.5281/zenodo.24119094"
+doi: "10.5281/zenodo.24119093"

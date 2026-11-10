@@ -2,3 +2,6 @@
 # records upstream sizes and SHA-256 values, so Git must not rewrite newlines.
 sample_data/nrcan/Hydraulic/*.GRD -text
 sample_data/nrcan/Hydraulic/*.xml -text
+
+# Archived reproducibility packages are verified by SHA256SUMS.txt; keep bytes unchanged.
+reproducibility/** -text

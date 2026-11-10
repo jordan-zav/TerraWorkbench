@@ -7,6 +7,7 @@ import subprocess
 
 
 MANIFEST_NAME = "public_manifest.txt"
+ARCHIVED_PACKAGES = ("reproducibility/esi-replay-v1/",)
 PRIVATE_RECORDS = {
     "docs/validation/records/lagged_irls_20261102.json",
     "docs/validation/records/mvi_stability_20261102.json",
@@ -102,4 +103,11 @@ def content_findings(relative, data):
         "private_key": r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
         "credential": r"(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[A-Z0-9]{16})",
     }
+    if relative.startswith(ARCHIVED_PACKAGES):
+        # Frozen replay packages keep their original repository layout, including
+        # their own editorial folder; every other check still applies.
+        patterns.pop("editorial_location")
+    else:
+        for prefix in ARCHIVED_PACKAGES:
+            value = value.replace(prefix + "docs/" + "publication", "")
     return [f"{relative}: {kind}" for kind, pattern in patterns.items() if re.search(pattern, value)]

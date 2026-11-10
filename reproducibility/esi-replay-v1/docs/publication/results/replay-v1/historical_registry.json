@@ -1,0 +1,71 @@
+{
+  "records": [
+    {
+      "file": "docs/validation/records/2d_extensions_20261028.json",
+      "sha256_lf": "58e13acd5cdb37d95ef9ddfd72be8f7c85db155fba25cbaf31b042496620f8cf",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/inversion3d_extensions_20261028.json",
+      "sha256_lf": "a52f5f01445814e682b909e08aaeb2a16bdf322d5dfe79ef6d23dedce4dfe80a",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/inversion3d_methods_20261028.json",
+      "sha256_lf": "223c8d7418f84c069d0fe04bacfd0d3b5be4f0cfd2b61c6f484696168f9472bf",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/lagged_irls_20261102.json",
+      "sha256_lf": "f03ef8084a0275624a86ba029d8a8e3427b426e00fa18c41736f7af6304ae898",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/mvi_acceptance_20261105.json",
+      "sha256_lf": "1253a665d81aa8737ecc626595e38151f2ced8c4c374b3ac400a2a0268bd48ab",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/mvi_causal_diagnosis_20261102.json",
+      "sha256_lf": "045a16d149bfb88a73e35a0ba094870fc3411f3bad8185c114cb85f8d592ecae",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/mvi_outer_20261105.json",
+      "sha256_lf": "cd50fc1eecc0398ceddc1a0091d15f73f3bc234820705ffa87c396c26ceeee7f",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/mvi_reference_20261029.json",
+      "sha256_lf": "10046edc0b82750892f27437a540de88bff9e269fb23be8ef84e5c53faf26463",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/mvi_stability_20261102.json",
+      "sha256_lf": "a680c3d6d8240e9ce82f44918446f7f87d4cd10f55f3343107e7262b045babab",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/public_inversion_20261028.json",
+      "sha256_lf": "5a9f8d5256510a719964f4d01c25f7b8f4e1fcd013b1b56d850b186cacfedf37",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/public_processing_20261028.json",
+      "sha256_lf": "e0fba2c943e4eb702f65127080a07dc63c4e2da61313c37d5c641d2caa3f8460",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/spherical_mvi_20261029.json",
+      "sha256_lf": "7096e32992d6c180b2e5c872d68ef7171c91182cb443d89d34c0efcf1bc7e8a3",
+      "role": "historical_development_not_new_blind_validation"
+    },
+    {
+      "file": "docs/validation/records/voxel_recovery_20261028.json",
+      "sha256_lf": "675a2b572d52c5c4a682a18cf90b7b4511b578e54af733f610e3b4e934ba0a21",
+      "role": "historical_development_not_new_blind_validation"
+    }
+  ],
+  "metric_rows": 5607,
+  "interpretation": "Nested diagnostics are not independent methods, experiments or pass-rate denominators. Units and definitions belong to the linked original record."
+}

@@ -1,0 +1,12 @@
+{
+ "docs/validation/records/lagged_irls_20261102.json": {
+  "original_sha256_lf": "f03ef8084a0275624a86ba029d8a8e3427b426e00fa18c41736f7af6304ae898",
+  "paths_redacted": 3,
+  "rule": "local session root replaced by <maintainer-session> and workstation name by <maintainer-host>; run identifiers and all values kept"
+ },
+ "docs/validation/records/mvi_stability_20261102.json": {
+  "original_sha256_lf": "a680c3d6d8240e9ce82f44918446f7f87d4cd10f55f3343107e7262b045babab",
+  "paths_redacted": 4,
+  "rule": "local session root replaced by <maintainer-session> and workstation name by <maintainer-host>; run identifiers and all values kept"
+ }
+}
