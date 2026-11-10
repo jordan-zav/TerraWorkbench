@@ -338,7 +338,7 @@ Requisitos e limites científicos permanecem nas seções expansíveis: FFT exig
 
 ## Como citar
 
-Use [CITATION.cff](CITATION.cff) para citar o software e registre a revisão exata utilizada. DOI arquivístico do software: **[DOI PENDIENTE]**. O arquivo deixa identificadores não atribuídos como comentários, sem inventar DOI ou ORCID.
+Use [CITATION.cff](CITATION.cff) para citar o software e registre a revisão exata utilizada. DOI arquivístico do software para 1.0.0: [10.5281/zenodo.24119094](https://doi.org/10.5281/zenodo.24119094). O arquivo deixa como comentários os identificadores ainda não atribuídos, como o ORCID.
 
 ## Contribuir
 

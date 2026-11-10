@@ -337,7 +337,7 @@ Filter prerequisites and scientific limits remain in the expandable processing s
 
 ## How to cite
 
-Use [CITATION.cff](CITATION.cff) for the software citation and record the exact source revision used. Archival software DOI: **[DOI PENDIENTE]**. The citation file deliberately leaves unassigned identifiers as comments rather than inventing a DOI or ORCID.
+Use [CITATION.cff](CITATION.cff) for the software citation and record the exact source revision used. Archival software DOI for 1.0.0: [10.5281/zenodo.24119094](https://doi.org/10.5281/zenodo.24119094). The citation file leaves still-unassigned identifiers, such as ORCID, as comments.
 
 ## Contributing
 

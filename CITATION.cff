@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "Please cite TerraWorkbench and record the source revision used. DOI: [DOI PENDIENTE]."
+message: "Please cite TerraWorkbench and record the source revision used. DOI: 10.5281/zenodo.24119094."
 type: software
 title: TerraWorkbench
 authors:
@@ -11,4 +11,4 @@ date-released: "2026-11-10"
 license: GPL-3.0-or-later
 url: "https://github.com/jordan-zav/TerraWorkbench"
 repository-code: "https://github.com/jordan-zav/TerraWorkbench"
-# doi: "[DOI PENDIENTE]"
+doi: "10.5281/zenodo.24119094"

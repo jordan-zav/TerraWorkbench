@@ -338,7 +338,7 @@ Los requisitos y límites científicos permanecen en los desplegables de procesa
 
 ## Cómo citar
 
-Usa [CITATION.cff](CITATION.cff) para citar el software y registra la revisión exacta utilizada. DOI archivístico del software: **[DOI PENDIENTE]**. El archivo deja identificadores sin asignar como comentarios, sin inventar DOI ni ORCID.
+Usa [CITATION.cff](CITATION.cff) para citar el software y registra la revisión exacta utilizada. DOI archivístico del software para 1.0.0: [10.5281/zenodo.24119094](https://doi.org/10.5281/zenodo.24119094). El archivo deja como comentarios los identificadores aún sin asignar, como el ORCID.
 
 ## Contribuir
 
