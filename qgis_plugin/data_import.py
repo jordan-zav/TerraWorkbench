@@ -2,18 +2,172 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import re
+import shutil
+from uuid import uuid4
 
 import numpy as np
 from osgeo import gdal, osr
-from qgis.core import QgsProcessingException
+from qgis.PyQt.QtCore import QUrl, QUrlQuery
+from qgis.core import QgsDataProvider, QgsProcessingException, QgsProcessingUtils, QgsProject, QgsSettings
 
 from .delimited_text import detect_delimited_layout, regular_coordinate_axes
 from .dependencies import import_harmonica
 
 
 GEOSOFT_SIGNATURE = b"!CBD"
+WORK_DIRECTORY_SCOPE = "TerraWorkbench"
+WORK_DIRECTORY_KEY = "workDirectory"
+RECENT_WORK_DIRECTORIES = "TerraWorkbench/recentWorkDirectories"
+TEMP_IMPORT_NAME = "TerraWorkbench/temporaryImportName"
+TEMP_IMPORT_LABEL = "TerraWorkbench/temporaryImportLabel"
+TEMP_IMPORT_ROOT = "TerraWorkbench/temporaryImportRoot"
+
+
+def project_work_directory(project=None):
+    """Resolve the project's entry against its saved file, including missing folders."""
+    project = project if project is not None else QgsProject.instance()
+    value, _ = project.readEntry(WORK_DIRECTORY_SCOPE, WORK_DIRECTORY_KEY)
+    if not value:
+        return None
+    path = Path(value).expanduser()
+    if not path.is_absolute() and project.absolutePath():
+        path = Path(project.absolutePath()) / path
+    return path
+
+
+def import_working_directory(project=None):
+    path = project_work_directory(project)
+    return path if path is not None and path.is_absolute() and path.is_dir() else None
+
+
+def write_project_work_directory(project, directory):
+    if directory is None:
+        project.removeEntry(WORK_DIRECTORY_SCOPE, WORK_DIRECTORY_KEY)
+        return
+    path = Path(directory).expanduser().resolve()
+    if project.absolutePath():
+        parent = Path(project.absolutePath()).resolve()
+        if path.is_relative_to(parent):
+            path = path.relative_to(parent)
+    project.writeEntry(WORK_DIRECTORY_SCOPE, WORK_DIRECTORY_KEY, path.as_posix())
+
+
+def recent_work_directories():
+    return QgsSettings().value(RECENT_WORK_DIRECTORIES, [], type=list)[:5]
+
+
+def remember_work_directory(directory):
+    path = str(Path(directory).resolve())
+    recent = [previous for previous in recent_work_directories()
+              if Path(previous) != Path(path)]
+    QgsSettings().setValue(RECENT_WORK_DIRECTORIES, [path, *recent[:4]])
+
+
+def temporary_import_root():
+    return Path(QgsProcessingUtils.tempFolder()) / "TerraWorkbench"
+
+
+def new_import_directory(source, destination=None):
+    """Create a separate output directory for each conversion or extraction."""
+    root = Path(destination) if destination is not None else import_working_directory()
+    if root is None:
+        root = temporary_import_root()
+    path = root / f"{Path(source).stem}-{uuid4().hex[:12]}"
+    path.mkdir(parents=True)
+    return path
+
+
+def import_layer_path(layer):
+    if layer.providerType() == "delimitedtext":
+        return Path(QUrl(layer.source()).toLocalFile())
+    return Path(layer.source())
+
+
+def is_temporary_import(layer):
+    if not layer.customProperty(TEMP_IMPORT_NAME):
+        return False
+    root = Path(layer.customProperty(TEMP_IMPORT_ROOT) or temporary_import_root())
+    return import_layer_path(layer).resolve().is_relative_to(root.resolve())
+
+
+def mark_temporary_import(layer, suffix, root=None):
+    root = Path(root or layer.customProperty(TEMP_IMPORT_ROOT) or temporary_import_root()).resolve()
+    if not import_layer_path(layer).resolve().is_relative_to(root):
+        return
+    base = layer.customProperty(TEMP_IMPORT_NAME) or layer.name()
+    previous = layer.customProperty(TEMP_IMPORT_LABEL) or base
+    label = f"{base} ({suffix})"
+    if layer.name() == previous:
+        layer.setName(label)
+    layer.setCustomProperty(TEMP_IMPORT_NAME, base)
+    layer.setCustomProperty(TEMP_IMPORT_LABEL, label)
+    layer.setCustomProperty(TEMP_IMPORT_ROOT, str(root))
+
+
+def repoint_import(layer, destination):
+    previous_source, previous_name = layer.source(), layer.name()
+    provider = layer.providerType()
+    base = layer.customProperty(TEMP_IMPORT_NAME)
+    name = base if previous_name == layer.customProperty(TEMP_IMPORT_LABEL) else previous_name
+    source = str(destination)
+    if provider == "delimitedtext":
+        url = QUrl.fromLocalFile(source)
+        url.setQuery(QUrlQuery(QUrl(previous_source)))
+        source = url.toString()
+    options = QgsDataProvider.ProviderOptions()
+    layer.setDataSource(source, name, provider, options)
+    if not layer.isValid():
+        layer.setDataSource(previous_source, previous_name, provider, options)
+        raise ValueError(f"QGIS could not reopen {destination}.")
+    layer.removeCustomProperty(TEMP_IMPORT_NAME)
+    layer.removeCustomProperty(TEMP_IMPORT_LABEL)
+    layer.removeCustomProperty(TEMP_IMPORT_ROOT)
+
+
+def copy_imported_raster(layer, destination):
+    source = import_layer_path(layer)
+    destination = Path(destination)
+    if source.resolve() == destination.resolve() or _in_processing_temp(destination, [layer]):
+        raise ValueError("Choose a GeoTIFF outside the QGIS temporary import folder.")
+    shutil.copy2(source, destination)
+    sidecar = source.with_suffix(source.suffix + ".aux.xml")
+    if sidecar.is_file():
+        shutil.copy2(sidecar, destination.with_suffix(destination.suffix + ".aux.xml"))
+    repoint_import(layer, destination)
+
+
+def _in_processing_temp(path, layers):
+    roots = {temporary_import_root().parent}
+    roots.update(Path(root).parent for layer in layers if (root := layer.customProperty(TEMP_IMPORT_ROOT)))
+    return any(path.resolve().is_relative_to(root.resolve()) for root in roots)
+
+
+def save_temporary_imports(layers, directory):
+    """Preserve each import batch together, including its Geosoft inventory."""
+    directory = Path(directory).resolve()
+    if _in_processing_temp(directory, layers):
+        raise ValueError("Choose a folder outside the QGIS temporary import folder.")
+    batches = {}
+    for layer in layers:
+        source = import_layer_path(layer)
+        batches.setdefault(source.parent, []).append((layer, source.name))
+    for folder, entries in batches.items():
+        target = directory / f"{folder.name}-{uuid4().hex[:8]}"
+        shutil.copytree(folder, target)
+        for inventory in target.glob("*_inventory.json"):
+            metadata = json.loads(inventory.read_text(encoding="utf-8"))
+            for field in ("csv", "channels_csv", "lines_csv"):
+                if metadata.get(field):
+                    old_path = Path(metadata[field])
+                    if old_path.parent.resolve() == folder.resolve():
+                        metadata[field] = str(target / old_path.name)
+            inventory.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+                                 encoding="utf-8")
+        for layer, filename in entries:
+            repoint_import(layer, target / filename)
 
 
 def read_sidecar_metadata(source):

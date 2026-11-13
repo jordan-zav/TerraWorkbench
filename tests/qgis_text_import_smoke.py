@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import time
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -94,11 +95,12 @@ def main():
                 return self.result()
             TextImportDialog.exec = accept_wizard
             QFileDialog.getOpenFileNames = lambda *args, **kwargs: ([str(first), str(second)], "")
-            manager.import_files()
-            deadline = time.monotonic() + 30
-            while manager.worker is not None and time.monotonic() < deadline:
-                app.processEvents()
-                QTest.qWait(10)
+            with patch("TerraWorkbench.ui.survey_map_dialog.choose_map_channels", return_value=None):
+                manager.import_files()
+                deadline = time.monotonic() + 30
+                while manager.worker is not None and time.monotonic() < deadline:
+                    app.processEvents()
+                    QTest.qWait(10)
             assert manager.worker is None and not errors, errors
             assert seen == [first.name, second.name]
             assert len(manager.store.databases()) == 2

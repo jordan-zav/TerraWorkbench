@@ -7,6 +7,7 @@ import csv
 import json
 import os
 from pathlib import Path
+import site
 import sys
 import types
 
@@ -41,6 +42,7 @@ def arguments():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--extract-all", action="store_true")
     parser.add_argument("--max-lines", type=int)
+    parser.add_argument("--open-archive", action="store_true")
     return parser.parse_args()
 
 
@@ -54,8 +56,40 @@ def json_safe(value):
     return str(value)
 
 
+def activate_managed_packages():
+    """Expose the profile's managed packages after the host's own stack."""
+    folder = os.environ.get("TERRAWORKBENCH_DEPENDENCY_PATH", "").strip()
+    if not folder or not os.path.isdir(folder):
+        return
+    # Packages are built per Python minor version; a desktop GX Python must
+    # never load QGIS' compiled wheels.
+    if os.path.basename(os.path.normpath(folder)) != f"{sys.version_info.major}.{sys.version_info.minor}":
+        return
+    known = set(sys.path)
+    site.addsitedir(folder)
+    # addsitedir appends; keep host-first ordering like the plugin process.
+    if folder not in known and folder not in sys.path:
+        sys.path.append(folder)
+
+
 def main():
+    activate_managed_packages()
     options = arguments()
+    options.input = options.input.resolve()
+    options.output = options.output.resolve()
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    if options.open_archive:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qgis_plugin.gdb_archive_gx import convert_gdb_archive
+
+        report = convert_gdb_archive(options.input, options.output / (options.input.stem + ".twarchive"))
+        print(json.dumps(report), flush=True)
+        if not report["verified"]:
+            print(json.dumps(report), file=sys.stderr, flush=True)
+        return 0 if report["verified"] else 1
+    from qgis_plugin.gdb_archive_gx import gx_context_options, gx_working_directory
+
+    context_options = gx_context_options()
     gdb, gx = import_gxpy()
     options.output.mkdir(parents=True, exist_ok=True)
     manifest_path = options.output / f"{options.input.stem}_inventory.json"
@@ -74,7 +108,7 @@ def main():
         "channels_csv": str(channels_path),
         "lines_csv": str(lines_path),
     }
-    with gx.GXpy():
+    with gx_working_directory(context_options), gx.GXpy(**context_options):
         database = gdb.Geosoft_gdb.open(str(options.input))
         try:
             channels = list(database.list_channels().keys())
@@ -104,6 +138,12 @@ def main():
                         "name": line,
                         "source_format": "Geosoft GeoDatabase",
                         **{str(key): json_safe(value) for key, value in detail.items()},
+                        "kind": {
+                            gdb.LINE_TYPE_NORMAL: "traverse",
+                            gdb.LINE_TYPE_TIE: "tie",
+                        }.get(detail.get("type"), "other")
+                        if detail.get("type") is not None
+                        else None,
                     }
                 )
             print(

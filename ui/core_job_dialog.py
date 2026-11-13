@@ -53,9 +53,9 @@ class CoreJobDialog(QDialog):
         layout = QVBoxLayout(self)
         warning = QLabel(
             tr(
-                "Advanced experimental console. Review the function contract, units and array shapes. Synthetic validation only; input/output size budgets do not limit solver RAM or runtime. Kernels without cancellation checkpoints finish computing before cancellation takes effect.",
-                "Consola avanzada experimental. Revisa el contrato, unidades y formas de las matrices. Solo validación sintética; los límites de entrada/salida no limitan RAM ni duración del solver. Los kernels sin puntos de cancelación terminan el cálculo antes de atenderla.",
-                "Console avançado experimental. Revise o contrato, unidades e formas das matrizes. Apenas validação sintética; limites de entrada/saída não limitam RAM nem duração do solver. Kernels sem pontos de cancelamento terminam o cálculo antes de atendê-lo.",
+                "The solver may exceed the input and output limits in memory use. Some calculations finish before cancellation takes effect.",
+                "El solver puede usar más memoria que la indicada por los límites de entrada y salida. Algunos cálculos terminan antes de que surta efecto la cancelación.",
+                "O solver pode usar mais memória que a indicada pelos limites de entrada e saída. Alguns cálculos terminam antes que o cancelamento tenha efeito.",
             )
         )
         warning.setWordWrap(True)

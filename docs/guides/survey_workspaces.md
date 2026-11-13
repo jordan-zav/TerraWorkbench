@@ -1,6 +1,6 @@
 # Survey workspaces
 
-Open **Raster → TerraWorkbench → Survey databases…**. Create a project in a
+Open **Databases…** in the Filter Stack or **Raster → TerraWorkbench → Survey databases…**. Both open the same window. An active survey layer selects its database. After a text or GDB import, **Open database** in the QGIS message bar opens the imported database at its first line. Create a project in a
 new empty folder, or open an existing project. The most recent folder is
 remembered; source surveys are never imported automatically.
 
@@ -52,8 +52,18 @@ remembered; source surveys are never imported automatically.
   X/Y in the QGIS export dialog, while CRS still requires explicit confirmation.
   The legacy programmatic <code>import_file</code> call without <code>text_options</code> retains its
   UTF-8/header/string-column behavior. Parquet retains its input types.
-- Select channels for a read-only preview of up to 100 rows. Optional membership
-  filters select lines, sensors or other channel values for preview/export.
+- Selecting one database opens its read-only sheet with all channels. The line,
+  fiducial or time, X and Y come first, followed by the database order. Units
+  appear below the channel name. Hover for type, version and source.
+- The searchable line selector uses the assigned line role when available and
+  shows the chosen channel beside it. Change the channel from that button.
+  Previous and Next follow the order in which lines appear in the source.
+  The sheet fetches batches of up to 512 rows while scrolling. **All rows**
+  retains the paginated view and its optional membership filters.
+- Change visibility from **Columns…** or the header context menu. Visibility is
+  remembered per database. Channel actions also accept the clicked sheet
+  column. The Profiles tab follows the line and marked numeric channels, and
+  a click on a table row marks the corresponding sample in the profile.
 - Calculate with <code>c("mag") - c("base")</code>, arithmetic <code>+ - * / **</code>, and
   <code>abs</code>, <code>sqrt</code>, <code>log10</code>. Powers require a constant from 0 to 16. The parser
   does not execute Python, access files or import modules. Non-finite results
@@ -69,9 +79,10 @@ remembered; source surveys are never imported automatically.
   and unit edits change catalogue metadata, not observations. There is no
   destructive delete or in-place cell editor in this release.
 - Export reads only selected/filter channels and writes a new CSV under
-  <code>results/</code>. **To QGIS points…** asks explicitly for X/Y and CRS, then adds a
-  selected-channel CSV snapshot to QGIS. That layer can feed the existing survey
-  gridding tool. This is a snapshot/export bridge, not a live Parquet QGIS provider.
+  <code>results/</code>. **Add survey to map…** uses saved X/Y and CRS, or asks for them
+  together when missing. It writes a GeoPackage and adds a survey group. The
+  Samples layer can feed the existing survey gridding tool. Both exports are
+  snapshots of the selected observations.
 
 ## Performance and durability
 
@@ -97,10 +108,10 @@ operation and available grids. This is horizontal XY only, not a vertical-datum
 or coordinate-epoch transformation. Geographic XY means longitude/latitude.
 No area-of-use certification or field-scale throughput claim is made.
 
-**To QGIS points…** reuses the saved active pair and CRS. Change them in the
+**Add survey to map…** reuses the saved active pair and CRS. Change them in the
 coordinate panel. Existing map layers are snapshots and are not updated when
-database coordinates change. With no saved geometry, the legacy explicit XY/CRS
-prompts remain available. Channel renames preserve coordinate references by ID.
+database coordinates change. With no saved geometry, a single dialog collects X, Y, the optional line
+channel and CRS. Channel renames preserve coordinate references by ID.
 
 <code>tests/qgis_coordinates_smoke.py</code> checks all three UI languages, a known UTM
 reference, reverse transformation and null preservation in real QGIS.

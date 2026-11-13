@@ -364,16 +364,6 @@ CHAPTERS = (
 )
 
 
-def citation_scope(locale):
-    """Context does not independently certify a local numerical kernel."""
-    index = LANGUAGES.index(locale)
-    return (
-        "Sources and scope: methodological context or library documentation; these links do not independently validate the local implementation, equations or numerical equivalence. The method note above defines its actual assumptions and limits.",
-        "Fuentes y alcance: contexto metodológico o documentación de librerías; estos enlaces no validan de forma independiente la implementación local, sus ecuaciones ni su equivalencia numérica. La ficha anterior define sus supuestos y límites reales.",
-        "Fontes e alcance: contexto metodológico ou documentação de bibliotecas; estes links não validam de forma independente a implementação local, suas equações ou equivalência numérica. A ficha acima define suas hipóteses e limites reais.",
-    )[index]
-
-
 def method_sources(method_id, locale):
     """Return only the sources relevant to a method, in a stable order."""
     label = ("Context sources", "Fuentes de contexto", "Fontes de contexto")[
@@ -389,13 +379,24 @@ def method_sources(method_id, locale):
     )
 
 
-def chapter_text(chapter_id, locale):
+def citation_scope(locale):
+    """Context does not independently certify a local numerical kernel."""
+    index = LANGUAGES.index(locale)
+    return (
+        "Sources and scope: methodological context or library documentation; these links do not independently validate the local implementation, equations or numerical equivalence. The method note above defines its actual assumptions and limits.",
+        "Fuentes y alcance: contexto metodológico o documentación de librerías; estos enlaces no validan de forma independiente la implementación local, sus ecuaciones ni su equivalencia numérica. La ficha anterior define sus supuestos y límites reales.",
+        "Fontes e alcance: contexto metodológico ou documentação de bibliotecas; estes links não validam de forma independente a implementação local, suas equações ou equivalência numérica. A ficha acima define suas hipóteses e limites reais.",
+    )[index]
+
+
+def chapter_text(chapter_id, locale, *, include_publication_scope=False):
     """Render the same chapter, equations and references in each UI language."""
     index = LANGUAGES.index(locale)
     chapter = next(c for c in CHAPTERS if c[0] == chapter_id)
     _, titles, paragraphs, equation, reference_ids = chapter
     text = "# " + titles[index] + "\n\n" + paragraphs[index]
-    text += "\n\n" + citation_scope(locale)
+    if include_publication_scope:
+        text += "\n\n" + citation_scope(locale)
     if equation:
         text += "\n\n" + equation
     for method_id, chapter, method_titles, notes, formula, parameters in METHODS:
@@ -436,7 +437,6 @@ def chapter_html(chapter_id, locale):
     result = (
         "<h3>" + escape(titles[index]) + "</h3><p>" + escape(paragraphs[index]) + "</p>"
     )
-    result += "<p>" + escape(citation_scope(locale)) + "</p>"
     if equation:
         result += "<p>" + escape(equation) + "</p>"
     for method_id, chapter, method_titles, notes, formula, parameters in METHODS:

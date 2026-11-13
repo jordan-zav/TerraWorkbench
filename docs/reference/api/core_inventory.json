@@ -2,9 +2,9 @@
   "schema_version": 2,
   "scope": "AST inventory; not all definitions are stable user API or registered GUI processes",
   "source_hash_scheme": "sha256 UTF-8 source with LF newlines",
-  "module_count": 90,
+  "module_count": 92,
   "registered_operation_count": 120,
-  "definition_count": 364,
+  "definition_count": 378,
   "modules": [
     {
       "module": "__init__",
@@ -964,6 +964,70 @@
           "extra": null
         }
       ]
+    },
+    {
+      "module": "gdb_archive",
+      "chapter": "04_importacion.md",
+      "source_sha256": "96bc6c3f1bc2fcb654cbed2d27a3a973042f6381724cd906f4107eb6bd7af2a3",
+      "description": "Typed open survey archives with independent, exact source verification.\n\nThe writer accepts a reader protocol (catalogue/read); it never imports Geosoft,\nQt or QGIS. SurveyStore format 1 is extended with additive archive tables.",
+      "summary": "Typed open survey archives with independent, exact source verification.",
+      "definitions": [
+        {
+          "name": "encode_metadata",
+          "line": 22,
+          "signature": "encode_metadata(value, *, conversions=None)",
+          "description": "Represent metadata safely and record typed conversions and unknown values.\n\nSample arrays use the separate native-data path. Unknown metadata never\naborts conversion or silently claims complete, lossless metadata.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Represent metadata safely and record typed conversions and unknown values."
+        },
+        {
+          "name": "file_sha256",
+          "line": 118,
+          "signature": "file_sha256(path)",
+          "description": "Hash a source or artifact using bounded reads.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Hash a source or artifact using bounded reads."
+        },
+        {
+          "name": "convert_database",
+          "line": 210,
+          "signature": "convert_database(reader, output, provenance, *, verify=True, canceled=None)",
+          "description": "Archive all channels/lines and verify a second independent source read.\n\nA failed conversion leaves a diagnostic archive marked incomplete. Existing\ndestinations are never overwritten. Memory use is bounded by one source line.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Archive all channels/lines and verify a second independent source read."
+        },
+        {
+          "name": "open_archive",
+          "line": 569,
+          "signature": "open_archive(path, *, require_verified=True, check_integrity=True)",
+          "description": "Open a folder, JSON, SQLite or Parquet archive entry without Geosoft.\n\nThe return value is (SurveyStore, database_id, manifest). Unverified or\nincomplete conversions are refused by default, even when readable.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Open a folder, JSON, SQLite or Parquet archive entry without Geosoft."
+        },
+        {
+          "name": "source_provenance",
+          "line": 595,
+          "signature": "source_provenance(path, gxpy_version, terraworkbench_version)",
+          "description": "Record the immutable source identity and conversion software versions.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Record the immutable source identity and conversion software versions."
+        },
+        {
+          "name": "attach_archive",
+          "line": 614,
+          "signature": "attach_archive(store, path, canceled=None)",
+          "description": "Add a verified archive to an existing SurveyStore without changing its API.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Add a verified archive to an existing SurveyStore without changing its API."
+        }
+      ],
+      "operations": []
     },
     {
       "module": "geomagnetism",
@@ -2266,13 +2330,13 @@
     {
       "module": "matrix_free_resolution",
       "chapter": "17_resolucion_incertidumbre.md",
-      "source_sha256": "73f38698505d0ebe0c32307d61fe35be87c0692219eb503aae1e7eaf5d49b54b",
+      "source_sha256": "f534f8c50806739ad13d62123d890057e27cd8d45128e058c719563828f56e05",
       "description": "Fixed linear-Gaussian diagnostics without dense model-square matrices.\n\nDirect Python callers may supply scipy sparse matrices or LinearOperators with\ntrue adjoints. The registered array API uses ordinary numeric matrices. Neither\nAPI turns a constrained, adaptive-beta or nonlinear fit into a Gaussian posterior.",
       "summary": "Fixed linear-Gaussian diagnostics without dense model-square matrices.",
       "definitions": [
         {
           "name": "stochastic_linear_resolution",
-          "line": 188,
+          "line": 191,
           "signature": "stochastic_linear_resolution(sensitivity, data_std, regularization, *, beta, probe_count=64, seed=0, method='rademacher', cg_rtol=1e-08, cg_maxiter=1000, precision_diagonal=None, max_elements=20000000, max_matvecs=200000, canceled=None)",
           "description": "Estimate diag(C), diag(R) and tr(R) with checked precision solves.\n\nH=G.T Wd^2 G+beta L.T L, C=H^-1, R=C G.T Wd^2 G. Independent\nRademacher probes estimate diagonals without model-square storage. Returned\nMonte Carlo standard errors describe probing variability, not posterior\nerror bars or finite-CG bias. Negative variance ESTIMATES remain flagged;\ntheir standard deviations are NaN instead of clipped. Basis mode computes\nexact diagonals up to CG tolerance for <=1024 parameters. A proper fixed\nGaussian prior is required. Bounds and learned regularizers are excluded.",
           "description_origin": "source_docstring",
@@ -2281,7 +2345,7 @@
         },
         {
           "name": "linear_point_spread",
-          "line": 282,
+          "line": 285,
           "signature": "linear_point_spread(sensitivity, data_std, regularization, parameter_indices, *, beta, cg_rtol=1e-08, cg_maxiter=1000, precision_diagonal=None, max_elements=20000000, max_matvecs=200000, canceled=None)",
           "description": "Selected C and R columns in supplied model coordinates, not spatial DOI.\n\nR[:,j] is the response to a unit true parameter j under the fixed linear\ninverse. This is a column, not an averaging-kernel row. C columns carry\nmodel covariance units; neither is clipped or normalized automatically.",
           "description_origin": "source_docstring",
@@ -2885,7 +2949,7 @@
     {
       "module": "profile_preparation",
       "chapter": "06_perfiles_qc.md",
-      "source_sha256": "da1181562555f41e003eb8562ab7a47175a2bbd1865ba9d3d6f641a13fc67952",
+      "source_sha256": "5fd6f99c4287daac0534e824c92970247fe7c84a30a65e77e4777920c53c5f17",
       "description": "Native row-preserving survey preparation and inspectable 1D spectra.\n\nLag convention matches Forge: GPS(t + lag) belongs to magnetic sample(t).\nNo interpolation across nulls, timestamp resets or explicitly configured gaps.",
       "summary": "Native row-preserving survey preparation and inspectable 1D spectra.",
       "definitions": [
@@ -4268,6 +4332,107 @@
       "operations": []
     },
     {
+      "module": "survey_map",
+      "chapter": "05_bases_canales.md",
+      "source_sha256": "59f6c0eee15d3d263cddd64e7c6c09055c42d2bfb1332f45930eee825a2c19d1",
+      "description": "Construct survey map geometry from row-aligned SurveyStore observations.",
+      "summary": "Construct survey map geometry from row-aligned SurveyStore observations.",
+      "definitions": [
+        {
+          "name": "MapChannels",
+          "line": 14,
+          "signature": "class MapChannels",
+          "description": "Channel names used to place a survey database on the map.\n\nEach field holds the channel that supplies easting, northing, CRS, line\nidentifier, sample order (fiducial or time), acquisition date and declared\nline type. None means the database does not provide that role.",
+          "description_origin": "source_docstring",
+          "fields": [
+            "x: str | None",
+            "y: str | None",
+            "crs: str | None",
+            "line: str | None",
+            "fiducial: str | None",
+            "time: str | None",
+            "date: str | None",
+            "line_type: str | None"
+          ],
+          "summary": "Channel names used to place a survey database on the map."
+        },
+        {
+          "name": "FlightSegment",
+          "line": 33,
+          "signature": "class FlightSegment",
+          "description": "One continuous piece of a survey line, split at distance gaps.\n\nHolds the line label and number, segment index, kind (traverse, tie or\nother), whether the kind came from metadata or was inferred, mean azimuth,\nlength in metres, ordered map coordinates, date range and local line\nspacing when it could be measured.",
+          "description_origin": "source_docstring",
+          "fields": [
+            "line: str",
+            "number: str",
+            "segment: int",
+            "kind: str",
+            "type_source: str",
+            "azimuth: float | None",
+            "length_m: float",
+            "xy: np.ndarray",
+            "date_start: str | None",
+            "date_end: str | None",
+            "spacing_m: float | None = None"
+          ],
+          "summary": "One continuous piece of a survey line, split at distance gaps."
+        },
+        {
+          "name": "SurveyMap",
+          "line": 56,
+          "signature": "class SurveyMap",
+          "description": "Map layers derived from a survey database, independent of QGIS.\n\nContains the CRS as WKT, valid sample coordinates and attributes, flight\nline segments, the coverage boundary geometry and a summary with line\ncounts, measured spacings, total kilometres and the boundary buffer.",
+          "description_origin": "source_docstring",
+          "fields": [
+            "crs_wkt: str",
+            "sample_xy: np.ndarray",
+            "samples: object",
+            "segments: tuple[FlightSegment, ...]",
+            "boundary: object",
+            "summary: dict"
+          ],
+          "summary": "Map layers derived from a survey database, independent of QGIS."
+        },
+        {
+          "name": "survey_map_channels",
+          "line": 76,
+          "signature": "survey_map_channels(store, database_id)",
+          "description": "Resolve configured channels, import roles and unambiguous header aliases.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Resolve configured channels, import roles and unambiguous header aliases."
+        },
+        {
+          "name": "build_survey_map",
+          "line": 339,
+          "signature": "build_survey_map(store, database_id, *, channels=None, sample_columns=(), filters=None, max_gap_m=None, canceled=None, boundary_builder=None)",
+          "description": "Read a store snapshot and construct lines and a buffered coverage estimate.\n\nLengths and thresholds are metres. Geographic samples are projected to a local\nazimuthal equidistant CRS. Original channels in the sample table stay unchanged.\nAn optional boundary_builder receives metric line arrays, valid metric sample\ncoordinates, a BoundaryPlan and output unit factor, and returns an object with\nWKB bytes. The default standalone builder requires the survey-map extra.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Read a store snapshot and construct lines and a buffered coverage estimate."
+        },
+        {
+          "name": "BoundaryPlan",
+          "line": 561,
+          "signature": "class BoundaryPlan",
+          "description": "Metre-based coverage parameters shared by standalone and host GEOS.",
+          "description_origin": "source_docstring",
+          "fields": [
+            "spacing_m: float | None",
+            "line_buffer_m: tuple[float, ...]",
+            "closing_m: float",
+            "hole_area_m2: float",
+            "fragment_area_m2: float",
+            "simplify_m: float",
+            "degenerate_buffer_m: float",
+            "concavity: float = 0.3"
+          ],
+          "summary": "Metre-based coverage parameters shared by standalone and host GEOS."
+        }
+      ],
+      "operations": []
+    },
+    {
       "module": "survey_processing",
       "chapter": "07_nivelacion_gridding.md",
       "source_sha256": "d25baf997c06424d32df83e0765d587d29ba3cd2b50caee82727b54239421587",
@@ -4308,13 +4473,13 @@
     {
       "module": "survey_store",
       "chapter": "05_bases_canales.md",
-      "source_sha256": "264c798a654b451c0e2a9911458470719c4d7fc96a088291e749b4e63f4dcb7e",
+      "source_sha256": "dcab50085cd4daae77e26b48fcf728cb164576e2f792c21514751689db70994b",
       "description": "Standalone versioned, column-selective storage (SQLite catalogue + Parquet).\n\nNo QGIS imports. Original files are read-only inputs; published Parquet files\nare immutable. Catalogue transactions expose complete files only. A crash\nbefore publication can leave an unreferenced file, never a partial channel.",
       "summary": "Standalone versioned, column-selective storage (SQLite catalogue + Parquet).",
       "definitions": [
         {
           "name": "Formula",
-          "line": 62,
+          "line": 63,
           "signature": "class Formula",
           "description": "Small arithmetic language: c('channel'), + - * / **, abs/sqrt/log10.\n\nParses an allowlisted AST; never uses Python eval or executes user code.",
           "description_origin": "source_docstring",
@@ -4323,7 +4488,7 @@
         },
         {
           "name": "Formula.__init__",
-          "line": 77,
+          "line": 78,
           "signature": "Formula.__init__(self, expression)",
           "description": "Parse and validate the restricted channel arithmetic language. Identify dependencies and reject unsupported operations without Python eval.",
           "description_origin": "authored_manual_note",
@@ -4332,7 +4497,7 @@
         },
         {
           "name": "Formula.calculate",
-          "line": 129,
+          "line": 130,
           "signature": "Formula.calculate(self, arrays)",
           "description": "Evaluate the validated tree on named channel arrays. The caller owns row alignment/units; calculation does not sort or join rows.",
           "description_origin": "authored_manual_note",
@@ -4341,7 +4506,7 @@
         },
         {
           "name": "SurveyStore",
-          "line": 151,
+          "line": 152,
           "signature": "class SurveyStore",
           "description": "SQLite-catalogue/Parquet-version store with selective reads. Keep catalogue and data coherent; public calls use database/channel identifiers, not arbitrary catalogue paths.",
           "description_origin": "authored_manual_note",
@@ -4350,7 +4515,7 @@
         },
         {
           "name": "SurveyStore.__init__",
-          "line": 152,
+          "line": 153,
           "signature": "SurveyStore.__init__(self, root, create=False)",
           "description": "Open an existing workspace or create one with create true. Creation validates the destination and avoids treating an old data folder as a new database.",
           "description_origin": "authored_manual_note",
@@ -4359,7 +4524,7 @@
         },
         {
           "name": "SurveyStore.databases",
-          "line": 206,
+          "line": 207,
           "signature": "SurveyStore.databases(self)",
           "description": "List registered databases and catalogue metadata without loading all channel values.",
           "description_origin": "authored_manual_note",
@@ -4368,7 +4533,7 @@
         },
         {
           "name": "SurveyStore.channels",
-          "line": 212,
+          "line": 213,
           "signature": "SurveyStore.channels(self, database_id)",
           "description": "Read channels and current versions. Use version_id to freeze reviewed input; names alone do not identify immutable content.",
           "description_origin": "authored_manual_note",
@@ -4377,7 +4542,7 @@
         },
         {
           "name": "SurveyStore.history",
-          "line": 226,
+          "line": 280,
           "signature": "SurveyStore.history(self, database_id)",
           "description": "Read database event history. It complements lineage and is not independent evidence of scientific correctness.",
           "description_origin": "authored_manual_note",
@@ -4386,7 +4551,7 @@
         },
         {
           "name": "SurveyStore.channel_pipeline",
-          "line": 243,
+          "line": 297,
           "signature": "SurveyStore.channel_pipeline(self, database_id, channel, limit=200)",
           "description": "Resolve immutable version ancestry, including formulas and aliases.\n\nLabels use current channel names; edges use exact historical version IDs.\nMissing or malformed references are errors, never invented ancestors.",
           "description_origin": "source_docstring",
@@ -4395,7 +4560,7 @@
         },
         {
           "name": "SurveyStore.import_file",
-          "line": 283,
+          "line": 337,
           "signature": "SurveyStore.import_file(self, source, name=None, delimiter=',', metadata=None, canceled=None, progress=None, text_options=None)",
           "description": "Import a new database in batches using reviewed text options where supplied. Preserve originals and publish complete data/catalogue; check counts and units afterwards.",
           "description_origin": "authored_manual_note",
@@ -4404,7 +4569,7 @@
         },
         {
           "name": "SurveyStore.batches",
-          "line": 511,
+          "line": 565,
           "signature": "SurveyStore.batches(self, database_id, names, batch_size=BATCH_SIZE, filters=None, canceled=None)",
           "description": "Only selected columns plus filter columns are read. Row order is stable.\n\nFilters are membership tests, e.g. {'line': ['L1', 'L2']}. They scan\ntheir selected columns; this is not yet a spatial or line index.",
           "description_origin": "source_docstring",
@@ -4413,7 +4578,7 @@
         },
         {
           "name": "SurveyStore.publish_channels",
-          "line": 534,
+          "line": 588,
           "signature": "SurveyStore.publish_channels(self, database_id, values, *, units, inputs, provenance, max_bytes=256 * 1024 ** 2, canceled=None)",
           "description": "Atomically publish row-aligned numerical outputs and exact input versions.\n\ninputs maps channel names to the versions actually used by the caller.\nNew outputs cannot replace any channel. NaN is stored as null; infinities\nare errors. Publication checks versions again under the catalogue lock.",
           "description_origin": "source_docstring",
@@ -4422,7 +4587,7 @@
         },
         {
           "name": "SurveyStore.derive",
-          "line": 622,
+          "line": 744,
           "signature": "SurveyStore.derive(self, database_id, output_name, expression, unit='', canceled=None, progress=None, *, expected_versions=None, reused_from=None, new_channel_only=False)",
           "description": "Calculate a formula as a derived version with unit/dependencies. expected_versions checks reviewed inputs; new_channel_only can require a new name.",
           "description_origin": "authored_manual_note",
@@ -4431,7 +4596,7 @@
         },
         {
           "name": "SurveyStore.filter_channel",
-          "line": 733,
+          "line": 855,
           "signature": "SurveyStore.filter_channel(self, database_id, channel, output_name, options, canceled=None, progress=None, *, expected_versions=None, reused_from=None)",
           "description": "Filter one channel into a new immutable channel, with full provenance.",
           "description_origin": "source_docstring",
@@ -4440,7 +4605,7 @@
         },
         {
           "name": "SurveyStore.correct_magnetic",
-          "line": 856,
+          "line": 978,
           "signature": "SurveyStore.correct_magnetic(self, database_id, value, time_channel, track, sensor, options, prefix='mag', time_scale=1.0, azimuth=None, base_time=None, base_value=None, base_reference=None, canceled=None)",
           "description": "Atomically publish magnetic correction terms with version provenance.\n\ntime_scale converts the survey time channel to seconds. Base arrays must\nalready be seconds on the same clock. Bounded to three million rows.",
           "description_origin": "source_docstring",
@@ -4449,7 +4614,7 @@
         },
         {
           "name": "SurveyStore.level_lines",
-          "line": 978,
+          "line": 1100,
           "signature": "SurveyStore.level_lines(self, database_id, value_channel, line_channel, crossovers, correction_name, corrected_name, outlier_sigma=4.5, canceled=None, progress=None)",
           "description": "Solve crossover constants and atomically publish correction/value channels.\n\nCrossovers are explicit (traverse, tie, residual) observations supplied by\nthe crossover backend. Their hash, constants, QC and input version IDs\nare saved; original channels and active coordinates are untouched.",
           "description_origin": "source_docstring",
@@ -4458,7 +4623,7 @@
         },
         {
           "name": "SurveyStore.magnetic_grid_pipeline",
-          "line": 1110,
+          "line": 1232,
           "signature": "SurveyStore.magnetic_grid_pipeline(self, database_id, template_path, x, y, line, correction, options, sample_step_cells=4.0, sigma_cells=2.0, input_precision='float64', canceled=None)",
           "description": "Database correction channels -> template -> versioned magnetic products.\n\nGDAL is loaded only on demand; no GUI is constructed or accessed.",
           "description_origin": "source_docstring",
@@ -4467,7 +4632,7 @@
         },
         {
           "name": "SurveyStore.rename_channel",
-          "line": 1147,
+          "line": 1269,
           "signature": "SurveyStore.rename_channel(self, database_id, old, new, unit=None)",
           "description": "Change channel name and optional unit label. Metadata relabelling does not numerically convert values; physical conversion must be an explicit transformation.",
           "description_origin": "authored_manual_note",
@@ -4476,7 +4641,7 @@
         },
         {
           "name": "SurveyStore.duplicate_channel",
-          "line": 1164,
+          "line": 1286,
           "signature": "SurveyStore.duplicate_channel(self, database_id, source_name, output_name)",
           "description": "Zero-copy alias of one immutable version; future versions are independent.",
           "description_origin": "source_docstring",
@@ -4485,8 +4650,8 @@
         },
         {
           "name": "SurveyStore.configure_geometry",
-          "line": 1192,
-          "signature": "SurveyStore.configure_geometry(self, database_id, x, y, crs)",
+          "line": 1314,
+          "signature": "SurveyStore.configure_geometry(self, database_id, x, y, crs, *, line=None)",
           "description": "Associate X/Y channels and CRS definition with the catalogue, without reprojection or elevation transformation.",
           "description_origin": "authored_manual_note",
           "fields": [],
@@ -4494,7 +4659,7 @@
         },
         {
           "name": "SurveyStore.reproject_coordinates",
-          "line": 1214,
+          "line": 1338,
           "signature": "SurveyStore.reproject_coordinates(self, database_id, x, y, source_crs, target_crs, output_x, output_y, transform, unit='', details=None, canceled=None, progress=None)",
           "description": "Publish a transformed XY pair and active geometry in one transaction.\n\ntransform receives finite NumPy XY arrays and returns two arrays. Null\npairs remain null; malformed/nonfinite coordinates abort the operation.\nThe caller supplies and validates the CRS engine, not this storage layer.",
           "description_origin": "source_docstring",
@@ -4503,7 +4668,7 @@
         },
         {
           "name": "SurveyStore.export_csv",
-          "line": 1342,
+          "line": 1466,
           "signature": "SurveyStore.export_csv(self, database_id, names, destination, filters=None, canceled=None, progress=None)",
           "description": "Batch-export chosen columns to a new destination with optional row filters. Preserve recipe/CRS/units separately if the CSV consumer cannot retain them.",
           "description_origin": "authored_manual_note",
@@ -4516,7 +4681,7 @@
     {
       "module": "survey_text_import",
       "chapter": "04_importacion.md",
-      "source_sha256": "ec6ec40efe01e24c599a380bb3bd0df4982882cd888bf5d35503d3211e66b7e5",
+      "source_sha256": "30243d779d320319ecc63c4945f6d7eb4c8005837d25bd5622165cf97b5dfd25",
       "description": "Standalone bounded survey text inspection and reproducible parsing.\n\nDetection is heuristic. Physical line numbers are one-based, header 0 means\nno header. The same parser serves preview and the full streaming import.",
       "summary": "Standalone bounded survey text inspection and reproducible parsing.",
       "definitions": [
@@ -4622,7 +4787,7 @@
         },
         {
           "name": "suggest_columns",
-          "line": 367,
+          "line": 382,
           "signature": "suggest_columns(path, options)",
           "description": "Infer from up to 100 records. IDs and leading-zero values stay text.",
           "description_origin": "source_docstring",
@@ -4631,7 +4796,7 @@
         },
         {
           "name": "inspect_text",
-          "line": 444,
+          "line": 469,
           "signature": "inspect_text(path)",
           "description": "Return suggestions, warnings and numbered sample lines, never import.",
           "description_origin": "source_docstring",
@@ -4644,13 +4809,31 @@
     {
       "module": "terrain_analysis",
       "chapter": "23_integracion_experimentos.md",
-      "source_sha256": "ca32da47c5d2408cacc304f93791735ea549e418d97a74527bd4ad951aaf32a2",
+      "source_sha256": "d0f93b33be74f2c3867b61bb5e8722757368a431f6a33f5c4afbbfdc09f55760",
       "description": "Terrain relief and explicit spatial comparison with magnetic grids.",
       "summary": "Terrain relief and explicit spatial comparison with magnetic grids.",
       "definitions": [
         {
+          "name": "automatic_hillshade_z",
+          "line": 35,
+          "signature": "automatic_hillshade_z(values, pixel_transform)",
+          "description": "Return tan(30°) divided by the 90th percentile of finite gradient magnitudes.\n\nThe four affine coefficients map (column, row) offsets to (east, north).\nFlat or unsupported gradients use a factor of one.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return tan(30°) divided by the 90th percentile of finite gradient magnitudes."
+        },
+        {
+          "name": "hillshade_arrays",
+          "line": 65,
+          "signature": "hillshade_arrays(values, pixel_transform, directions, altitude=45, z_factor=None, canceled=None)",
+          "description": "Yield one shaded array per direction and the shared, effective z factor.\n\nAzimuths are clockwise from north. Edges and neighbours of holes use\none-sided differences where possible. Original holes stay masked.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Yield one shaded array per direction and the shared, effective z factor."
+        },
+        {
           "name": "relief_arrays",
-          "line": 62,
+          "line": 133,
           "signature": "relief_arrays(values, resolution_metres, scales_metres, msrm_min_metres, msrm_max_metres, msrm_exponent=2.0, canceled=None)",
           "description": "Native square-pixel relief, no resampling; elevation values are metres.\n\nLocal residual is elevation minus a square boxcar mean. MSRM is the\nauthor's mean of consecutive low-pass surface differences; fractional\npixel radii are rounded upward and recorded. No export rounding is applied.",
           "description_origin": "source_docstring",
@@ -4659,7 +4842,7 @@
         },
         {
           "name": "run_terrain",
-          "line": 161,
+          "line": 224,
           "signature": "run_terrain(dtm_path, magnetic_path, output_dir, scales_metres=(5.0, 20.0), msrm_min_metres=1.0, msrm_max_metres=20.0, msrm_exponent=2.0, elevation_unit='m', canceled=None)",
           "description": "Publish terrain products on the exact magnetic grid and correlation evidence.\n\nDTM elevations require explicit metre or foot units. Relief is computed at\nnative DTM resolution before bilinear alignment. Geographic DTMs are first\nwarped to the magnetic projected metre CRS at GDAL estimated resolution.\nCorrelation measures spatial association and does not assign anomaly age.",
           "description_origin": "source_docstring",

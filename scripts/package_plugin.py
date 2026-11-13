@@ -30,6 +30,9 @@ REQUIRED_METADATA = (
 )
 
 PLUGIN_FILES = (
+    "qgis_plugin/gx_runtime_check.py",
+    "assets/runtime/SHA256SUMS",
+    "assets/runtime/SHA512SUMS",
     "assets/legacy/icon.svg",
     "compat/__init__.py",
     "compat/redirects.py",
@@ -55,6 +58,7 @@ PLUGIN_FILES = (
     "qgis_plugin/plugin.py",
     "qgis_plugin/provider.py",
     "qgis_plugin/raster_io.py",
+    "qgis_plugin/hillshade.py",
     "compat/spectral.py",
     "compat/line_processing.py",
     "qgis_plugin/microlevel.py",
@@ -71,6 +75,7 @@ PLUGIN_FILES = (
     "ui/text_import_dialog.py",
     "ui/survey_coordinates_dialog.py",
     "ui/survey_workspace_dialog.py",
+    "ui/survey_sheet.py",
     "ui/survey_profile_widget.py",
     "ui/process_centre.py",
     "ui/core_job_dialog.py",
@@ -89,9 +94,14 @@ PLUGIN_FILES = (
     "ui/dependency_dialog.py",
     "ui/settings_dialog.py",
     "ui/workflow_dock.py",
+    "ui/hillshade.py",
     "qgis_plugin/data_import.py",
     "qgis_plugin/geosoft_runtime.py",
     "qgis_plugin/geosoft_bridge.py",
+    "qgis_plugin/gdb_archive_gx.py",
+    "qgis_plugin/gx_runtime_setup.py",
+    "terraworkbench_core/gdb_archive.py",
+    "scripts/convert_gdb_archive.py",
     "assets/branding/README.md",
     "assets/branding/terraworkbench-logo.png",
     "assets/branding/terraworkbench-icon.png",
@@ -267,6 +277,27 @@ def update_version(version: str) -> None:
         path.write_text(value, encoding="utf-8", newline="\n")
 
 
+def runtime_document(relative: str) -> bool:
+    """Leave repository provenance in public source, outside the runtime ZIP.
+
+    The manual reader consumes coverage.json; the other metadata, figure
+    digests, API inventory/notes and validation records are build/audit inputs.
+    Keep this filter separate from the authoritative public export manifest.
+    """
+    if relative == "docs/manuals/_meta/coverage.json":
+        return True
+    return not (
+        relative.endswith(".json")
+        and (
+            relative.startswith(("docs/manuals/_meta/", "docs/reference/api/notes/",
+                                 "docs/validation/records/"))
+            or relative == "docs/reference/api/core_inventory.json"
+            or (relative.startswith("docs/manuals/assets/")
+                and relative.endswith("/figuras.json"))
+        )
+    )
+
+
 def package_files() -> list[Path]:
     # The explicit public source manifest is authoritative, including in a private checkout.
     try:
@@ -274,11 +305,11 @@ def package_files() -> list[Path]:
     except ModuleNotFoundError:
         from public_files import read_manifest
     return [ROOT / relative for relative in read_manifest(ROOT)
-            if relative.startswith(("algorithms/", "terraworkbench_core/", "compat/",
+            if runtime_document(relative) and (relative.startswith(("algorithms/", "terraworkbench_core/", "compat/",
                                     "qgis_plugin/", "ui/", "embedded_qpip/", "assets/",
                                     "docs/", "sample_data/", "requirements/"))
-            or relative in ("__init__.py", "metadata.txt", "LICENSE", "README.md",
-                            "README.es.md", "README.pt.md", "public_manifest.txt")]
+            or relative in PLUGIN_FILES or relative in ("__init__.py", "metadata.txt", "LICENSE", "README.md",
+                            "README.es.md", "README.pt.md", "public_manifest.txt"))]
 
 
 def validate_source() -> list[str]:
@@ -334,6 +365,54 @@ def validate_source() -> list[str]:
                     f"invalid Python source {source.relative_to(ROOT)}: {error}"
                 )
 
+    errors.extend(missing_internal_imports())
+    return errors
+
+
+def missing_internal_imports() -> list[str]:
+    """Report relative imports that point at plugin modules left out of the ZIP.
+
+    PLUGIN_FILES alone does not decide the archive contents; public_manifest.txt
+    does. A module listed in one but not the other installs a plugin that fails
+    in classFactory, so check every packaged module's relative imports.
+    """
+    packaged = {source.relative_to(ROOT).as_posix() for source in package_files()}
+    errors = [
+        f"PLUGIN_FILES entry is not packaged (add it to public_manifest.txt): {name}"
+        for name in PLUGIN_FILES
+        if name not in packaged
+    ]
+    for relative in sorted(packaged):
+        if not relative.endswith(".py"):
+            continue
+        try:
+            tree = ast.parse((ROOT / relative).read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeError):
+            continue
+        package = PurePosixPath(relative).parent
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom) or not node.level:
+                continue
+            base = package
+            for _ in range(node.level - 1):
+                base = base.parent
+            targets = (
+                [node.module.split(".")]
+                if node.module
+                else [[alias.name] for alias in node.names]
+            )
+            for parts in targets:
+                target = base.joinpath(*parts)
+                if str(target) == ".":
+                    continue
+                candidates = (f"{target}.py", f"{target}/__init__.py")
+                if not any(candidate in packaged for candidate in candidates):
+                    if node.module is None and (base / "__init__.py").as_posix() in packaged:
+                        continue
+                    errors.append(
+                        f"{relative} imports {target.as_posix().replace('/', '.')}, "
+                        "which is not packaged (add it to public_manifest.txt)"
+                    )
     return errors
 
 

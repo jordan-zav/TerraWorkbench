@@ -232,15 +232,78 @@ def test_redistributable_sample_data_is_packaged_separately():
     assert "refresh_bundled_reference_actions" in (ROOT / "ui/workflow_dock.py").read_text(encoding="utf-8")
 
 
-def test_standalone_geosoft_reader_is_declared_before_installed_fallback():
+@pytest.mark.parametrize("states, expected", [
+    ([(True, True)], True),
+    ([(True, False), (True, True)], True),
+    ([(False, True), (False, True)], False),
+    ([(True, False), (True, False)], False),
+])
+@pytest.mark.parametrize("desktop_available", [False, True])
+def test_standalone_geosoft_reader_requires_managed_runtime(
+    tmp_path, monkeypatch, states, expected, desktop_available
+):
+    from types import SimpleNamespace
+    import sys
+
+    from qgis_plugin.geosoft_runtime import GeosoftRuntime
+
     requirements = (ROOT / "requirements/base.txt").read_text(encoding="utf-8")
     bridge = (ROOT / "qgis_plugin/geosoft_bridge.py").read_text(encoding="utf-8")
     dock = (ROOT / "ui/workflow_dock.py").read_text(encoding="utf-8")
     licenses = (ROOT / "docs/legal/THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
     assert 'geosoft>=2024.2,<2025; platform_system == "Windows"' in requirements
     assert "TERRAWORKBENCH_GEOSOFT_SITE" in bridge
-    assert dock.index('find_spec("geosoft")') < dock.index("find_geosoft_runtime(")
     assert "BSD-2-Clause" in licenses
+    # Run the actual selector with the same preparation API used by the manager.
+    # Cancellation must return immediately without opening the full manager.
+    selectors = {node.name: node for node in ast.walk(ast.parse(dock))
+                 if isinstance(node, ast.FunctionDef)
+                 and node.name in {"_geosoft_runtime", "_managed_geosoft_runtime"}}
+    preparations, notices = [], []
+    folder = tmp_path / "dependencies"
+    redist = folder / "managed"
+    desktop = GeosoftRuntime(folder / "Oasis", folder / "omscore.exe", folder / "python.exe")
+
+    def state():
+        package, runtime = states[min(len(preparations), len(states) - 1)]
+        return package, redist if runtime else None
+
+    def prepare(parent):
+        preparations.append(True)
+        return all(states[-1])
+
+    monkeypatch.setitem(sys.modules, "fixture.ui.dependency_dialog",
+                        SimpleNamespace(
+                            check_gdb_connector=lambda parent: True,
+                            gdb_support_state=state,
+                            gdb_dotnet_ready=lambda: True,
+                            prepare_gdb_support=prepare,
+                            confirm_gx_conversion=lambda parent: notices.append(True) or True,
+                        ))
+    namespace = {
+        "__package__": "fixture.ui",
+        "dependency_directory": lambda: folder,
+        "GeosoftRuntime": GeosoftRuntime,
+        "find_geosoft_runtime": lambda path: desktop if desktop_available else None,
+        "QgsSettings": lambda: SimpleNamespace(value=lambda *args: ""),
+        "Path": Path,
+        "python_command": lambda: str(tmp_path / "python.exe"),
+    }
+    exec(compile(ast.Module(body=list(selectors.values()), type_ignores=[]), "selector", "exec"), namespace)
+
+    class Dock:
+        _geosoft_runtime = namespace["_geosoft_runtime"]
+        _managed_geosoft_runtime = namespace["_managed_geosoft_runtime"]
+
+    result = Dock()._geosoft_runtime()
+    if desktop_available:
+        assert result is desktop and not preparations and len(notices) == 1
+        return
+    assert (result is not None) is expected
+    assert len(preparations) == (0 if states[0] == (True, True) else 1)
+    assert len(notices) == (1 if states[0] == (True, True) else 0)
+    if result:
+        assert result.standalone and result.root == folder and result.redist == redist
 
 
 def test_local_reference_data_is_configurable_and_not_hardcoded():

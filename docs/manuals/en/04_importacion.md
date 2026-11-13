@@ -44,3 +44,13 @@ Further reading: [workspaces](../../guides/survey_workspaces.md), [importers and
 ---
 
 [Contents](README.md) · [Previous](03_coordenadas.md) · [Next](05_bases_canales.md)
+
+## Open archive of a Geosoft GDB
+
+Convert to open archive (recommended) creates a SurveyStore folder with a SQLite catalogue, native typed Parquet, archive.json and verification.json. It preserves integers, float32/64, text, fixed-size spectra, dummies as nulls and each line/channel's own fiducials. No silent resampling takes place. A second GX read compares every channel; only zero differences and no unreadable channels produce an accepted archive.
+
+On Windows, GDB conversion requires Geosoft Connect and a free Seequent ID account. The dependency manager asks for consent before downloading the full GX 2024.2 runtime (about 345 MiB). If .NET 6 is missing, install [Microsoft .NET 6 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/6.0), which includes the desktop and core frameworks. If an organization account prompts for checkout, select While app is running. The checkout ends when GX closes. Conversion was verified with a free account outside a licensed organization, without loading Oasis montaj DLLs. To work without a Seequent account, import XYZ or CSV.
+
+Open converted survey archive accepts archive.json, catalog.sqlite or Parquet and creates layers through the existing workflow. The API also accepts the folder. Open archives work without Geosoft or a Seequent ID. Legacy CSV remains available and omits some metadata.
+
+[Schema, verification, CLI and terms](../../development/gdb_open_archive.md).

@@ -57,7 +57,7 @@ class NinePointSmoothingAlgorithm(SpatialFilterBase):
         return smooth_nine_point(values, passes, feedback.isCanceled), f"kernel=1,2,1;2,4,2;1,2,1; passes={passes}; valid-weight normalization"
 
     def shortHelpString(self):
-        return self.tr("Applies a normalized 3x3 binomial kernel. Missing cells and outside edges have zero weight; original NoData cells remain missing. Each pass uses the previous result. Independent definition, not a certified equivalent of proprietary nine-point filters.")
+        return self.tr("Applies a normalized 3x3 binomial kernel. Missing cells and outside edges have zero weight; original NoData cells remain missing. Each pass uses the previous result.")
 
 
 class CircularMedianAlgorithm(SpatialFilterBase):
@@ -111,4 +111,4 @@ class AutomaticGainControlAlgorithm(SpatialFilterBase):
         return automatic_gain_control(values, window, floor, cap), f"window_px={window}; floor_fraction={floor}; max_gain={cap}; global_RMS/local_RMS"
 
     def shortHelpString(self):
-        return self.tr("Scales the field by global RMS divided by local RMS in a square pixel window, with an RMS floor and gain cap. No mean subtraction; original NoData is preserved. This changes physical amplitudes: use for enhancement, not quantitative inversion. Independent definition, not a certified equivalent of proprietary AGC.")
+        return self.tr("Scales the field by global RMS divided by local RMS in a square pixel window, with an RMS floor and gain cap. No mean subtraction; original NoData is preserved. This changes physical amplitudes: use for enhancement, not quantitative inversion.")

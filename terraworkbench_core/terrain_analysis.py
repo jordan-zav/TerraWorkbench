@@ -12,6 +12,77 @@ MAX_CELLS = 4_000_000
 AUTHOR_SOURCE = "https://github.com/horengo/MSRM-Multi-Scale-Relief-Model/blob/master/Original%20GEE%20JavaScript%20implementation.js"
 
 
+def _hillshade_gradients(values, pixel_transform):
+    values = np.ma.asarray(values, dtype=float).filled(np.nan)
+    if values.ndim != 2 or min(values.shape) < 2:
+        raise ValueError("Hillshade requires at least two rows and columns.")
+    matrix = np.asarray(pixel_transform, dtype=float).reshape(2, 2)
+    inverse = np.linalg.inv(matrix)
+    rows, columns = np.gradient(values)
+    for axis, gradient in enumerate((rows, columns)):
+        original = np.swapaxes(values, 0, axis)
+        derivative = np.swapaxes(gradient, 0, axis)
+        difference = np.diff(original, axis=0)
+        for target in (derivative[1:], derivative[:-1]):
+            missing = ~np.isfinite(target)
+            target[missing] = difference[missing]
+        derivative[~np.isfinite(original)] = np.nan
+    east = columns * inverse[0, 0] + rows * inverse[1, 0]
+    north = columns * inverse[0, 1] + rows * inverse[1, 1]
+    return values, east, north
+
+
+def automatic_hillshade_z(values, pixel_transform):
+    """Return tan(30°) divided by the 90th percentile of finite gradient magnitudes.
+
+    The four affine coefficients map (column, row) offsets to (east, north).
+    Flat or unsupported gradients use a factor of one.
+    """
+    _, east, north = _hillshade_gradients(values, pixel_transform)
+    return _hillshade_z(east, north)
+
+
+def _hillshade_z(east, north):
+    magnitude = np.hypot(east, north)
+    valid = magnitude[np.isfinite(magnitude)]
+    reference = np.percentile(valid, 90) if valid.size else 0.0
+    if reference == 0.0:
+        # A mostly flat raster can still contain real gradients.
+        positive = valid[valid > 0]
+        reference = np.percentile(positive, 90) if positive.size else 0.0
+    return math.tan(math.pi / 6) / float(reference) if reference > 0 else 1.0
+
+
+def _illumination(east, north, azimuth, altitude):
+    azimuth, altitude = np.radians(azimuth), np.radians(altitude)
+    return np.maximum(0.0, (
+        -east * np.sin(azimuth) * np.cos(altitude)
+        - north * np.cos(azimuth) * np.cos(altitude)
+        + np.sin(altitude)
+    ) / np.sqrt(1 + east * east + north * north))
+
+
+def hillshade_arrays(values, pixel_transform, directions, altitude=45, z_factor=None, canceled=None):
+    """Yield one shaded array per direction and the shared, effective z factor.
+
+    Azimuths are clockwise from north. Edges and neighbours of holes use
+    one-sided differences where possible. Original holes stay masked.
+    """
+    values, east, north = _hillshade_gradients(values, pixel_transform)
+    factor = _hillshade_z(east, north) if z_factor is None else float(z_factor)
+    if not np.isfinite(factor) or factor <= 0 or not 0 <= altitude <= 90:
+        raise ValueError("Hillshade requires a positive finite z factor and altitude in [0, 90].")
+    valid = np.isfinite(values)
+    east = np.nan_to_num(east, nan=0.0, posinf=0.0, neginf=0.0) * factor
+    north = np.nan_to_num(north, nan=0.0, posinf=0.0, neginf=0.0) * factor
+    for azimuth in directions:
+        _check(canceled)
+        if not np.isfinite(azimuth):
+            raise ValueError("Hillshade azimuth must be finite.")
+        shading = _illumination(east, north, azimuth, altitude)
+        yield np.where(valid, shading, np.nan), factor
+
+
 def _check(canceled):
     if canceled and canceled():
         raise InterruptedError("Terrain processing canceled.")
@@ -130,16 +201,8 @@ def relief_arrays(
     dzdy, dzdx = np.gradient(values, rr, rr)
     slope = np.arctan(np.hypot(dzdx, dzdy))
     arrays["terrain_slope"] = np.where(gradient_support, np.degrees(slope), np.nan)
-    # Columns east, rows south: north-facing surface normal has +dzdy.
-    normal_length = np.sqrt(1 + dzdx * dzdx + dzdy * dzdy)
-    azimuth, altitude = np.radians(315.0), np.radians(45.0)
-    illumination = (
-        -dzdx * np.sin(azimuth) * np.cos(altitude)
-        + dzdy * np.cos(azimuth) * np.cos(altitude)
-        + np.sin(altitude)
-    ) / normal_length
     arrays["terrain_hillshade"] = np.where(
-        gradient_support, np.maximum(illumination, 0.0), np.nan
+        gradient_support, _illumination(dzdx, -dzdy, 315.0, 45.0), np.nan
     )
     arrays["terrain_support"] = support.astype(float)
     return arrays, {

@@ -19,6 +19,7 @@ class SurveyProfileWidget(QWidget):
         self.y_label = ""
         self.empty_text = ""
         self.viewport = None
+        self.selected_sample = None
         self._drag = None
         self.setMouseTracking(True)
 
@@ -31,6 +32,10 @@ class SurveyProfileWidget(QWidget):
     def clear(self):
         self.profile = None
         self.viewport = None
+        self.update()
+
+    def set_selected_sample(self, sample):
+        self.selected_sample = sample
         self.update()
 
     def plot_box(self):
@@ -177,7 +182,7 @@ class SurveyProfileWidget(QWidget):
         colors = self.series_colors()
         painter.save()
         painter.setClipRect(box)
-        for index, segment in enumerate(segments):
+        for segment in segments:
             painter.setPen(QPen(colors[segment["label"]], 1.4))
             points = QPolygonF(
                 [
@@ -192,6 +197,10 @@ class SurveyProfileWidget(QWidget):
                 painter.drawEllipse(points[0], 2.5, 2.5)
             else:
                 painter.drawPolyline(points)
+        if self.selected_sample is not None:
+            x = box.left() + (self.selected_sample - low_x) / (high_x - low_x) * box.width()
+            painter.setPen(QPen(palette.text().color(), 1.25, qt_enum(Qt, "PenStyle", "DashLine")))
+            painter.drawLine(QPointF(x, box.top()), QPointF(x, box.bottom()))
         painter.restore()
         painter.setPen(palette.text().color())
         painter.drawText(

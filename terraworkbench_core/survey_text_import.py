@@ -330,7 +330,18 @@ def _role(name):
             "itmx",
             "xitm",
         },
-        "y": {"y", "n", "north", "northing", "norte", "latitude", "lat", "latitud", "itmy", "yitm"},
+        "y": {
+            "y",
+            "n",
+            "north",
+            "northing",
+            "norte",
+            "latitude",
+            "lat",
+            "latitud",
+            "itmy",
+            "yitm",
+        },
         "time": {
             "time",
             "timestamp",
@@ -346,6 +357,9 @@ def _role(name):
             "line",
             "lineid",
             "linenumber",
+            "lineandsegment",
+            "flightline",
+            "flightlineid",
             "track",
             "trackid",
             "profile",
@@ -357,9 +371,10 @@ def _role(name):
         "sensor": {"sensor", "sensorid", "sensornumber", "device", "deviceid"},
     }
     for role, names in aliases.items():
-        if key in names or (role in ("x", "y") and (
-            key.startswith(role + "utm") or key.startswith("utm" + role)
-        )):
+        if key in names or (
+            role in ("x", "y")
+            and (key.startswith(role + "utm") or key.startswith("utm" + role))
+        ):
             return role
     return ""
 
@@ -395,10 +410,20 @@ def suggest_columns(path, options):
     keys = [re.sub(r"[^a-z0-9]", "", name.casefold()) for name in names]
     # An explicit Cartesian/UTM/ITM pair wins over supplementary geographic coordinates.
     # This assigns channel roles only: it does not infer the datum or CRS.
-    if (sum(k in {"x", "e", "east", "easting", "este", "itmx", "xitm"}
-            or k.startswith(("utmx", "xutm")) for k in keys) == 1
-            and sum(k in {"y", "n", "north", "northing", "norte", "itmy", "yitm"}
-                    or k.startswith(("utmy", "yutm")) for k in keys) == 1):
+    if (
+        sum(
+            k in {"x", "e", "east", "easting", "este", "itmx", "xitm"}
+            or k.startswith(("utmx", "xutm"))
+            for k in keys
+        )
+        == 1
+        and sum(
+            k in {"y", "n", "north", "northing", "norte", "itmy", "yitm"}
+            or k.startswith(("utmy", "yutm"))
+            for k in keys
+        )
+        == 1
+    ):
         for i, key in enumerate(keys):
             if key in {"long", "lon", "longitude", "lat", "latitude"}:
                 roles[i] = ""
@@ -474,12 +499,15 @@ def inspect_text(path):
     if len(raw) == SAMPLE_BYTES and lines and not decoded.endswith(("\n", "\r")):
         lines = lines[:-1]
     lines = lines[:500]
-    xyz_sections = (
-        any(line.lstrip().startswith("/") and not line.lstrip().startswith("//")
-            and len(line.split()) > 2
-            and any(_role(name.lstrip("/")) == "line" for name in line.split())
-            for line in lines)
-        and any(re.fullmatch(r"\s*(?:Line|Tie(?:_?line)?)\s+\S+\s*", line, re.IGNORECASE) for line in lines)
+    xyz_sections = any(
+        line.lstrip().startswith("/")
+        and not line.lstrip().startswith("//")
+        and len(line.split()) > 2
+        and any(_role(name.lstrip("/")) == "line" for name in line.split())
+        for line in lines
+    ) and any(
+        re.fullmatch(r"\s*(?:Line|Tie(?:_?line)?)\s+\S+\s*", line, re.IGNORECASE)
+        for line in lines
     )
     candidates = []
     for mode, delimiter in [("delimited", d) for d in (",", ";", "\t", "|")] + [
@@ -489,8 +517,20 @@ def inspect_text(path):
         if xyz_sections and mode == "whitespace":
             options.comments += tuple(
                 marker + space
-                for marker in ("Line", "Tie", "Tie_line", "TieLine", "line", "tie",
-                               "tie_line", "tieline", "LINE", "TIE", "TIE_LINE", "TIELINE")
+                for marker in (
+                    "Line",
+                    "Tie",
+                    "Tie_line",
+                    "TieLine",
+                    "line",
+                    "tie",
+                    "tie_line",
+                    "tieline",
+                    "LINE",
+                    "TIE",
+                    "TIE_LINE",
+                    "TIELINE",
+                )
                 for space in (" ", "\t")
             )
             options.null_values += ("*",)
@@ -502,7 +542,11 @@ def inspect_text(path):
                 continue
             try:
                 row = [v.strip() for v in _tokens(line, options)]
-                if xyz_sections and mode == "whitespace" and line.lstrip().startswith("/"):
+                if (
+                    xyz_sections
+                    and mode == "whitespace"
+                    and line.lstrip().startswith("/")
+                ):
                     row = _xyz_header_fields(row)
             except (ValueError, csv.Error):
                 continue

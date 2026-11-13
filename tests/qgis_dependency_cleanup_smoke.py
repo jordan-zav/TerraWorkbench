@@ -134,7 +134,8 @@ def main():
             with patch.object(QMessageBox, "warning", abort_error), patch.object(QMessageBox, "exec", lambda box: confirm(box, QMessageBox.No)):
                 assert dialog.cleanup() is False
             assert (target / "payload.dat").exists()
-            assert len([k for k in settings.allKeys() if k.startswith("TerraWorkbench/")]) == 12
+            unchanged()
+            plugin_keys = [key for key in before_keys if key.startswith("TerraWorkbench/")]
             with patch.object(QMessageBox, "warning", abort_error), patch.object(QMessageBox, "exec", lambda box: confirm(box, QMessageBox.Yes)), patch.object(QMessageBox, "information") as info:
                 assert dialog.cleanup() is True
                 assert info.called
@@ -150,7 +151,7 @@ def main():
             app.processEvents()
             dialog.grab().save(str(root / f"cleanup-{locale}-complete.png"))
             dialog.close()
-            results.append({"locale": locale, "files_removed": 2, "bytes_removed": 8, "keys_removed": 12,
+            results.append({"locale": locale, "files_removed": 2, "bytes_removed": 8, "keys_removed": len(plugin_keys),
                             "unrelated_state_preserved": True, "loaded_file_blocked": True,
                             "loaded_namespace_blocked": True, "late_import_blocked": True,
                             "unavailable_profile_handled": True})

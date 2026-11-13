@@ -20,6 +20,14 @@ Availability is process-specific. Some APIs have dedicated forms; others use adv
 
 An empty output folder may use processing temporaries. A chosen folder establishes a run context and retains recipe/intermediates according to the tool. A recipe does not certify identical input bytes on the next execution.
 
+## Quick hillshade
+
+Select a single-band raster and click **Hillshade** beside **Work folder** in the Filter Stack. The same options appear in the raster's context menu. The click applies the GeoRamp classic geophysics ramp between the 2nd and 98th percentiles of valid samples and inserts an on-the-fly QGIS hillshade above the raster. It creates no files. Click again to hide or show the effect. The menu lets you change azimuth, altitude, intensity (×0.5, ×1, ×2 or ×4) and palette (classic or grayscale). The default is 315° azimuth and 45° altitude, with Multiply blending at 34% opacity.
+
+**Calculate hillshade…** writes a Float32 GeoTIFF with the source geometry and NoData. Azimuth is clockwise from north. Use the compass shortcuts, select several azimuths for individual outputs, or choose **Combined (multidirectional)** for the arithmetic mean with equal weight 1/N for each of the N selected directions. The calculation runs in the background. Results join the source's group and go to the project's work folder or QGIS temporary storage. Each GeoTIFF records its source, angles, weights and effective z factor.
+
+The automatic z factor is tan(30°) divided by the 90th percentile of the finite gradient magnitudes, computed per horizontal coordinate unit using the pixel spacing. If that percentile is zero, it uses the 90th percentile of positive gradients. A flat grid uses a factor of one. The visual effect estimates gradients from tiles of adjacent native cells. Multiplying all grid values by a positive constant divides the automatic factor by the same constant. The calculation also accepts an explicit factor.
+
 ## Advanced forms
 
 Forms use actual signatures, authored labels in three languages and validators. Required physical values are not invented. Arrays can come from NPZ through @name or a $array JSON object. Review shape, dtype, units and length; header inspection does not load or validate all array physics.

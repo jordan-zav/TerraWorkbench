@@ -4,7 +4,7 @@
 # TerraWorkbench
 
 [![Status: internal testing](https://img.shields.io/badge/status-internal%20testing-f59e0b)](#project-status)
-[![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-2563eb)](metadata.txt)
+[![Version 1.0.2](https://img.shields.io/badge/version-1.0.2-2563eb)](metadata.txt)
 [![QGIS 3.28–3.x](https://img.shields.io/badge/QGIS-3.28%E2%80%933.x-589632?logo=qgis&logoColor=white)](metadata.txt)
 [![Python Core ≥3.10; inversion ≥3.11](https://img.shields.io/badge/Python-Core%203.10%2B%20%7C%20inversion%203.11%2B-3776ab)](pyproject.toml)
 [![2D dependencies](https://img.shields.io/badge/2D-requirements%2Fbase.txt-3776ab)](requirements/base.txt)
@@ -51,6 +51,8 @@ Basic processing also includes global TPS gridding for up to 2,000 unique points
 | Geosoft single-file <code>.gdb</code> | Optional Windows-only BSD GX Developer runtime for inventory/export to open CSV and QGIS layers |
 
 A Geosoft channel database is not an Esri FileGDB. The optional bridge does not modify original surveys or bundle Geosoft code.
+
+On Windows, GDB conversion requires Geosoft Connect and a free Seequent ID account. The dependency manager asks for consent before downloading the full GX 2024.2 runtime (about 345 MiB). If .NET 6 is missing, install [Microsoft .NET 6 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/6.0), which includes the desktop and core frameworks. If an organization account prompts for checkout, select While app is running. The checkout ends when GX closes. Conversion was verified with a free account outside a licensed organization, without loading Oasis montaj DLLs. To work without a Seequent account, import XYZ or CSV. [GDB](docs/development/gdb_open_archive.md).
 
 <details>
 <summary><strong>Magnetic and gravity exploration filters</strong></summary>
@@ -261,7 +263,7 @@ From a checkout, generate the ZIP with the explicit allowlist packager:
 python scripts/package_plugin.py
 ~~~
 
-This validates source/metadata and creates <code>dist/TerraWorkbench-1.0.1.zip</code>. In QGIS, open **Plugins → Manage and Install Plugins → Install from ZIP** and select that file. The Windows interactive alternative is <code>scripts/build_dist.bat</code>; it asks for a version, so retain the current version when only packaging.
+This validates source/metadata and creates <code>dist/TerraWorkbench-1.0.2.zip</code>. In QGIS, open **Plugins → Manage and Install Plugins → Install from ZIP** and select that file. The Windows interactive alternative is <code>scripts/build_dist.bat</code>; it asks for a version, so retain the current version when only packaging.
 
 The current Windows installer can check discovery, then install/update the active profile:
 
@@ -351,7 +353,7 @@ TerraWorkbench is licensed under [GPL-3.0-or-later](LICENSE). Third-party librar
 
 ## Project status
 
-Version **1.0.1** is the current release; the independent Core package is **0.1.0**. Fixes are published as 1.0.x releases. Individual methods documented as experimental keep that status.
+Version **1.0.2** is the current release candidate, prepared locally and awaiting publication approval; the independent Core package is **0.1.0**. Fixes are published as 1.0.x releases. Individual methods documented as experimental keep that status.
 
 The [public processing campaign](docs/validation/reports/public_processing_benchmark.md) records pinned inputs and independent numerical references; the [inversion reports](docs/validation/README.md) distinguish execution, convergence and model recovery. Historical QGIS 3.44 smoke checks, Processing/Filter Stack runs and ZIP validation are evidence for their recorded revisions.
 

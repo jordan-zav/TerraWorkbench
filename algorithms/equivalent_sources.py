@@ -128,9 +128,9 @@ class EquivalentSourceContinuationAlgorithm(RasterAlgorithmBase):
             parameters, self.HOLDOUT_PERCENT, context
         )
         if holdout_percent > 0.0:
-            random = np.random.default_rng(0)
+            rng = np.random.default_rng(0)
             holdout_count = max(1, int(round(cells * holdout_percent / 100.0)))
-            holdout = np.sort(random.choice(cells, holdout_count, replace=False))
+            holdout = np.sort(rng.choice(cells, holdout_count, replace=False))
             training = np.ones(cells, dtype=bool)
             training[holdout] = False
             if int(training.sum()) < 4:

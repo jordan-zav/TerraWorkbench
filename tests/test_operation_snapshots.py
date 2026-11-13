@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 
 def test_core_operation_snapshots_are_exact_and_observational():
@@ -65,3 +66,38 @@ def test_compensation_step_callback_preserves_diurnal_outputs(tmp_path):
     pd.testing.assert_frame_equal(expected, observed)
     assert report == actual and len(steps) == 1
     pd.testing.assert_frame_equal(steps[0][1], observed)
+
+
+@pytest.mark.parametrize("malicious", [False, True])
+def test_kml_clip_preserves_polygon_and_rejects_xml_entities(tmp_path, malicious):
+    import numpy as np
+    import pandas as pd
+    from defusedxml.common import EntitiesForbidden
+    from terraworkbench_core.profile_preparation import preprocess_frame
+
+    polygon = """<kml xmlns="http://www.opengis.net/kml/2.2"><Placemark>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>
+    0,0 2,0 2,2 0,2 0,0
+    </coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark></kml>"""
+    if malicious:
+        polygon = ('<!DOCTYPE kml [<!ENTITY payload SYSTEM "file:///nonexistent">]>'
+                   + polygon.replace('<Placemark>', '<Placemark><name>&payload;</name>'))
+    clip = tmp_path / "clip.kml"
+    clip.write_text(polygon, encoding="utf-8")
+    frame = pd.DataFrame({"x": [0., 1., 3.], "y": [0., 1., 3.], "v": [4., 5., 6.]})
+    original = frame.copy(deep=True)
+
+    def prepare():
+        return preprocess_frame(frame, {"clip_geo": str(clip)}, x_column="x",
+                                y_column="y", value_column="v",
+                                coordinate_mode="geographic", crs="EPSG:4326")
+
+    if malicious:
+        with pytest.raises(EntitiesForbidden):
+            prepare()
+    else:
+        result, report = prepare()
+        np.testing.assert_array_equal(result["v"].to_numpy(), [4., 5., np.nan])
+        assert report["clipped_rows"] == 1
+    pd.testing.assert_frame_equal(frame, original)

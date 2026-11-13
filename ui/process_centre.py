@@ -1,7 +1,6 @@
 """Geophysics-wide catalogue: host forms and explicitly identified Core APIs."""
 
 from html import escape
-import json
 
 from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import Qt
@@ -27,62 +26,73 @@ from .survey_workspace_dialog import tr
 from ..terraworkbench_core.operations import list_operations, operation_info
 
 
+PARAMETER_KINDS = {
+    "source": ("Vector layer", "Capa vectorial", "Camada vetorial"),
+    "vector": ("Vector layer", "Capa vectorial", "Camada vetorial"),
+    "raster": ("Raster layer", "Capa ráster", "Camada raster"),
+    "multilayer": ("Layers", "Capas", "Camadas"),
+    "field": ("Field", "Campo", "Campo"),
+    "band": ("Band", "Banda", "Banda"),
+    "number": ("Number", "Número", "Número"),
+    "distance": ("Distance", "Distancia", "Distância"),
+    "enum": ("Option", "Opción", "Opção"),
+    "boolean": ("Yes / no", "Sí / no", "Sim / não"),
+    "string": ("Text", "Texto", "Texto"),
+    "file": ("File", "Archivo", "Arquivo"),
+    "crs": ("CRS", "SRC", "SRC"),
+    "extent": ("Extent", "Extensión", "Extensão"),
+    "sink": ("Output layer", "Capa de salida", "Camada de saída"),
+    "vectorDestination": ("Output layer", "Capa de salida", "Camada de saída"),
+    "rasterDestination": ("Output raster", "Ráster de salida", "Raster de saída"),
+    "fileDestination": ("Output file", "Archivo de salida", "Arquivo de saída"),
+    "folderDestination": ("Output folder", "Carpeta de salida", "Pasta de saída"),
+}
+
+
+def parameter_summary(parameter):
+    """Describe a parameter by its default, or by its kind when it has none."""
+    default = parameter.defaultValue()
+    if parameter.type() == "enum" and isinstance(default, int):
+        options = parameter.options()
+        if 0 <= default < len(options):
+            default = translate(options[default])
+    if default is None or default == "":
+        kind = PARAMETER_KINDS.get(parameter.type())
+        summary = tr(*kind) if kind else parameter.type()
+    elif isinstance(default, bool):
+        summary = tr("Yes", "Sí", "Sim") if default else tr("No", "No", "Não")
+    else:
+        summary = str(default)
+    try:
+        from qgis.core import QgsProcessingParameterDefinition
+
+        optional = bool(parameter.flags() & QgsProcessingParameterDefinition.Flag.FlagOptional)
+    except (AttributeError, TypeError):
+        optional = False
+    if optional:
+        summary += " · " + tr("optional", "opcional", "opcional")
+    return summary
+
+
 class ProcessCentre(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(
-            tr(
-                "TerraWorkbench — Geophysical processes",
-                "TerraWorkbench — Procesos geofísicos",
-                "TerraWorkbench — Processos geofísicos",
-            )
-        )
         self.resize(1180, 780)
         self.setMinimumSize(820, 580)
         layout = QVBoxLayout(self)
-        title = QLabel(
-            tr(
-                "Explore all disciplines · inspect the method · choose the correct input",
-                "Explora todas las disciplinas · revisa el método · elige la entrada correcta",
-                "Explore todas as disciplinas · consulte o método · escolha a entrada correta",
-            )
-        )
-        title.setWordWrap(True)
-        layout.addWidget(title)
         filters = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText(
-            tr(
-                "Search name, group, domain or ID…",
-                "Buscar nombre, grupo, dominio o ID…",
-                "Buscar nome, grupo, domínio ou ID…",
-            )
-        )
         self.mode = QComboBox()
-        for value, labels in (
-            ("all", ("All interfaces", "Todas las interfaces", "Todas as interfaces")),
-            ("qgis", ("QGIS forms", "Formularios QGIS", "Formulários QGIS")),
-            ("core", ("Core API", "API del core", "API do core")),
-        ):
-            self.mode.addItem(tr(*labels), value)
+        for value in ("all", "qgis", "core"):
+            self.mode.addItem("", value)
         filters.addWidget(self.search, 1)
         filters.addWidget(self.mode)
-        refresh = QPushButton(tr("Refresh", "Actualizar", "Atualizar"))
-        refresh.clicked.connect(self.refresh)
-        filters.addWidget(refresh)
+        self.refresh_button = QPushButton()
+        self.refresh_button.clicked.connect(self.refresh)
+        filters.addWidget(self.refresh_button)
         layout.addLayout(filters)
         split = QSplitter(qt_enum(Qt, "Orientation", "Horizontal"))
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(
-            [
-                tr(
-                    "Discipline / process",
-                    "Disciplina / proceso",
-                    "Disciplina / processo",
-                ),
-                tr("Interface", "Interfaz", "Interface"),
-            ]
-        )
         self.tree.setColumnWidth(0, 370)
         self.browser = QTextBrowser()
         self.browser.setOpenExternalLinks(False)
@@ -95,43 +105,73 @@ class ProcessCentre(QDialog):
         self.count = QLabel()
         layout.addWidget(self.count)
         controls = QHBoxLayout()
-        self.launch = QPushButton(
-            tr(
-                "Open processing form…",
-                "Abrir formulario de proceso…",
-                "Abrir formulário de processo…",
-            )
-        )
+        self.launch = QPushButton()
         self.launch.setEnabled(False)
         self.launch.clicked.connect(self.open_form)
         controls.addWidget(self.launch)
-        self.workflows = QPushButton(
+        self.workflows = QPushButton()
+        self.workflows.clicked.connect(self.open_workflow)
+        controls.addWidget(self.workflows)
+        layout.addLayout(controls)
+        self.search.textChanged.connect(self.filter_items)
+        self.mode.currentIndexChanged.connect(self.filter_items)
+        self.tree.currentItemChanged.connect(self.inspect)
+        self.tree.itemDoubleClicked.connect(lambda *_: self.open_form())
+        self.retranslate()
+
+    def retranslate(self):
+        self.setWindowTitle(
+            tr(
+                "TerraWorkbench — Geophysical processes",
+                "TerraWorkbench — Procesos geofísicos",
+                "TerraWorkbench — Processos geofísicos",
+            )
+        )
+        self.search.setPlaceholderText(
+            tr(
+                "Search name, group, domain or ID…",
+                "Buscar nombre, grupo, dominio o ID…",
+                "Buscar nome, grupo, domínio ou ID…",
+            )
+        )
+        for value, labels in (
+            ("all", ("All interfaces", "Todas las interfaces", "Todas as interfaces")),
+            ("qgis", ("QGIS forms", "Formularios QGIS", "Formulários QGIS")),
+            ("core", ("Core API", "API del core", "API do core")),
+        ):
+            self.mode.setItemText(self.mode.findData(value), tr(*labels))
+        self.tree.setHeaderLabels(
+            [
+                tr(
+                    "Discipline / process",
+                    "Disciplina / proceso",
+                    "Disciplina / processo",
+                ),
+                tr("Interface", "Interfaz", "Interface"),
+            ]
+        )
+        self.workflows.setText(
             tr(
                 "Run saved workflow…",
                 "Ejecutar workflow guardado…",
                 "Executar fluxo salvo…",
             )
         )
-        self.workflows.clicked.connect(self.open_workflow)
-        controls.addWidget(self.workflows)
-        note = QLabel(
+        self.launch.setText(
             tr(
-                "Core entries use signature-based controls and JSON/NPZ inputs. No optional packages are installed here.",
-                "Las entradas del core usan controles basados en su firma y entradas JSON/NPZ. Aquí no se instalan paquetes opcionales.",
-                "As entradas do core usam controles baseados na assinatura e entradas JSON/NPZ. Nenhum pacote opcional é instalado aqui.",
+                "Open processing form…",
+                "Abrir formulario de proceso…",
+                "Abrir formulário de processo…",
             )
         )
-        note.setWordWrap(True)
-        controls.addWidget(note, 1)
-        layout.addLayout(controls)
-        self.search.textChanged.connect(self.filter_items)
-        self.mode.currentIndexChanged.connect(self.filter_items)
-        self.tree.currentItemChanged.connect(self.inspect)
-        self.tree.itemDoubleClicked.connect(lambda *_: self.open_form())
+        self.refresh_button.setText(tr("Refresh", "Actualizar", "Atualizar"))
         self.refresh()
 
     def refresh(self):
+        current = self.tree.currentItem()
+        selected = current.data(0, 256) if current is not None else None
         self.tree.clear()
+        selected_item = None
         self.entries = {}
         groups = {}
         algorithms = sorted(
@@ -151,6 +191,8 @@ class ProcessCentre(QDialog):
             self.entries[key] = ("qgis", algorithm)
             item = QTreeWidgetItem([algorithm.displayName(), "QGIS"])
             item.setData(0, 256, key)
+            if key == selected:
+                selected_item = item
             item.setToolTip(
                 0, key + " · " + getattr(algorithm, "processing_domain", "")
             )
@@ -222,6 +264,8 @@ class ProcessCentre(QDialog):
             self.entries[key] = ("core", metadata)
             item = QTreeWidgetItem([operation_title(metadata["id"]), "Core API"])
             item.setData(0, 256, key)
+            if key == selected:
+                selected_item = item
             item.setToolTip(0, domain_label(metadata["domain"]))
             group.addChild(item)
         for _, group in sorted(
@@ -238,6 +282,8 @@ class ProcessCentre(QDialog):
         )
         self.launch.setEnabled(False)
         self.filter_items()
+        if selected_item is not None:
+            self.tree.setCurrentItem(selected_item)
 
     def filter_items(self, *_):
         query, mode = self.search.text().casefold().strip(), self.mode.currentData()
@@ -270,10 +316,10 @@ class ProcessCentre(QDialog):
             visible += count
         self.count.setText(
             tr(
-                "{visible} visible / {total} entries · QGIS forms + registered Core expansion; not a completeness certification",
-                "{visible} visibles / {total} entradas · formularios QGIS + expansión registrada del core; no certifica cobertura completa",
-                "{visible} visíveis / {total} entradas · formulários QGIS + expansão registrada do core; não certifica cobertura completa",
-            ).format(visible=visible, total=len(self.entries))
+                "{visible} processes",
+                "{visible} procesos",
+                "{visible} processos",
+            ).format(visible=visible)
         )
         item = self.tree.currentItem()
         if item is not None and item.data(0, 256):
@@ -303,12 +349,12 @@ class ProcessCentre(QDialog):
             if kind == "qgis":
                 algorithm = source
                 title = algorithm.displayName()
-                domain = getattr(
-                    algorithm,
-                    "processing_domain",
-                    tr("Not declared", "No declarado", "Não declarado"),
-                )
-                html = f"<h2>{escape(title)}</h2><p>{escape(key)}<br>{escape(translate(domain))}</p>"
+                # Fall back to the QGIS group so every entry names its discipline.
+                domain = getattr(algorithm, "processing_domain", "") or algorithm.group()
+                html = f"<h2>{escape(title)}</h2><p>{escape(key)}"
+                if domain:
+                    html += f"<br>{escape(translate(domain))}"
+                html += "</p>"
                 html += (
                     "<h3>"
                     + escape(
@@ -322,34 +368,25 @@ class ProcessCentre(QDialog):
                     + escape(translate(algorithm.shortHelpString()))
                     + "</p>"
                 )
-                html += (
-                    "<h3>"
-                    + escape(
-                        tr(
-                            "Implementation and libraries",
-                            "Implementación y librerías",
-                            "Implementação e bibliotecas",
-                        )
-                    )
-                    + "</h3>"
-                )
                 details = getattr(algorithm, "implementation_details", ())
-                html += (
-                    "<ul>"
-                    + "".join(
-                        f"<li>{escape(translate(str(label)))}: {escape(translate(str(value)))}</li>"
-                        for label, value in details
-                    )
-                    + "</ul>"
-                    if details
-                    else escape(
-                        tr(
-                            "Not declared by this algorithm",
-                            "No declarado por este algoritmo",
-                            "Não declarado por este algoritmo",
+                # Show the section only when the algorithm documents it.
+                if details:
+                    html += (
+                        "<h3>"
+                        + escape(
+                            tr(
+                                "Implementation and libraries",
+                                "Implementación y librerías",
+                                "Implementação e bibliotecas",
+                            )
                         )
+                        + "</h3><ul>"
+                        + "".join(
+                            f"<li>{escape(translate(str(label)))}: {escape(translate(str(value)))}</li>"
+                            for label, value in details
+                        )
+                        + "</ul>"
                     )
-                )
                 html += (
                     "<h3>"
                     + escape(
@@ -362,45 +399,12 @@ class ProcessCentre(QDialog):
                     + "</h3><table cellpadding='5'>"
                 )
                 for parameter in algorithm.parameterDefinitions():
-                    html += f"<tr><td><b>{escape(parameter.name())}</b><br>{escape(translate(parameter.description()))}</td><td>{escape(str(parameter.defaultValue()))}</td></tr>"
-                html += (
-                    "</table><p>"
-                    + escape(
-                        tr(
-                            "Opening the form does not run the process. Review CRS, units, data, parameters and output paths before execution.",
-                            "Abrir el formulario no ejecuta el proceso. Revisa CRS, unidades, datos, parámetros y rutas de salida antes de ejecutar.",
-                            "Abrir o formulário não executa o processo. Revise SRC, unidades, dados, parâmetros e caminhos de saída antes de executar.",
-                        )
-                    )
-                    + "</p>"
-                )
+                    html += f"<tr><td><b>{escape(parameter.name())}</b><br>{escape(translate(parameter.description()))}</td><td>{escape(parameter_summary(parameter))}</td></tr>"
+                html += "</table>"
             else:
                 info = operation_info(source["id"])
                 html = f"<h2>{escape(operation_title(info['id']))}</h2><p>{escape(info['id'])} · {escape(domain_label(info['domain']))}</p>"
-                html += (
-                    "<p>"
-                    + escape(
-                        tr(
-                            "Experimental expansion: synthetic tests only; this is not field validation or complete coverage of the discipline.",
-                            "Expansión experimental: solo pruebas sintéticas; no equivale a validación de campo ni cobertura completa de la disciplina.",
-                            "Expansão experimental: apenas testes sintéticos; não equivale à validação de campo nem à cobertura completa da disciplina.",
-                        )
-                    )
-                    + "</p>"
-                )
                 html += operation_guidance_html(info["id"])
-                html += f"<pre>{escape(info['module'] + '.' + info['function'] + info['signature'])}</pre>"
-                html += (
-                    "<h3>"
-                    + escape(
-                        tr(
-                            "Libraries and optional engine",
-                            "Librerías y motor opcional",
-                            "Bibliotecas e motor opcional",
-                        )
-                    )
-                    + f"</h3><pre>{escape(json.dumps({'base_libraries': info['base_libraries'], 'optional_engine': info['optional_engine'], 'optional_extra': info['optional_extra']}, indent=2))}</pre>"
-                )
             self.browser.setHtml(html)
         except Exception as error:
             self.browser.setPlainText(str(error))

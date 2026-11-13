@@ -10,11 +10,24 @@ A base preserva alinhamento de linhas. Selecionar colunas não o altera. Máscar
 
 ## Primeira base pela interface
 
-Abrir o explorador, escolher Novo projeto e uma pasta vazia, depois Importar texto / Parquet. Revisar o assistente antes de aceitar. Selecionar uma base à esquerda e somente os canais necessários; Carregar seleção mostra uma página sem despejar todas as linhas na tabela. As ações de canais preparam derivados e mostram seu pipeline. Salvar produtos importantes fora de temporários e preservar a pasta completa do workspace.
+Abrir **Bancos de dados…** na Pilha de filtros ou **Bancos de levantamentos…** no menu Raster do QGIS. Se a camada ativa pertence a um levantamento, o explorador seleciona seu banco. Após importar texto ou uma GDB, clicar em **Abrir banco de dados** na barra de mensagens do QGIS para abrir o banco importado na primeira linha. Criar um workspace em uma pasta vazia e revisar o assistente de texto antes de aceitar.
+
+Selecionar um banco abre uma planilha somente leitura com todos os canais. Linha, fiducial ou tempo, X e Y vêm primeiro. Os demais seguem a ordem do banco. Os cabeçalhos mostram as unidades e a dica exibe origem, tipo e versão. A busca e as setas percorrem as linhas na ordem de ocorrência. O papel de linha atribuído tem prioridade sobre a detecção pelo nome. O botão do canal de linha permite alterá-lo. A planilha lê pequenos lotes durante a rolagem. **Todas as linhas** usa páginas e os filtros de visualização existentes.
+
+Usar **Colunas…** ou o menu de contexto do cabeçalho para mudar a visibilidade. A configuração é lembrada para cada banco. As ações usam uma coluna da planilha ou a seleção lateral. **Perfis** acompanha a linha e os canais numéricos marcados. Clicar em uma linha da planilha marca a posição da amostra. Preservar a pasta completa do workspace ao fazer cópias dos produtos.
 
 ![Versões de canais](../assets/pt/linaje.svg)
 
 Figura 2. Fontes e canais derivados em um exemplo conceitual. A versão de entrada, além do nome, determina o conteúdo processado.
+
+## Adicionar um levantamento ao mapa do QGIS
+
+No assistente de texto, revise as funções X, Y e linha opcional e escolha o SRC de origem se estiver ausente. Com as coordenadas e o SRC conhecidos, o TerraWorkbench adiciona automaticamente um grupo. A ação **Adicionar levantamento ao mapa…** permite reconstruir o grupo com uma seleção filtrada ou atribuir coordenadas e SRC em um único diálogo.
+
+O grupo inclui Linhas de voo, Linhas de controle quando disponíveis, Limite do levantamento e Amostras. Os rótulos das extremidades aparecem ao aproximar o mapa. Amostras inicia desligada e tem seu próprio limite de escala. Sem canal de linha, são criados apenas Amostras e Limite do levantamento. O GeoPackage é salvo em results do workspace. [Regras de geometria e classificação](../../development/survey_map_layers.md).
+
+As linhas de voo são cinza-escuro e as de controle são laranja-escuro. Ambas têm halo branco e mostram setas no sentido de aquisição a 1:150.000 ou mais perto. As outras linhas são pontilhadas. O limite tem dois traços, branco e verde-azulado, com um brilho interno que se torna transparente.
+
 
 ## Criar uma variável derivada
 

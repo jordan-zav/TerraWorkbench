@@ -79,8 +79,42 @@ Joblib, threadpoolctl, fsspec, Toolz, Cloudpickle and Click declare BSD-3-Clause
 
 ## Optional future integrations
 
+The optional GDB archive converter prepares the official GX 2024.2 full redistributable only after explicit download approval in the dependency manager. Native binaries remain outside the plugin ZIP and repository. The [archive design and terms](../development/gdb_open_archive.md) distinguish the BSD wrapper license from vendor entitlement and third-party restrictions. The setup retains copyright, license and third-party notices beside the downloaded runtime; it does not accept Seequent identity or subscription terms for the user.
+
 PyVista, GemPy, pyGIMLi, empymod and UBC-GIF are not bundled or required by the current release. Each integration must receive a separate license review before distribution. UBC-GIF executables must never be redistributed; a future connector may only work with a licensed copy installed separately by the user.
 
 ## Redistribution rule
 
 If a future release vendors any third-party package inside the plugin archive, its complete upstream copyright notice, license text and notices must be copied into the distributed archive. This file alone does not replace those required license texts.
+
+## Tellus A9 radiometric line data
+
+Product: GSI_Tellus_A9_RAD_DATA_2022.zip, provided by Geological Survey Ireland. Product-specific CC BY 4.0 confirmation was received on 11 November 2026. [Source data](https://gsi.geodata.gov.ie/downloads/Geophysics/Data/GSI_Tellus_A9_RAD_DATA_2022.zip) · [GSI data licence](https://gsi.ie/data-and-maps/) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+Contains Irish Public Sector Data (Geological Survey Ireland) licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) licence
+
+The public benchmark retrieves the pinned source archive from its publisher; it does not bundle raw line data. It imports the supplied corrected concentrations and derives U/Th ratios, terrestrial dose and normalized RGB, preserving the source units and labels. These products do not reconstruct detector calibration or validate full atmospheric-radon correction. The attribution is retained in benchmark source metadata, results and workspace metadata.
+
+Example from the repository root, using an existing verified cache and a new output folder:
+
+    python examples/manual/tellus_a9.py --cache CACHE_DIRECTORY --output NEW_OUTPUT_DIRECTORY
+
+Network retrieval is opt-in through the example flag --allow-download. The numerical checks and data checksum are unchanged by the licensing restoration.
+
+## PSI gamma-ray spectra
+
+The public processing benchmark uses the data_v1_1_0.zip spectra of David
+Breitenmoser, Alberto Stabilini, Malgorzata Magdalena Kasprzak and Sabine Mayer,
+Paul Scherrer Institute, under CC BY 4.0. Credit both the
+[dataset, Zenodo 20032395](https://doi.org/10.5281/zenodo.20032395) and the
+[associated Nature Communications article](https://doi.org/10.1038/s41467-026-78464-2),
+as confirmed by the dataset author. The source registry and benchmark report
+retain this citation pair. These spectra are benchmark inputs, separate from
+the Tellus A9 concentration workflow; no raw PSI archive is bundled in the
+plugin ZIP.
+
+The full 2024.2 archive includes the Seequent Evo dependencies omitted by the minimal package. Its managed components declare Microsoft .NET 6 Core and Windows Desktop frameworks, obtained separately under Microsoft terms. No .NET runtime is bundled in the plugin.
+
+## Microsoft .NET 6 portable
+
+TerraWorkbench downloads the Microsoft .NET Runtime and Windows Desktop Runtime 6.0.36 x64 ZIPs with consent when preparing GDB support. The ZIPs are verified against the [Microsoft release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/6.0/releases.json) and extracted into the active QGIS profile. The runtime distribution includes the [MIT license](https://github.com/dotnet/runtime/blob/v6.0.36/LICENSE.TXT) and third-party notices, which are retained with the extracted files.

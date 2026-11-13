@@ -47,13 +47,13 @@ class _System:
         self.histories = []
         self.storage = 0
         self.g = self.operator(sensitivity, "sensitivity")
-        self.l = self.operator(regularization, "regularization")
+        self.regularization_operator = self.operator(regularization, "regularization")
         self.n = self.g.shape[1]
         if np.iscomplexobj(data_std):
             raise ValueError("Data errors must be real")
         self.std = as_array(data_std, float)
         if (
-            self.l.shape[1] != self.n
+            self.regularization_operator.shape[1] != self.n
             or self.std.shape != (self.g.shape[0],)
             or not np.isfinite(self.std).all()
             or np.any(self.std <= 0)
@@ -62,7 +62,8 @@ class _System:
                 "Matching G/L parameter counts and finite positive data errors required"
             )
         if (
-            self.storage + 32 * self.n + 4 * (self.g.shape[0] + self.l.shape[0])
+            self.storage + 32 * self.n
+            + 4 * (self.g.shape[0] + self.regularization_operator.shape[0])
             > max_elements
         ):
             raise ValueError("Matrix-free diagnostic element budget exceeded")
@@ -84,7 +85,7 @@ class _System:
         # Catch common operator-adapter mistakes before random diagonal estimates
         # conceal them. This is a numerical adjoint check, not a rank certificate.
         rng = np.random.default_rng(913)
-        for operator in (self.g, self.l):
+        for operator in (self.g, self.regularization_operator):
             x, y = (
                 rng.normal(size=operator.shape[1]),
                 rng.normal(size=operator.shape[0]),
@@ -143,7 +144,9 @@ class _System:
         return self.g.rmatvec(self.g.matvec(vector) / self.std**2)
 
     def precision(self, vector):
-        result = self.gram(vector) + self.beta * self.l.rmatvec(self.l.matvec(vector))
+        result = self.gram(vector) + self.beta * self.regularization_operator.rmatvec(
+            self.regularization_operator.matvec(vector)
+        )
         if not np.isfinite(result).all():
             raise ValueError("Precision arithmetic overflow; rescale units/noise")
         return result
@@ -324,7 +327,7 @@ def linear_point_spread(
     if (
         system.storage
         + system.n * (32 + 2 * len(indices))
-        + 4 * (system.g.shape[0] + system.l.shape[0])
+        + 4 * (system.g.shape[0] + system.regularization_operator.shape[0])
         > max_elements
     ):
         raise ValueError("Point-spread output element budget exceeded")

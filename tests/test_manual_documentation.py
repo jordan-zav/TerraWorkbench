@@ -32,11 +32,12 @@ def test_manual_covers_current_source_and_has_no_broken_links():
 
 def test_manual_and_images_are_in_plugin_package():
     from scripts.public_files import read_manifest
+    from scripts.package_plugin import runtime_document
 
     included = set(package_files())
     for relative in read_manifest(ROOT):
         if relative.startswith("docs/manuals/"):
-            assert ROOT / relative in included
+            assert (ROOT / relative in included) == runtime_document(relative)
 
 
 def test_translation_manifest_detects_source_drift(tmp_path, monkeypatch):

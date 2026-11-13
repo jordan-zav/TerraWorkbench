@@ -10,11 +10,24 @@ A database preserves row alignment. Column selection leaves that alignment intac
 
 ## Your first database in the interface
 
-Open the explorer, choose New project and an empty folder, then Import text / Parquet. Review the wizard before accepting the import. Select a database on the left and only the channels needed; Load selection displays a page rather than dumping all rows into the table. Channel actions prepare derived variables and expose their pipeline. Save important products outside session temporaries and retain the complete workspace folder.
+Open **Databases…** in the Filter Stack or **Survey databases…** in QGIS's Raster menu. If the active layer belongs to a survey, the explorer selects that database. After importing text or a GDB, click **Open database** in the QGIS message bar to open the imported database at its first line. Create a new workspace in an empty folder and review the text import wizard before accepting.
+
+Selecting a database opens a read-only sheet with every channel. Line, fiducial or time, X and Y come first. Remaining channels follow the database order. Headers show units and a tooltip with the source, type and version. The line search and arrows follow acquisition row order. An assigned line role takes precedence over name detection. Use the line channel button to override it. The line is read in small batches as you scroll. **All rows** uses paginated results and the existing view filters.
+
+Use **Columns…** or the header context menu to change visible columns. The workspace remembers the visibility for each database. A table column or the sidebar selection can drive channel actions. **Profiles** follows the selected line and marked numeric channels. Clicking a row places a marker at its sample position. Keep the complete workspace folder when backing up products.
 
 ![Channel versions](../assets/en/linaje.svg)
 
 Figure 2. Conceptual sources and derived channels. The input version, in addition to its name, determines the content processed.
+
+## Add a survey to the QGIS map
+
+In the text import assistant, review the X, Y and optional line roles and select the source CRS if it is missing. When coordinates and CRS are known, TerraWorkbench adds a survey group automatically. Select a database and choose **Add survey to map…** to rebuild it from a filtered selection or to assign missing coordinates and CRS in a single dialog.
+
+The group contains Flight lines, Tie lines when present, Survey boundary and Samples. Endpoint labels appear as the map is zoomed in. Samples starts switched off and has its own scale limit. A database without a line channel receives only Samples and Survey boundary. The GeoPackage is saved under the workspace results directory. [Map geometry and classification rules](../../development/survey_map_layers.md).
+
+Flight lines are dark gray and tie lines are dark orange. Both have a white halo and show arrows in acquisition direction at 1:150,000 or closer. Other lines are dotted. The boundary uses white and teal strokes with a subtle inward fade.
+
 
 ## Creating a derived variable
 

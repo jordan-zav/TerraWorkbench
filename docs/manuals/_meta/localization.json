@@ -126,9 +126,9 @@
       "file": "04_importacion.md",
       "versions": {
         "es": {
-          "sha256_lf": "e39733d3fcc41f2997a665ece8c39b93d400d19eb7278dddd1edb09653adfb73",
-          "words": 430,
-          "sections": 6,
+          "sha256_lf": "dcc71897bcfa8a37ebf95817294d33f918e2c262eddca30d86f8231edc7ad760",
+          "words": 643,
+          "sections": 7,
           "images": 0,
           "table_rows": 0,
           "source_modules": [
@@ -136,13 +136,14 @@
             "text_import.py"
           ],
           "external_urls": [
+            "https://dotnet.microsoft.com/en-us/download/dotnet/6.0",
             "https://gdal.org/en/stable/user/raster_data_model.html"
           ]
         },
         "en": {
-          "sha256_lf": "0af1a5212e089bc3d17dfb42b5bf73a6af91c1fe0b2e387bb6a95d451e258565",
-          "words": 388,
-          "sections": 6,
+          "sha256_lf": "aa5286e40372b26aeeae42eae30d9001eb115da11b7f553378e9252cc8576aa0",
+          "words": 588,
+          "sections": 7,
           "images": 0,
           "table_rows": 0,
           "source_modules": [
@@ -150,13 +151,14 @@
             "text_import.py"
           ],
           "external_urls": [
+            "https://dotnet.microsoft.com/en-us/download/dotnet/6.0",
             "https://gdal.org/en/stable/user/raster_data_model.html"
           ]
         },
         "pt": {
-          "sha256_lf": "ccc3bf5dab16b7839177d7e16ff7497ebebf826cc2d6bf844a50f0b655c3aa99",
-          "words": 394,
-          "sections": 6,
+          "sha256_lf": "9ca87a625480bb0477702b0a138b0f018f25b019d243d746294eea0ef7ad0f9c",
+          "words": 605,
+          "sections": 7,
           "images": 0,
           "table_rows": 0,
           "source_modules": [
@@ -164,6 +166,7 @@
             "text_import.py"
           ],
           "external_urls": [
+            "https://dotnet.microsoft.com/en-us/download/dotnet/6.0",
             "https://gdal.org/en/stable/user/raster_data_model.html"
           ]
         }
@@ -173,9 +176,9 @@
       "file": "05_bases_canales.md",
       "versions": {
         "es": {
-          "sha256_lf": "d6cb3b5e9e63f3097666c30034b1714b989aa468363cc7d703bb7bfaa5daf658",
-          "words": 528,
-          "sections": 6,
+          "sha256_lf": "a6117e19d4b76b42d12b85a1b6a0bdc59c0accb1627acc153dac8fa3314abae5",
+          "words": 859,
+          "sections": 7,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
@@ -186,9 +189,9 @@
           "external_urls": []
         },
         "en": {
-          "sha256_lf": "893c5c6a1d47be0d42c5d61a7e078430f344b874474a93ba590f7f1da7fab976",
-          "words": 456,
-          "sections": 6,
+          "sha256_lf": "0535351ec7de83566b8349ca44b7ea68a77923419a879ff1cb3ead0efaf22dd6",
+          "words": 764,
+          "sections": 7,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
@@ -199,9 +202,9 @@
           "external_urls": []
         },
         "pt": {
-          "sha256_lf": "d7ef30e70f0035a41535ca9bedaf932bcb5f3644b994d20dc77decefdb967bd5",
-          "words": 468,
-          "sections": 6,
+          "sha256_lf": "f802d74d09435b7a94193e5f28e1e8907f4eddb1f031c914ea41371b095bced0",
+          "words": 802,
+          "sections": 7,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
@@ -1135,27 +1138,27 @@
       "file": "24_gui_qgis.md",
       "versions": {
         "es": {
-          "sha256_lf": "26de13025997f08c2d252b078db74976d5fbce0504b8593653106167560b827e",
-          "words": 546,
-          "sections": 4,
+          "sha256_lf": "ce5e9003e8cd021a2e8c3ff992ab120145d29447f94278638fcd75277aa264d2",
+          "words": 836,
+          "sections": 5,
           "images": 2,
           "table_rows": 0,
           "source_modules": [],
           "external_urls": []
         },
         "en": {
-          "sha256_lf": "3743a6e0bf9db90cecddd3903b814e6997425b5d020dd8d425b7b84b4bd154af",
-          "words": 450,
-          "sections": 4,
+          "sha256_lf": "706f343da0b3afbcec03d540cfcd1d2226fc6e01e4a8ca211f44d2ce387b7104",
+          "words": 705,
+          "sections": 5,
           "images": 2,
           "table_rows": 0,
           "source_modules": [],
           "external_urls": []
         },
         "pt": {
-          "sha256_lf": "b53996636968464d5046db7f5988c45a4d4a958baf4221580f7e4b263a32e9bb",
-          "words": 471,
-          "sections": 4,
+          "sha256_lf": "c11227ddea61f843e578f95d93330f31795f996327dcb312b642e95df273e9bc",
+          "words": 761,
+          "sections": 5,
           "images": 2,
           "table_rows": 0,
           "source_modules": [],

@@ -4,7 +4,7 @@
 # TerraWorkbench
 
 [![Status: internal testing](https://img.shields.io/badge/status-internal%20testing-f59e0b)](#project-status)
-[![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-2563eb)](metadata.txt)
+[![Version 1.0.2](https://img.shields.io/badge/version-1.0.2-2563eb)](metadata.txt)
 [![QGIS 3.28–3.x](https://img.shields.io/badge/QGIS-3.28%E2%80%933.x-589632?logo=qgis&logoColor=white)](metadata.txt)
 [![Python Core ≥3.10; inversion ≥3.11](https://img.shields.io/badge/Python-Core%203.10%2B%20%7C%20inversion%203.11%2B-3776ab)](pyproject.toml)
 [![2D dependencies](https://img.shields.io/badge/2D-requirements%2Fbase.txt-3776ab)](requirements/base.txt)
@@ -52,6 +52,8 @@ El procesamiento básico incluye TPS global hasta 2.000 puntos únicos, aproxima
 | Geosoft <code>.gdb</code> de un archivo | Runtime BSD GX Developer opcional, solo Windows, para inventario/exportación a CSV abierto y capas QGIS |
 
 Una base de canales Geosoft no es una Esri FileGDB. El puente opcional no modifica levantamientos originales ni incorpora código Geosoft al paquete.
+
+En Windows, la conversión de GDB requiere Geosoft Connect y una cuenta Seequent ID gratuita. El administrador de dependencias solicita autorización antes de descargar GX 2024.2 completo (unos 345 MiB). Si falta .NET 6, instale [Microsoft .NET 6 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/6.0), que incluye los frameworks de escritorio y núcleo. Si una cuenta de organización muestra el checkout, seleccione While app is running. La reserva termina al cerrar GX. La conversión se verificó con una cuenta gratuita sin organización y sin cargar DLL de Oasis montaj. Para trabajar sin una cuenta Seequent, importe XYZ o CSV. [GDB](docs/development/gdb_open_archive.md).
 
 <details>
 <summary><strong>Magnetic and gravity exploration filters</strong></summary>
@@ -264,7 +266,7 @@ Desde una copia del repositorio, genera el ZIP con el empaquetador de lista expl
 python scripts/package_plugin.py
 ~~~
 
-Valida fuentes/metadatos y crea <code>dist/TerraWorkbench-1.0.1.zip</code>. En QGIS, abre **Plugins → Manage and Install Plugins → Install from ZIP** y selecciona ese archivo. La alternativa interactiva Windows es <code>scripts/build_dist.bat</code>; pide una versión, por lo que debes conservar la actual si solo empaquetas.
+Valida fuentes/metadatos y crea <code>dist/TerraWorkbench-1.0.2.zip</code>. En QGIS, abre **Plugins → Manage and Install Plugins → Install from ZIP** y selecciona ese archivo. La alternativa interactiva Windows es <code>scripts/build_dist.bat</code>; pide una versión, por lo que debes conservar la actual si solo empaquetas.
 
 El instalador Windows actual comprueba la detección y después instala/actualiza el perfil activo:
 
@@ -352,7 +354,7 @@ TerraWorkbench usa [GPL-3.0-or-later](LICENSE). Las bibliotecas de terceros cons
 
 ## Estado del proyecto
 
-El plugin **1.0.1** es la versión publicada actual; el paquete Core independiente es **0.1.0**. Las correcciones se publican como versiones 1.0.x. Los métodos documentados como experimentales conservan esa condición.
+El plugin **1.0.2** es el candidato preparado localmente, pendiente de autorización para publicar; el paquete Core independiente es **0.1.0**. Las correcciones se publican como versiones 1.0.x. Los métodos documentados como experimentales conservan esa condición.
 
 La [campaña pública de procesamiento](docs/validation/reports/public_processing_benchmark.md) registra entradas fijadas y referencias numéricas independientes; los [informes de inversión](docs/validation/README.md) distinguen ejecución, convergencia y recuperación. Las comprobaciones históricas de QGIS 3.44, Processing/Filter Stack y estructura ZIP son evidencia de sus revisiones registradas.
 

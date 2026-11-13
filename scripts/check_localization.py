@@ -102,18 +102,30 @@ def audit():
                 if isinstance(node.func, ast.Attribute)
                 else ""
             )
-            if name not in ("text", "tr", "translate"):
+            args = node.args
+            if path.name == "survey_workspace_dialog.py":
+                offset = {
+                    "_bind_text": 1,
+                    "_translated_widget": 1,
+                    "_translated_tab": 1,
+                    "_translated_option": 2,
+                    "_bind_option": 2,
+                    "_result_label": 0,
+                }.get(name)
+                if offset is not None:
+                    name, args = "tr", args[offset:]
+            if name not in ("text", "tr", "translate") or not args:
                 continue
             where = f"{path.relative_to(ROOT)}:{node.lineno}"
-            if isinstance(node.args[0], ast.JoinedStr):
+            if isinstance(args[0], ast.JoinedStr):
                 errors.append(where + ": format after translation, not before")
-            sources = constant_strings(node.args[0])
+            sources = constant_strings(args[0])
             if not sources:
                 continue  # separately audited data-driven catalogues
-            direct = [constant_strings(arg) for arg in node.args]
+            direct = [constant_strings(arg) for arg in args]
             for source in sources:
                 source_count.add(source)
-                if len(node.args) >= 3 and all(len(v) == 1 for v in direct[:3]):
+                if len(args) >= 3 and all(len(v) == 1 for v in direct[:3]):
                     translations = [v[0] for v in direct[:3]]
                     triple_count += 1
                 else:

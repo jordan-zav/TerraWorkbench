@@ -45,7 +45,11 @@ def _physical_source(layer):
 
 def read_raster(layer, band_number):
     """Read one raster band as float64 using the GDAL bundled with QGIS."""
-    source = _physical_source(layer)
+    return read_raster_source(_physical_source(layer), band_number)
+
+
+def read_raster_source(source, band_number):
+    """Read a GDAL source without accessing a QGIS layer from a worker."""
     dataset = gdal.Open(source, gdal.GA_ReadOnly)
     if dataset is None:
         raise QgsProcessingException("GDAL could not open the input raster.")
@@ -139,8 +143,8 @@ def restore_raster_order(values, orientation):
     return restored
 
 
-def write_geotiff(output_path, values, grid, description, output_nodata=None):
-    """Write a georeferenced float64 GeoTIFF."""
+def write_geotiff(output_path, values, grid, description, output_nodata=None, *, float32=False):
+    """Write a georeferenced floating-point GeoTIFF."""
     rows, columns = values.shape
     driver = gdal.GetDriverByName("GTiff")
     dataset = driver.Create(
@@ -148,7 +152,7 @@ def write_geotiff(output_path, values, grid, description, output_nodata=None):
         columns,
         rows,
         1,
-        gdal.GDT_Float64,
+        gdal.GDT_Float32 if float32 else gdal.GDT_Float64,
         options=["TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=3"],
     )
     if dataset is None:
@@ -160,7 +164,7 @@ def write_geotiff(output_path, values, grid, description, output_nodata=None):
     dataset.SetProjection(grid.projection)
     dataset.SetMetadata(grid.metadata)
     band = dataset.GetRasterBand(1)
-    band.WriteArray(np.asarray(values, dtype=np.float64))
+    band.WriteArray(np.asarray(values, dtype=np.float32 if float32 else np.float64))
     band.SetDescription(description)
     if output_nodata is not None:
         band.SetNoDataValue(float(output_nodata))

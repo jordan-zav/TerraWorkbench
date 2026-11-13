@@ -614,7 +614,7 @@ def preprocess_frame(
                 [shape(f.get("geometry", f)) for f in features if f.get("geometry", f)]
             )
         elif suffix == ".kml":
-            import xml.etree.ElementTree as ET
+            import defusedxml.ElementTree as ET
             from shapely.geometry import Polygon
 
             doc = ET.parse(str(clip))

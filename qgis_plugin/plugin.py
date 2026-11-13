@@ -46,8 +46,9 @@ class TerraWorkbenchPlugin:
         show_dependency_dialog(self.iface.mainWindow())
         self.initProcessing()
         if self.filter_stack_dock is None:
-            self.filter_stack_dock = FilterStackDock(self.iface.mainWindow())
+            self.filter_stack_dock = FilterStackDock(self.iface.mainWindow(), iface=self.iface)
             self.filter_stack_dock.languageChanged.connect(self.retranslate)
+            self.filter_stack_dock.workspaceRequested.connect(self.show_workspace)
             self.iface.addDockWidget(
                 qt_enum(Qt, "DockWidgetArea", "RightDockWidgetArea"),
                 self.filter_stack_dock,
@@ -77,7 +78,7 @@ class TerraWorkbenchPlugin:
             self.workspace_action = QAction(
                 "TerraWorkbench — Survey databases…", self.iface.mainWindow()
             )
-            self.workspace_action.triggered.connect(self.show_workspace)
+            self.workspace_action.triggered.connect(lambda: self.show_workspace())
             self.iface.addPluginToRasterMenu("TerraWorkbench", self.workspace_action)
             self.process_action = QAction(
                 "TerraWorkbench — Geophysical processes…", self.iface.mainWindow()
@@ -88,6 +89,9 @@ class TerraWorkbenchPlugin:
             self.retranslate()
 
     def retranslate(self):
+        for dialog in (self.process_dialog, self.workspace_dialog):
+            if dialog is not None:
+                dialog.retranslate()
         if self.process_action is not None:
             from ..ui.survey_workspace_dialog import tr
 
@@ -127,12 +131,22 @@ class TerraWorkbenchPlugin:
                 )
             )
 
-    def show_workspace(self):
+    def show_workspace(self, path="", database_id=""):
         from ..ui.survey_workspace_dialog import SurveyWorkspaceDialog
+        from .survey_map_layers import survey_layer_database
+        from qgis.core import QgsProject
 
         if self.workspace_dialog is None:
-            self.workspace_dialog = SurveyWorkspaceDialog(self.iface.mainWindow())
+            self.workspace_dialog = SurveyWorkspaceDialog(self.iface.mainWindow(), iface=self.iface)
         self.workspace_dialog._close_requested = False
+        context = (path, database_id) if path and database_id else survey_layer_database(
+            QgsProject.instance(), getattr(self.iface, "activeLayer", lambda: None)(),
+        )
+        if context:
+            try:
+                self.workspace_dialog.select_database(*context)
+            except (OSError, ValueError) as error:
+                self.iface.messageBar().pushWarning("TerraWorkbench", str(error))
         self.workspace_dialog.show()
         self.workspace_dialog.raise_()
         self.workspace_dialog.activateWindow()

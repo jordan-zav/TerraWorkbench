@@ -20,6 +20,14 @@ La disponibilidad se verifica por proceso. Algunas APIs tienen formulario especi
 
 La carpeta vacía puede usar temporales del procesamiento. Una carpeta elegida crea un contexto de ejecución y permite conservar receta e intermedios según la herramienta. La receta no certifica que la siguiente ejecución recibió los mismos bytes de entrada.
 
+## Sombreado rápido
+
+Selecciona un ráster de una banda y pulsa **Sombreado**, junto a **Carpeta de trabajo** en la Pila de filtros. El menú contextual del ráster ofrece las mismas opciones. El botón aplica la paleta geofísica clásica de GeoRamp entre los percentiles 2 y 98 de las muestras válidas y añade el sombreado al vuelo de QGIS encima del ráster, sin crear archivos. Vuelve a pulsar para ocultarlo o mostrarlo. El menú permite cambiar el azimut, la altura, la intensidad (×0,5, ×1, ×2 o ×4) y la paleta (clásica o grises). Por defecto usa azimut 315°, altura 45° y mezcla Multiplicar al 34 % de opacidad.
+
+**Calcular sombreado…** escribe un GeoTIFF Float32 con la geometría y NoData de la entrada. El azimut se mide desde el norte en sentido horario. Usa los atajos de brújula, elige varios azimuts para generar salidas individuales o selecciona **Combinado (multidireccional)** para obtener la media aritmética con peso 1/N para cada una de las N direcciones. El cálculo se ejecuta en segundo plano. Los resultados quedan en el grupo de la capa y van a la carpeta de trabajo del proyecto o a la temporal de QGIS. Cada GeoTIFF registra su origen, ángulos, pesos y factor z efectivo.
+
+El factor z automático es tan(30°) dividido por el percentil 90 de las magnitudes finitas del gradiente por unidad de coordenada horizontal, calculadas con el tamaño de celda. Si ese percentil es cero, usa el percentil 90 de los gradientes positivos. Una grilla plana usa un factor de uno. El efecto visual estima los gradientes en bloques de celdas nativas contiguas. Al multiplicar toda la grilla por una constante positiva, el factor automático se divide por la misma constante. El cálculo también acepta un factor explícito.
+
 ## Formularios avanzados
 
 Los formularios se construyen a partir de firmas reales, etiquetas escritas en tres idiomas y validadores. Un argumento obligatorio sin valor físico no se inventa. Las matrices pueden venir de un NPZ mediante @nombre o un objeto $array en JSON. Revisar forma, dtype, unidades y longitud antes de ejecutar; el inspector de cabeceras no carga ni valida toda la física de los arrays.

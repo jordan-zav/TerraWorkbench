@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import html
-import importlib.util
 import json
 import hashlib
 import inspect
@@ -70,7 +69,6 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import (
     QgsApplication,
-    QgsCoordinateReferenceSystem,
     QgsProcessing,
     QgsProcessingContext,
     QgsProcessingException,
@@ -86,6 +84,7 @@ from qgis.core import (
 )
 
 from ._paths import PLUGIN_ROOT
+from .hillshade import HillshadeActions
 from ..qgis_plugin.qgis_compat import (
     PROCESSING_NUMBER_INTEGER,
     processing_parameter_is_optional,
@@ -107,16 +106,28 @@ from ..compat.spectral import (
     radial_power_spectrum,
 )
 from ..qgis_plugin.data_import import (
+    copy_imported_raster,
+    import_layer_path,
+    import_working_directory,
+    is_temporary_import,
+    mark_temporary_import,
+    new_import_directory,
+    project_work_directory,
+    recent_work_directories,
+    remember_work_directory,
+    save_temporary_imports,
+    temporary_import_root,
+    write_project_work_directory,
     import_survey_grid,
     list_raster_subdatasets,
     list_vector_layers,
 )
-from ..embedded_qpip import activate_dependency_path, dependency_directory
+from ..qgis_plugin.hillshade import EFFECT
+from ..embedded_qpip import dependency_directory
 from ..embedded_qpip.manager import python_command
 from ..qgis_plugin.geosoft_runtime import (
     GeosoftRuntime,
     find_geosoft_runtime,
-    validate_geosoft_location,
 )
 from .i18n import language, text, translate
 from .settings_dialog import (
@@ -142,48 +153,136 @@ _KNOWLEDGE_REPOSITORIES = (
     (
         "Campos potenciales y filtros",
         (
-            ("Harmonica", "https://github.com/fatiando/harmonica", "Procesamiento, modelado, fuentes equivalentes, Euler y lectura GRD."),
-            ("Verde", "https://github.com/fatiando/verde", "Gridding, tendencias y validación espacial."),
-            ("Boule", "https://github.com/fatiando/boule", "Elipsoides y gravedad normal."),
-            ("Choclo", "https://github.com/fatiando/choclo", "Kernels rápidos de gravedad y magnetismo."),
-            ("GMT", "https://github.com/GenericMappingTools/gmt", "Procesamiento maduro de grillas y filtros FFT."),
-            ("xrft", "https://github.com/xgcm/xrft", "FFT con dimensiones y coordenadas xarray."),
+            (
+                "Harmonica",
+                "https://github.com/fatiando/harmonica",
+                "Procesamiento, modelado, fuentes equivalentes, Euler y lectura GRD.",
+            ),
+            (
+                "Verde",
+                "https://github.com/fatiando/verde",
+                "Gridding, tendencias y validación espacial.",
+            ),
+            (
+                "Boule",
+                "https://github.com/fatiando/boule",
+                "Elipsoides y gravedad normal.",
+            ),
+            (
+                "Choclo",
+                "https://github.com/fatiando/choclo",
+                "Kernels rápidos de gravedad y magnetismo.",
+            ),
+            (
+                "GMT",
+                "https://github.com/GenericMappingTools/gmt",
+                "Procesamiento maduro de grillas y filtros FFT.",
+            ),
+            (
+                "xrft",
+                "https://github.com/xgcm/xrft",
+                "FFT con dimensiones y coordenadas xarray.",
+            ),
         ),
     ),
     (
         "Suites geofísicas y QGIS",
         (
-            ("PyGMI", "https://github.com/Patrick-Cole/pygmi", "Suite abierta de magnetismo, gravedad, raster y modelado."),
-            ("SGTool", "https://github.com/swaxi/SGTool", "Plugin QGIS/ArcGIS para cálculos de campos potenciales."),
-            ("QGIS", "https://github.com/qgis/QGIS", "Código del host, Processing, tareas y raster providers."),
+            (
+                "PyGMI",
+                "https://github.com/Patrick-Cole/pygmi",
+                "Suite abierta de magnetismo, gravedad, raster y modelado.",
+            ),
+            (
+                "SGTool",
+                "https://github.com/swaxi/SGTool",
+                "Plugin QGIS/ArcGIS para cálculos de campos potenciales.",
+            ),
+            (
+                "QGIS",
+                "https://github.com/qgis/QGIS",
+                "Código del host, Processing, tareas y raster providers.",
+            ),
         ),
     ),
     (
         "Inversión y modelos 3D",
         (
-            ("SimPEG", "https://github.com/simpeg/simpeg", "GRAV, MAG, MVI, regularización e inversión conjunta."),
-            ("discretize", "https://github.com/simpeg/discretize", "TensorMesh, TreeMesh y operadores."),
-            ("geoana", "https://github.com/simpeg/geoana", "Soluciones analíticas para pruebas sintéticas."),
-            ("pyGIMLi", "https://github.com/gimli-org/pyGIMLi", "Modelado e inversión restringida y conjunta."),
-            ("Euler inversion", "https://github.com/compgeolab/euler-inversion", "Investigación reproducible de localización de fuentes."),
-            ("GemPy", "https://github.com/gempy-project/gempy", "Modelado geológico implícito y estocástico."),
-            ("LoopStructural", "https://github.com/Loop3D/LoopStructural", "Modelado estructural implícito."),
+            (
+                "SimPEG",
+                "https://github.com/simpeg/simpeg",
+                "GRAV, MAG, MVI, regularización e inversión conjunta.",
+            ),
+            (
+                "discretize",
+                "https://github.com/simpeg/discretize",
+                "TensorMesh, TreeMesh y operadores.",
+            ),
+            (
+                "geoana",
+                "https://github.com/simpeg/geoana",
+                "Soluciones analíticas para pruebas sintéticas.",
+            ),
+            (
+                "pyGIMLi",
+                "https://github.com/gimli-org/pyGIMLi",
+                "Modelado e inversión restringida y conjunta.",
+            ),
+            (
+                "Euler inversion",
+                "https://github.com/compgeolab/euler-inversion",
+                "Investigación reproducible de localización de fuentes.",
+            ),
+            (
+                "GemPy",
+                "https://github.com/gempy-project/gempy",
+                "Modelado geológico implícito y estocástico.",
+            ),
+            (
+                "LoopStructural",
+                "https://github.com/Loop3D/LoopStructural",
+                "Modelado estructural implícito.",
+            ),
         ),
     ),
     (
         "Campo principal y formatos",
         (
-            ("ppigrf", "https://github.com/IAGA-VMOD/ppigrf", "IGRF-14 puro en Python."),
-            ("GDAL", "https://github.com/OSGeo/gdal", "Formatos raster/vector y metadatos."),
-            ("Rasterio", "https://github.com/rasterio/rasterio", "Lectura, escritura y validación raster sobre GDAL."),
-            ("awesome-open-geoscience", "https://github.com/softwareunderground/awesome-open-geoscience", "Catálogo comunitario para descubrir proyectos abiertos."),
+            (
+                "ppigrf",
+                "https://github.com/IAGA-VMOD/ppigrf",
+                "IGRF-14 puro en Python.",
+            ),
+            (
+                "GDAL",
+                "https://github.com/OSGeo/gdal",
+                "Formatos raster/vector y metadatos.",
+            ),
+            (
+                "Rasterio",
+                "https://github.com/rasterio/rasterio",
+                "Lectura, escritura y validación raster sobre GDAL.",
+            ),
+            (
+                "awesome-open-geoscience",
+                "https://github.com/softwareunderground/awesome-open-geoscience",
+                "Catálogo comunitario para descubrir proyectos abiertos.",
+            ),
         ),
     ),
     (
         "Radiometría gamma",
         (
-            ("IAEA radioelement guidelines", "https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf", "Normas de adquisición, calibración, procesamiento, incertidumbre y cartografía radiométrica."),
-            ("Geoscience Australia Radiometrics", "https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics", "Productos oficiales K, eU, eTh, dosis y composiciones ternarias."),
+            (
+                "IAEA radioelement guidelines",
+                "https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf",
+                "Normas de adquisición, calibración, procesamiento, incertidumbre y cartografía radiométrica.",
+            ),
+            (
+                "Geoscience Australia Radiometrics",
+                "https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics",
+                "Productos oficiales K, eU, eTh, dosis y composiciones ternarias.",
+            ),
         ),
     ),
 )
@@ -315,7 +414,9 @@ def run_filter_stack(
         QgsApplication.processingRegistry().algorithmById(step.algorithm_id)
         for step in steps
     ]
-    if all(isinstance(algorithm, SpectralFilterBase) for algorithm in spectral_algorithms):
+    if all(
+        isinstance(algorithm, SpectralFilterBase) for algorithm in spectral_algorithms
+    ):
         preprocessing = [
             algorithm.preprocessing_values(step.parameters, context)
             for algorithm, step in zip(spectral_algorithms, steps)
@@ -417,9 +518,7 @@ def _run_combined_spectral_stack(
         if feedback.isCanceled():
             raise QgsProcessingException("Filter stack was canceled.")
         algorithm.prepare(grid, step.parameters, context, feedback)
-        response = algorithm.transfer(
-            k_east, k_north, radial, step.parameters, context
-        )
+        response = algorithm.transfer(k_east, k_north, radial, step.parameters, context)
         if not np.isfinite(response).all():
             raise QgsProcessingException(
                 f"Non-finite FFT response: {algorithm.displayName()}"
@@ -431,9 +530,7 @@ def _run_combined_spectral_stack(
             restore_trend=settings[3],
         )
         values = restore_raster_order(filtered, orientation)
-        persist = output_path is not None and (
-            keep_intermediate or index == last_index
-        )
+        persist = output_path is not None and (keep_intermediate or index == last_index)
         if persist:
             destination = output_path / f"{_safe_output_stem(index, algorithm)}.tif"
         else:
@@ -508,7 +605,11 @@ class SpectrumPlot(QWidget):
             self.height() - 16,
             f"{maximum:.4g} {text('rad/unit', 'rad/unidad')}",
         )
-        painter.drawText(int(plot.center().x()) - 45, self.height() - 16, text("wavenumber", "número de onda"))
+        painter.drawText(
+            int(plot.center().x()) - 45,
+            self.height() - 16,
+            text("wavenumber", "número de onda"),
+        )
         painter.setPen(QPen(QColor("#202020"), 2.0))
         painter.drawLine(65, 34, 92, 34)
         painter.setPen(self.palette().text().color())
@@ -548,9 +649,7 @@ class KnowledgeBaseDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("TerraWorkbenchKnowledgeBase")
-        self.setWindowFlags(
-            self.windowFlags() | qt_enum(Qt, "WindowType", "Tool")
-        )
+        self.setWindowFlags(self.windowFlags() | qt_enum(Qt, "WindowType", "Tool"))
         self.setMinimumSize(620, 480)
         self.setMaximumSize(900, 760)
         self.resize(760, 680)
@@ -581,6 +680,7 @@ class KnowledgeBaseDialog(QDialog):
         self.chapter_search.textChanged.connect(self.filter_chapters)
         self.chapter_picker.currentIndexChanged.connect(self.show_chapter)
         from .full_manual import FullManualWidget
+
         self.full_manual = FullManualWidget()
         self.tabs.addTab(self.full_manual, "")
         layout.addWidget(self.tabs, 1)
@@ -596,7 +696,10 @@ class KnowledgeBaseDialog(QDialog):
 
     def retranslate(self):
         self.setWindowTitle(
-            text("TerraWorkbench — Knowledge Base", "TerraWorkbench — Base de conocimiento")
+            text(
+                "TerraWorkbench — Knowledge Base",
+                "TerraWorkbench — Base de conocimiento",
+            )
         )
         self.intro.setText(
             text(
@@ -606,11 +709,20 @@ class KnowledgeBaseDialog(QDialog):
         )
         self.repository_browser.setHtml(self._repository_html())
         self.tabs.setTabText(0, text("Trusted repositories", "Repositorios confiables"))
-        self.tabs.setTabText(1, text("MAG / GRAV / RAD reference", "Referencia MAG / GRAV / RAD"))
+        self.tabs.setTabText(
+            1, text("MAG / GRAV / RAD reference", "Referencia MAG / GRAV / RAD")
+        )
         self.tabs.setTabText(2, text("Practical handbook", "Manual práctico"))
-        self.tabs.setTabText(3, {"en": "Complete manual", "es": "Manual completo", "pt": "Manual completo"}[language()])
+        self.tabs.setTabText(
+            3,
+            {"en": "Complete manual", "es": "Manual completo", "pt": "Manual completo"}[
+                language()
+            ],
+        )
         self.full_manual.retranslate(language())
-        self.chapter_search.setPlaceholderText(text("Search handbook…", "Buscar en el manual…"))
+        self.chapter_search.setPlaceholderText(
+            text("Search handbook…", "Buscar en el manual…")
+        )
         self.filter_chapters()
         reference_name = {
             "en": "potential_fields_reference_en.md",
@@ -619,7 +731,9 @@ class KnowledgeBaseDialog(QDialog):
         }[language()]
         reference_path = PLUGIN_ROOT / "docs" / "handbook" / reference_name
         if reference_path.is_file():
-            self.reference_browser.setMarkdown(reference_path.read_text(encoding="utf-8"))
+            self.reference_browser.setMarkdown(
+                reference_path.read_text(encoding="utf-8")
+            )
         else:
             self.reference_browser.setPlainText(
                 text(
@@ -654,7 +768,9 @@ class KnowledgeBaseDialog(QDialog):
     def show_chapter(self, *_args):
         chapter_id = self.chapter_picker.currentData()
         if chapter_id is None:
-            self.handbook_browser.setPlainText(text("No matching chapters.", "No hay capítulos coincidentes."))
+            self.handbook_browser.setPlainText(
+                text("No matching chapters.", "No hay capítulos coincidentes.")
+            )
         else:
             self.handbook_browser.setMarkdown(chapter_text(chapter_id, language()))
 
@@ -692,9 +808,7 @@ class FilterInfoDialog(QDialog):
         self.setObjectName("TerraWorkbenchFilterInfo")
         self.algorithm = None
         self.algorithm_id = None
-        self.setWindowFlags(
-            self.windowFlags() | qt_enum(Qt, "WindowType", "Tool")
-        )
+        self.setWindowFlags(self.windowFlags() | qt_enum(Qt, "WindowType", "Tool"))
         self.setMinimumSize(480, 400)
         self.resize(720, 680)
         layout = QVBoxLayout(self)
@@ -716,7 +830,9 @@ class FilterInfoDialog(QDialog):
                 )
             )
         else:
-            current = QgsApplication.processingRegistry().algorithmById(self.algorithm_id)
+            current = QgsApplication.processingRegistry().algorithmById(
+                self.algorithm_id
+            )
             if current is not None:
                 self.set_algorithm(current)
 
@@ -758,12 +874,9 @@ class FilterInfoDialog(QDialog):
 
         links = _algorithm_reference_links(algorithm)
         link_items = "".join(
-            f'<li><a href="{url}">{html.escape(name)}</a></li>'
-            for name, url in links
+            f'<li><a href="{url}">{html.escape(name)}</a></li>' for name, url in links
         )
-        self.setWindowTitle(
-            f"TerraWorkbench — {algorithm.displayName()}"
-        )
+        self.setWindowTitle(f"TerraWorkbench — {algorithm.displayName()}")
         self.browser.setHtml(
             f"<h2>{html.escape(algorithm.displayName())}</h2>"
             f"<p><b>{text('Group', 'Grupo')}:</b> {html.escape(algorithm.group())}<br>"
@@ -791,27 +904,42 @@ def _algorithm_reference_links(algorithm):
     if any(term in searchable for term in ("gravity", "magnetic", "harmonica")):
         links.append(("Harmonica", "https://github.com/fatiando/harmonica"))
     if any(term in searchable for term in ("fft", "spectral", "frequency", "fourier")):
-        links.append(("GMT grid FFT reference", "https://github.com/GenericMappingTools/gmt"))
-    if any(term in searchable for term in ("igrf", "field-direction", "pole", "equator")):
+        links.append(
+            ("GMT grid FFT reference", "https://github.com/GenericMappingTools/gmt")
+        )
+    if any(
+        term in searchable for term in ("igrf", "field-direction", "pole", "equator")
+    ):
         links.append(("ppigrf / IGRF-14", "https://github.com/IAGA-VMOD/ppigrf"))
     if any(term in searchable for term in ("bouguer", "normal gravity", "latitude")):
         links.append(("Boule geodetic reference", "https://github.com/fatiando/boule"))
     if any(term in searchable for term in ("gamma", "radiometr", "dose", "euth")):
         links.extend(
             (
-                ("IAEA radioelement-mapping guidelines", "https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf"),
-                ("Geoscience Australia radiometrics", "https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics"),
+                (
+                    "IAEA radioelement-mapping guidelines",
+                    "https://www-pub.iaea.org/MTCD/publications/PDF/te_1363_web/PDF/Contents.pdf",
+                ),
+                (
+                    "Geoscience Australia radiometrics",
+                    "https://www.ga.gov.au/scientific-topics/disciplines/geophysics/radiometrics",
+                ),
             )
         )
     if not links:
-        links.append(("TerraWorkbench reference ecosystem", "https://github.com/fatiando/harmonica"))
+        links.append(
+            (
+                "TerraWorkbench reference ecosystem",
+                "https://github.com/fatiando/harmonica",
+            )
+        )
     return links
 
 
 class ElidedButton(QPushButton):
     """Keep full scientific labels in the tooltip while rendering explicit ellipsis."""
 
-    def __init__(self, value='', parent=None):
+    def __init__(self, value="", parent=None):
         self.full_text = str(value)
         super().__init__(value, parent)
 
@@ -821,8 +949,13 @@ class ElidedButton(QPushButton):
         self.update_elision()
 
     def update_elision(self):
-        width = max(1, self.width()-24)
-        value = '\n'.join(self.fontMetrics().elidedText(line, qt_enum(Qt, 'TextElideMode', 'ElideRight'), width) for line in self.full_text.splitlines())
+        width = max(1, self.width() - 24)
+        value = "\n".join(
+            self.fontMetrics().elidedText(
+                line, qt_enum(Qt, "TextElideMode", "ElideRight"), width
+            )
+            for line in self.full_text.splitlines()
+        )
         super().setText(value)
 
     def resizeEvent(self, event):
@@ -834,8 +967,9 @@ class FilterStackDock(QDockWidget):
     """Right-side QGIS panel for composing sequential raster filters."""
 
     languageChanged = pyqtSignal()
+    workspaceRequested = pyqtSignal(str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, iface=None):
         super().__init__("TerraWorkbench — Filter Stack", parent)
         self.setObjectName("TerraWorkbenchFilterStackDock")
         self.setMinimumWidth(320)
@@ -844,6 +978,10 @@ class FilterStackDock(QDockWidget):
         self._parameter_editors = {}
         self.last_stages = []
         self._algorithm_labels = {}
+        self._warned_work_directories = set()
+        self._ignored_temporary_imports = set()
+        self.iface = iface
+        self.hillshade = HillshadeActions(self, iface)
         self._build_ui()
         self.apply_preferences()
         self.retranslate()
@@ -855,8 +993,8 @@ class FilterStackDock(QDockWidget):
         body = QWidget(self)
         body.setObjectName("TerraWorkbenchBody")
         layout = QVBoxLayout(body)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(10)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(6)
 
         self.header = QFrame()
         self.header.setObjectName("TerraWorkbenchHeader")
@@ -864,9 +1002,7 @@ class FilterStackDock(QDockWidget):
         header_layout.setContentsMargins(12, 10, 12, 10)
         self.brand_icon = QLabel()
         self.brand_icon.setObjectName("TerraWorkbenchBrandIcon")
-        self.brand_icon.setPixmap(
-            QIcon(str(BRAND_ICON_PATH)).pixmap(QSize(36, 36))
-        )
+        self.brand_icon.setPixmap(QIcon(str(BRAND_ICON_PATH)).pixmap(QSize(36, 36)))
         self.brand_icon.setFixedSize(40, 40)
         brand_copy = QVBoxLayout()
         brand_copy.setSpacing(1)
@@ -880,10 +1016,26 @@ class FilterStackDock(QDockWidget):
         header_layout.addLayout(brand_copy, 1)
         layout.addWidget(self.header)
 
+        self.work_directory_button = QToolButton()
+        self.work_directory_menu = QMenu(self.work_directory_button)
+        self.work_directory_menu.setToolTipsVisible(True)
+        self.work_directory_menu.aboutToShow.connect(self._populate_work_directory_menu)
+        self.work_directory_button.setMenu(self.work_directory_menu)
+        self.work_directory_button.setPopupMode(
+            qt_enum(QToolButton, "ToolButtonPopupMode", "InstantPopup")
+        )
+        self.quick_tools = QGridLayout()
+        self.quick_tools.setColumnStretch(3, 1)
+        self._quick_tools_wrapped = None
+        self.workspace_button = QToolButton()
+        self.workspace_button.clicked.connect(lambda: self.workspaceRequested.emit("", ""))
+        layout.addLayout(self.quick_tools)
+
         self.source_group = QGroupBox("Input raster")
         self.source_group.setObjectName("TerraWorkbenchSection")
         source_layout = QFormLayout(self.source_group)
         self.layer_combo = QComboBox()
+        self.layer_combo.currentIndexChanged.connect(self.hillshade.refresh)
         self.layer_combo.setSizeAdjustPolicy(
             qt_enum(
                 QComboBox,
@@ -917,9 +1069,7 @@ class FilterStackDock(QDockWidget):
             qt_enum(QSizePolicy, "Policy", "Ignored"),
             qt_enum(QSizePolicy, "Policy", "Fixed"),
         )
-        self.algorithm_button.setToolTip(
-            "Open the filter catalogue"
-        )
+        self.algorithm_button.setToolTip("Open the filter catalogue")
         self.add_button = QPushButton("Add filter")
         self.add_button.setObjectName("TerraWorkbenchAccentButton")
         add_row.addWidget(self.algorithm_button, 1)
@@ -940,9 +1090,7 @@ class FilterStackDock(QDockWidget):
         self.step_list.setDragDropMode(
             qt_enum(QAbstractItemView, "DragDropMode", "InternalMove")
         )
-        self.step_list.setDefaultDropAction(
-            qt_enum(Qt, "DropAction", "MoveAction")
-        )
+        self.step_list.setDefaultDropAction(qt_enum(Qt, "DropAction", "MoveAction"))
         self.step_list.setDragEnabled(True)
         self.step_list.setAcceptDrops(True)
         self.step_list.setDropIndicatorShown(True)
@@ -990,7 +1138,9 @@ class FilterStackDock(QDockWidget):
         parameter_tab_layout = QVBoxLayout(parameter_tab)
         self.parameter_group = QGroupBox("Selected filter parameters")
         self.parameter_form = QFormLayout(self.parameter_group)
-        self.parameter_form.setRowWrapPolicy(qt_enum(QFormLayout, "RowWrapPolicy", "WrapLongRows"))
+        self.parameter_form.setRowWrapPolicy(
+            qt_enum(QFormLayout, "RowWrapPolicy", "WrapLongRows")
+        )
         self.parameter_form.setVerticalSpacing(12)
         self.empty_parameters = QLabel("Select a filter to edit its parameters.")
         self.parameter_form.addRow(self.empty_parameters)
@@ -1030,8 +1180,7 @@ class FilterStackDock(QDockWidget):
         self.algorithm_picker.setObjectName("TerraWorkbenchAlgorithmPicker")
         self.algorithm_picker.setWindowTitle("Choose a TerraWorkbench filter")
         self.algorithm_picker.setWindowFlags(
-            self.algorithm_picker.windowFlags()
-            | qt_enum(Qt, "WindowType", "Tool")
+            self.algorithm_picker.windowFlags() | qt_enum(Qt, "WindowType", "Tool")
         )
         self.algorithm_picker.setMinimumWidth(560)
         self.algorithm_picker.resize(840, 700)
@@ -1040,7 +1189,9 @@ class FilterStackDock(QDockWidget):
         self.domain_filter = QComboBox()
         for key in ("", "SPACE", "FREQUENCY", "MIXED", "MODEL", "OTHER"):
             self.domain_filter.addItem(key, key)
-        self.domain_filter.currentIndexChanged.connect(lambda: self.filter_algorithm_picker(self.algorithm_search.text()))
+        self.domain_filter.currentIndexChanged.connect(
+            lambda: self.filter_algorithm_picker(self.algorithm_search.text())
+        )
         picker_layout.addWidget(self.domain_filter)
         self.domain_note = QLabel(
             "SPATIAL = cells and neighbours; FREQUENCY = 2D Fourier/wavenumber; "
@@ -1096,11 +1247,26 @@ class FilterStackDock(QDockWidget):
             "Open formulas, limitations and trusted open-source repositories"
         )
         self.import_menu = QMenu(self.import_button)
-        self.import_grid_action = self.import_menu.addAction("Survey grid file…", self.import_grid)
-        self.import_gdb_action = self.import_menu.addAction("Esri FileGDB folder…", self.import_filegdb)
+        self.import_grid_action = self.import_menu.addAction(
+            "Survey grid file…", self.import_grid
+        )
+        self.import_gdb_action = self.import_menu.addAction(
+            "Esri FileGDB folder…", self.import_filegdb
+        )
         self.import_geosoft_action = self.import_menu.addAction(
             "Geosoft GeoDatabase inventory/export…", self.import_geosoft_gdb
         )
+        self.open_archive_action = self.import_menu.addAction(
+            "Open converted survey archive…", self.import_open_archive
+        )
+        self.export_geosoft_action = self.import_menu.addAction(
+            "Export Geosoft GeoDatabase to folder…",
+            lambda: self.import_geosoft_gdb(choose_destination=True),
+        )
+        self.save_import_action = self.import_menu.addAction(
+            "Save as GeoTIFF…", self.save_imported_grid
+        )
+        self.import_menu.aboutToShow.connect(self._update_import_actions)
         self.example_menu = self.import_menu.addMenu("Bundled sample datasets")
         self.sample_mag_action = self.example_menu.addAction(
             "Synthetic magnetic anomaly (nT)",
@@ -1265,8 +1431,7 @@ class FilterStackDock(QDockWidget):
             text(
                 "{count} filter" if count == 1 else "{count} filters",
                 "{count} filtro" if count == 1 else "{count} filtros",
-            )
-            .format(count=count)
+            ).format(count=count)
         )
         self.empty_stack_note.setVisible(count == 0)
         self.run_button.setEnabled(count > 0 and self.layer_combo.count() > 0)
@@ -1292,9 +1457,7 @@ class FilterStackDock(QDockWidget):
         settings = QgsSettings()
         self.band_spin.setValue(settings.value(KEY_BAND, 1, type=int))
         self.output_directory.setText(settings.value(KEY_OUTPUT, "", type=str))
-        self.keep_intermediate.setChecked(
-            settings.value(KEY_KEEP, False, type=bool)
-        )
+        self.keep_intermediate.setChecked(settings.value(KEY_KEEP, False, type=bool))
         tooltips = settings.value(KEY_TOOLTIPS, True, type=bool)
         self.algorithm_button.setToolTip(
             text(
@@ -1326,6 +1489,10 @@ class FilterStackDock(QDockWidget):
         self.setWindowTitle(
             text("TerraWorkbench — Filter Stack", "TerraWorkbench — Pila de filtros")
         )
+        if getattr(self, "_survey_notices", None):
+            from .survey_workspace_dialog import translate_survey_notices
+
+            translate_survey_notices(self)
         self.brand_subtitle.setText(
             text("Geophysical workflow builder", "Constructor de flujos geofísicos")
         )
@@ -1360,14 +1527,20 @@ class FilterStackDock(QDockWidget):
             )
         )
         self.inspector.setWindowTitle(
-            text("TerraWorkbench — Filter inspector", "TerraWorkbench — Inspector de filtros")
+            text(
+                "TerraWorkbench — Filter inspector",
+                "TerraWorkbench — Inspector de filtros",
+            )
         )
         self.parameter_group.setTitle(
             text("Selected filter parameters", "Parámetros del filtro seleccionado")
         )
         self.parameters_button.setText(text("Parameters", "Parámetros"))
         self.empty_parameters.setText(
-            text("Select a filter to edit its parameters.", "Seleccione un filtro para editar sus parámetros.")
+            text(
+                "Select a filter to edit its parameters.",
+                "Seleccione un filtro para editar sus parámetros.",
+            )
         )
         self.spectrum_note.setText(
             text(
@@ -1397,10 +1570,22 @@ class FilterStackDock(QDockWidget):
                 "ESPACIAL: celdas y sus vecinas. FRECUENCIA: Fourier 2D y número de onda. MIXTO: combina ambos dominios. MODELO FÍSICO: ecuaciones con parámetros geofísicos. Una base de datos es un tipo de entrada, no un dominio numérico.",
             )
         )
-        for index, label in enumerate(("All domains", "Spatial · 2D grids", "Frequency · 2D Fourier", "Mixed · space and frequency", "Physical models", "Other grid operations")):
+        for index, label in enumerate(
+            (
+                "All domains",
+                "Spatial · 2D grids",
+                "Frequency · 2D Fourier",
+                "Mixed · space and frequency",
+                "Physical models",
+                "Other grid operations",
+            )
+        ):
             self.domain_filter.setItemText(index, translate(label))
         self.search_label.setText(
-            text("Search by method, group or abbreviation", "Buscar por método, grupo o abreviatura")
+            text(
+                "Search by method, group or abbreviation",
+                "Buscar por método, grupo o abreviatura",
+            )
         )
         self.algorithm_search.setPlaceholderText(
             "RTP, upward, THDR, Butterworth…"
@@ -1412,11 +1597,21 @@ class FilterStackDock(QDockWidget):
         self.close_picker.setText(text("Close", "Cerrar"))
         self.output_group.setTitle(text("Outputs", "Salidas"))
         self.output_directory.setPlaceholderText(
-            text("Temporary output (or choose a folder)", "Salida temporal (o elija una carpeta)")
+            text(
+                "Temporary output (or choose a folder)",
+                "Salida temporal (o elija una carpeta)",
+            )
         )
         self.output_browse.setText(text("Browse…", "Examinar…"))
         from .survey_workspace_dialog import tr
-        self.review_stages_button.setText(tr("Review last run stages…", "Revisar etapas de la última ejecución…", "Revisar etapas da última execução…"))
+
+        self.review_stages_button.setText(
+            tr(
+                "Review last run stages…",
+                "Revisar etapas de la última ejecución…",
+                "Revisar etapas da última execução…",
+            )
+        )
         self.keep_intermediate.setText(
             text("Save every intermediate raster", "Guardar cada ráster intermedio")
         )
@@ -1426,17 +1621,66 @@ class FilterStackDock(QDockWidget):
         self.save_button.setText(text("Save stack…", "Guardar pila…"))
         self.run_button.setText(text("Run stack", "Ejecutar pila"))
         self.settings_button.setText(text("Settings…", "Configuración…"))
-        self.import_grid_action.setText(text("Survey grid file…", "Archivo de grilla de levantamiento…"))
-        self.import_gdb_action.setText(text("Esri FileGDB folder…", "Carpeta Esri FileGDB…"))
-        self.import_geosoft_action.setText(text("Geosoft GeoDatabase inventory/export…", "Inventario/exportación de GeoDatabase Geosoft…"))
-        self.example_menu.setTitle(text("Bundled sample datasets", "Datos de ejemplo incluidos"))
-        self.sample_mag_action.setText(text("Synthetic magnetic anomaly (nT)", "Anomalía magnética sintética (nT)"))
-        self.sample_grav_action.setText(text("Synthetic gravity anomaly (mGal)", "Anomalía gravimétrica sintética (mGal)"))
+        self.import_grid_action.setText(
+            text("Survey grid file…", "Archivo de grilla de levantamiento…")
+        )
+        self.import_gdb_action.setText(
+            text("Esri FileGDB folder…", "Carpeta Esri FileGDB…")
+        )
+        self.import_geosoft_action.setText(
+            text(
+                "Geosoft GeoDatabase inventory/export…",
+                "Inventario y exportación de GeoDatabase Geosoft…",
+            )
+        )
+        self.export_geosoft_action.setText(text(
+            "Export Geosoft GeoDatabase to folder…",
+            "Exportar GeoDatabase Geosoft a una carpeta…",
+        ))
+        self.open_archive_action.setText(text(
+            "Open converted survey archive…", "Abrir copia abierta de levantamiento…"
+        ))
+        self.refresh_work_directory()
+        self.hillshade.retranslate()
+        self.workspace_button.setText(text("Databases…", "Bases de datos…"))
+        self._layout_quick_tools()
+        for layer in QgsProject.instance().mapLayers().values():
+            if is_temporary_import(layer):
+                self._mark_import(layer)
+        self.example_menu.setTitle(
+            text("Bundled sample datasets", "Datos de ejemplo incluidos")
+        )
+        self.sample_mag_action.setText(
+            text("Synthetic magnetic anomaly (nT)", "Anomalía magnética sintética (nT)")
+        )
+        self.sample_grav_action.setText(
+            text(
+                "Synthetic gravity anomaly (mGal)",
+                "Anomalía gravimétrica sintética (mGal)",
+            )
+        )
         self.sample_dem_action.setText(text("Synthetic DEM (m)", "DEM sintético (m)"))
-        self.sample_k_action.setText(text("Synthetic potassium (% K)", "Potasio sintético (% K)"))
-        self.sample_u_action.setText(text("Synthetic equivalent uranium (ppm eU)", "Uranio equivalente sintético (ppm eU)"))
-        self.sample_th_action.setText(text("Synthetic equivalent thorium (ppm eTh)", "Torio equivalente sintético (ppm eTh)"))
-        self.sample_points_action.setText(text("Synthetic survey points (CSV)", "Puntos sintéticos de levantamiento (CSV)"))
+        self.sample_k_action.setText(
+            text("Synthetic potassium (% K)", "Potasio sintético (% K)")
+        )
+        self.sample_u_action.setText(
+            text(
+                "Synthetic equivalent uranium (ppm eU)",
+                "Uranio equivalente sintético (ppm eU)",
+            )
+        )
+        self.sample_th_action.setText(
+            text(
+                "Synthetic equivalent thorium (ppm eTh)",
+                "Torio equivalente sintético (ppm eTh)",
+            )
+        )
+        self.sample_points_action.setText(
+            text(
+                "Synthetic survey points (CSV)",
+                "Puntos sintéticos de levantamiento (CSV)",
+            )
+        )
         self.nrcan_menu.setTitle(
             text("NRCan field reference grids", "Grillas reales de referencia NRCan")
         )
@@ -1444,7 +1688,9 @@ class FilterStackDock(QDockWidget):
         self.nrcan_hydraulic_mag_action.setText(
             text("Hydraulic — residual magnetics", "Hydraulic — magnetometría residual")
         )
-        self.local_data_menu.setTitle(text("Local test datasets", "Datos locales de prueba"))
+        self.local_data_menu.setTitle(
+            text("Local test datasets", "Datos locales de prueba")
+        )
         self.refresh_local_data_menu()
         self.knowledge_base.retranslate()
         self.filter_info.retranslate()
@@ -1482,12 +1728,29 @@ class FilterStackDock(QDockWidget):
         project = QgsProject.instance()
         project.layersAdded.connect(self.refresh_layers)
         project.layersRemoved.connect(self.refresh_layers)
+        project.writeProject.connect(self.warn_temporary_imports)
+        project.readProject.connect(self._work_project_changed)
+        project.cleared.connect(self._work_project_changed)
 
     def disconnect_project(self):
+        self.hillshade.close()
+        if getattr(self, "_survey_notices", None):
+            from .survey_workspace_dialog import close_survey_notices
+
+            close_survey_notices(self)
         project = QgsProject.instance()
         for signal in (project.layersAdded, project.layersRemoved):
             try:
                 signal.disconnect(self.refresh_layers)
+            except (TypeError, RuntimeError):
+                pass
+        for signal, slot in (
+            (project.writeProject, self.warn_temporary_imports),
+            (project.readProject, self._work_project_changed),
+            (project.cleared, self._work_project_changed),
+        ):
+            try:
+                signal.disconnect(slot)
             except (TypeError, RuntimeError):
                 pass
         self.algorithm_picker.close()
@@ -1497,9 +1760,33 @@ class FilterStackDock(QDockWidget):
         self.settings_dialog.close()
 
     def showEvent(self, event):
+        self.refresh_work_directory()
         self.refresh_layers()
         self.refresh_algorithms()
         super().showEvent(event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, "workspace_button"):
+            self._layout_quick_tools()
+
+    def _layout_quick_tools(self):
+        buttons = (self.work_directory_button, self.hillshade.button, self.workspace_button)
+        width = sum(button.sizeHint().width() for button in buttons) + 2 * self.quick_tools.spacing()
+        wrapped = width > self.width() - 24
+        if wrapped == self._quick_tools_wrapped:
+            return
+        self._quick_tools_wrapped = wrapped
+        for button in buttons:
+            self.quick_tools.removeWidget(button)
+        align = qt_enum(Qt, "AlignmentFlag", "AlignLeft")
+        if wrapped:
+            self.quick_tools.addWidget(buttons[0], 0, 0, 1, 3, align)
+            self.quick_tools.addWidget(buttons[1], 1, 0, align)
+            self.quick_tools.addWidget(buttons[2], 1, 1, align)
+        else:
+            for column, button in enumerate(buttons):
+                self.quick_tools.addWidget(button, 0, column, align)
 
     def refresh_layers(self, *_args):
         selected_id = self.layer_combo.currentData()
@@ -1508,7 +1795,7 @@ class FilterStackDock(QDockWidget):
         layers = [
             layer
             for layer in QgsProject.instance().mapLayers().values()
-            if isinstance(layer, QgsRasterLayer) and layer.isValid()
+            if isinstance(layer, QgsRasterLayer) and layer.isValid() and not layer.customProperty(EFFECT)
         ]
         for layer in sorted(layers, key=lambda item: item.name().casefold()):
             self.layer_combo.addItem(layer.name(), layer.id())
@@ -1516,6 +1803,7 @@ class FilterStackDock(QDockWidget):
         if selected_index >= 0:
             self.layer_combo.setCurrentIndex(selected_index)
         self.layer_combo.blockSignals(False)
+        self.hillshade.refresh()
         self._update_stack_state()
 
     def refresh_algorithms(self):
@@ -1539,34 +1827,45 @@ class FilterStackDock(QDockWidget):
             # the label and information button. Painting both causes duplicated,
             # overlapping text on Windows/QGIS dark themes.
             item = QListWidgetItem()
-            item.setData(
-                qt_enum(Qt, "ItemDataRole", "UserRole"), algorithm.id()
-            )
+            item.setData(qt_enum(Qt, "ItemDataRole", "UserRole"), algorithm.id())
             item.setData(_SEARCH_TEXT_ROLE, label)
             item.setToolTip(label)
             self.algorithm_list.addItem(item)
             row = QWidget(self.algorithm_list)
             row_layout = QHBoxLayout(row)
             row_layout.setContentsMargins(2, 1, 2, 1)
-            choose_button = ElidedButton(algorithm.displayName() + "\n" + translate(algorithm_domain(algorithm)) + " · " + algorithm.group())
+            choose_button = ElidedButton(
+                algorithm.displayName()
+                + "\n"
+                + translate(algorithm_domain(algorithm))
+                + " · "
+                + algorithm.group()
+            )
             choose_button.setFlat(True)
             choose_button.setStyleSheet("text-align: left; padding: 10px;")
             choose_button.setMinimumHeight(64)
-            choose_button.setSizePolicy(qt_enum(QSizePolicy, "Policy", "Ignored"), qt_enum(QSizePolicy, "Policy", "Fixed"))
+            choose_button.setSizePolicy(
+                qt_enum(QSizePolicy, "Policy", "Ignored"),
+                qt_enum(QSizePolicy, "Policy", "Fixed"),
+            )
             choose_button.setToolTip(label)
             choose_button.clicked.connect(
-                lambda _checked=False, algorithm_id=algorithm.id():
-                self.choose_algorithm_id(algorithm_id)
+                lambda _checked=False, algorithm_id=algorithm.id(): (
+                    self.choose_algorithm_id(algorithm_id)
+                )
             )
             info_button = QToolButton()
             info_button.setText("i")
             info_button.setToolTip(
-                translate("Method, parameters and libraries") + ": " + algorithm.displayName()
+                translate("Method, parameters and libraries")
+                + ": "
+                + algorithm.displayName()
             )
             info_button.setFixedWidth(30)
             info_button.clicked.connect(
-                lambda _checked=False, algorithm_id=algorithm.id():
-                self.show_algorithm_info(algorithm_id)
+                lambda _checked=False, algorithm_id=algorithm.id(): (
+                    self.show_algorithm_info(algorithm_id)
+                )
             )
             row_layout.addWidget(choose_button, 1)
             row_layout.addWidget(info_button)
@@ -1592,10 +1891,25 @@ class FilterStackDock(QDockWidget):
         for index in range(self.algorithm_list.count()):
             item = self.algorithm_list.item(index)
             label = str(item.data(_SEARCH_TEXT_ROLE) or "").casefold()
-            algorithm = self._algorithm(item.data(qt_enum(Qt, "ItemDataRole", "UserRole")))
+            algorithm = self._algorithm(
+                item.data(qt_enum(Qt, "ItemDataRole", "UserRole"))
+            )
             domain = algorithm_domain(algorithm).upper() if algorithm else ""
-            category = "MIXED" if "MIXED" in domain else "MODEL" if "MODEL" in domain else "FREQUENCY" if "FREQUENCY" in domain else "SPACE" if "SPACE" in domain or "SPATIAL" in domain else "OTHER"
-            item.setHidden(not all(word in label for word in words) or bool(selected_domain and selected_domain != category))
+            category = (
+                "MIXED"
+                if "MIXED" in domain
+                else "MODEL"
+                if "MODEL" in domain
+                else "FREQUENCY"
+                if "FREQUENCY" in domain
+                else "SPACE"
+                if "SPACE" in domain or "SPATIAL" in domain
+                else "OTHER"
+            )
+            item.setHidden(
+                not all(word in label for word in words)
+                or bool(selected_domain and selected_domain != category)
+            )
 
     def choose_algorithm_item(self, item):
         algorithm_id = item.data(qt_enum(Qt, "ItemDataRole", "UserRole"))
@@ -1662,7 +1976,11 @@ class FilterStackDock(QDockWidget):
         algorithm_id = self.algorithm_combo.currentData()
         algorithm = self._algorithm(algorithm_id)
         if algorithm is None:
-            QMessageBox.warning(self, "TerraWorkbench", text("No filter is selected.", "No hay ningún filtro seleccionado."))
+            QMessageBox.warning(
+                self,
+                "TerraWorkbench",
+                text("No filter is selected.", "No hay ningún filtro seleccionado."),
+            )
             return
         try:
             step = PipelineStep(algorithm_id, algorithm_defaults(algorithm))
@@ -1707,7 +2025,12 @@ class FilterStackDock(QDockWidget):
         self._clear_parameter_form()
         if row < 0:
             self.parameter_form.addRow(
-                QLabel(text("Select a filter to edit its parameters.", "Seleccione un filtro para editar sus parámetros."))
+                QLabel(
+                    text(
+                        "Select a filter to edit its parameters.",
+                        "Seleccione un filtro para editar sus parámetros.",
+                    )
+                )
             )
             return
         item = self.step_list.item(row)
@@ -1715,7 +2038,12 @@ class FilterStackDock(QDockWidget):
         algorithm = self._algorithm(step.algorithm_id)
         if algorithm is None:
             self.parameter_form.addRow(
-                QLabel(text("This filter is not currently available.", "Este filtro no está disponible actualmente."))
+                QLabel(
+                    text(
+                        "This filter is not currently available.",
+                        "Este filtro no está disponible actualmente.",
+                    )
+                )
             )
             return
 
@@ -1731,7 +2059,9 @@ class FilterStackDock(QDockWidget):
             editor.setText("" if value is None else str(value))
             optional = processing_parameter_is_optional(parameter)
             editor.setPlaceholderText(
-                text("Optional", "Opcional") if optional else text("Required", "Obligatorio")
+                text("Optional", "Opcional")
+                if optional
+                else text("Required", "Obligatorio")
             )
             editor.editingFinished.connect(self.update_current_parameters)
             self._parameter_editors[parameter.name()] = (editor, parameter)
@@ -1739,7 +2069,12 @@ class FilterStackDock(QDockWidget):
             editable += 1
         if not editable:
             self.parameter_form.addRow(
-                QLabel(text("This filter has no additional parameters.", "Este filtro no tiene parámetros adicionales."))
+                QLabel(
+                    text(
+                        "This filter has no additional parameters.",
+                        "Este filtro no tiene parámetros adicionales.",
+                    )
+                )
             )
         if reveal:
             self._show_inspector_left()
@@ -1758,7 +2093,9 @@ class FilterStackDock(QDockWidget):
         anchor_top_left = anchor.mapToGlobal(QPoint(0, 0))
         screen = QApplication.screenAt(anchor_top_left)
         primary = QApplication.primaryScreen()
-        available = screen.availableGeometry() if screen else primary.availableGeometry()
+        available = (
+            screen.availableGeometry() if screen else primary.availableGeometry()
+        )
         maximum_height = max(320, available.height() - 32)
         window.resize(window.width(), min(window.height(), maximum_height))
         x = max(available.left(), anchor_top_left.x() - window.width() - 8)
@@ -1776,7 +2113,10 @@ class FilterStackDock(QDockWidget):
             self,
             text("Import survey grid", "Importar grilla de levantamiento"),
             "",
-            text("Survey grids (*.grd *.GRD *.gxf *.GXF *.tif *.tiff *.asc *.xyz *.csv *.txt *.gdb);;All files (*)", "Grillas de levantamiento (*.grd *.GRD *.gxf *.GXF *.tif *.tiff *.asc *.xyz *.csv *.txt *.gdb);;Todos los archivos (*)"),
+            text(
+                "Survey grids (*.grd *.GRD *.gxf *.GXF *.tif *.tiff *.asc *.xyz *.csv *.txt *.gdb);;All files (*)",
+                "Grillas de levantamiento (*.grd *.GRD *.gxf *.GXF *.tif *.tiff *.asc *.xyz *.csv *.txt *.gdb);;Todos los archivos (*)",
+            ),
         )
         if not source:
             return
@@ -1796,8 +2136,13 @@ class FilterStackDock(QDockWidget):
         if not layer.isValid():
             QMessageBox.critical(
                 self,
-                text("TerraWorkbench sample data", "Datos de ejemplo de TerraWorkbench"),
-                text("The bundled sample raster could not be opened:\n{source}", "No se pudo abrir el ráster de ejemplo incluido:\n{source}").format(source=source),
+                text(
+                    "TerraWorkbench sample data", "Datos de ejemplo de TerraWorkbench"
+                ),
+                text(
+                    "The bundled sample raster could not be opened:\n{source}",
+                    "No se pudo abrir el ráster de ejemplo incluido:\n{source}",
+                ).format(source=source),
             )
             return None
         QgsProject.instance().addMapLayer(layer)
@@ -1822,8 +2167,13 @@ class FilterStackDock(QDockWidget):
         if not layer.isValid():
             QMessageBox.critical(
                 self,
-                text("TerraWorkbench sample data", "Datos de ejemplo de TerraWorkbench"),
-                text("The bundled survey points could not be opened:\n{source}", "No se pudieron abrir los puntos de levantamiento incluidos:\n{source}").format(source=source),
+                text(
+                    "TerraWorkbench sample data", "Datos de ejemplo de TerraWorkbench"
+                ),
+                text(
+                    "The bundled survey points could not be opened:\n{source}",
+                    "No se pudieron abrir los puntos de levantamiento incluidos:\n{source}",
+                ).format(source=source),
             )
             return None
         QgsProject.instance().addMapLayer(layer)
@@ -1837,7 +2187,10 @@ class FilterStackDock(QDockWidget):
         """Hide optional example actions when their source is not distributed."""
         entries = (
             (self.nrcan_hydraulic_dem_action, "Hydraulic/BC_2004_G_Hydraulic_dem.GRD"),
-            (self.nrcan_hydraulic_mag_action, "Hydraulic/BC_2004_G_Hydraulic_mag_res.GRD"),
+            (
+                self.nrcan_hydraulic_mag_action,
+                "Hydraulic/BC_2004_G_Hydraulic_mag_res.GRD",
+            ),
         )
         for action, filename in entries:
             available = self._nrcan_sample_path(filename).is_file()
@@ -1914,7 +2267,17 @@ class FilterStackDock(QDockWidget):
             )
         )
         self.local_data_menu.addSeparator()
-        supported = {".tif", ".tiff", ".grd", ".gxf", ".asc", ".xyz", ".csv", ".txt", ".gdb"}
+        supported = {
+            ".tif",
+            ".tiff",
+            ".grd",
+            ".gxf",
+            ".asc",
+            ".xyz",
+            ".csv",
+            ".txt",
+            ".gdb",
+        }
         candidates = [
             path
             for path in directory.rglob("*")
@@ -1923,7 +2286,9 @@ class FilterStackDock(QDockWidget):
         ]
         # Do not list the internal files of an Esri FileGDB separately.
         filegdb_directories = {
-            path for path in candidates if path.is_dir() and path.suffix.casefold() == ".gdb"
+            path
+            for path in candidates
+            if path.is_dir() and path.suffix.casefold() == ".gdb"
         }
         candidates = [
             path
@@ -1940,13 +2305,18 @@ class FilterStackDock(QDockWidget):
             )
         if not candidates:
             empty = self.local_data_menu.addAction(
-                text("No supported datasets found", "No se encontraron datasets compatibles")
+                text(
+                    "No supported datasets found",
+                    "No se encontraron datasets compatibles",
+                )
             )
             empty.setEnabled(False)
 
     def open_local_test_data(self, source):
         """Open a real local reference dataset while preserving its source file."""
         source = Path(source)
+        if (source.is_dir() and (source / "archive.json").is_file()) or source.name == "archive.json":
+            return self.import_open_archive(str(source))
         if source.is_dir() and source.suffix.casefold() == ".gdb":
             self.import_filegdb(str(source))
             return
@@ -1976,43 +2346,47 @@ class FilterStackDock(QDockWidget):
         return None
 
     def _geosoft_runtime(self):
-        activate_dependency_path()
-        if importlib.util.find_spec("geosoft") is not None:
-            return GeosoftRuntime(
-                dependency_directory(),
-                None,
-                Path(python_command()),
-                standalone=True,
-            )
-        settings = QgsSettings()
-        runtime = find_geosoft_runtime(
-            settings.value("TerraWorkbench/geosoftLocation", "")
-        )
-        if runtime:
-            settings.setValue("TerraWorkbench/geosoftLocation", str(runtime.root))
-            return runtime
-        selected = QFileDialog.getExistingDirectory(
-            self,
-            text("Locate the optional Geosoft Desktop runtime", "Ubicar el runtime opcional de Geosoft Desktop"),
-            "",
-        )
-        if not selected:
-            return None
-        runtime = validate_geosoft_location(selected)
-        if runtime is None:
-            QMessageBox.critical(
-                self,
-                "TerraWorkbench",
-                text(
-                    "That folder does not contain both bin\\omscore.exe and the bundled python\\python.exe. Choose the Geosoft Desktop Applications folder.",
-                    "Esa carpeta no contiene bin\\omscore.exe y python\\python.exe. Elija la carpeta de Geosoft Desktop Applications.",
-                ),
-            )
-            return None
-        settings.setValue("TerraWorkbench/geosoftLocation", str(runtime.root))
-        return runtime
+        from .dependency_dialog import confirm_gx_conversion
 
-    def import_geosoft_gdb(self, source=None):
+        settings = QgsSettings()
+        desktop = find_geosoft_runtime(settings.value("TerraWorkbench/geosoftLocation", ""))
+        if desktop:
+            if not confirm_gx_conversion(self):
+                return None
+            return desktop
+        return self._managed_geosoft_runtime()
+
+    def _managed_geosoft_runtime(self, *, confirm=True):
+        """Return the managed GX runtime, which runs in QGIS' own Python."""
+        from .dependency_dialog import check_gdb_connector, confirm_gx_conversion, gdb_dotnet_ready, gdb_support_state, prepare_gdb_support
+
+        if not check_gdb_connector(self):
+            return None
+
+        package, redist = gdb_support_state()
+        if package and redist and gdb_dotnet_ready():
+            if confirm and not confirm_gx_conversion(self):
+                return None
+        else:
+            if not prepare_gdb_support(self):
+                return None
+            package, redist = gdb_support_state()
+        if package and redist and gdb_dotnet_ready():
+            return GeosoftRuntime(dependency_directory(), None, Path(python_command()),
+                                  standalone=True, redist=redist)
+        return None
+
+    def import_geosoft_gdb(self, source=None, *, choose_destination=False):
+        """Ignore repeated import events while a prompt or conversion is active."""
+        if getattr(self, "_gdb_import_active", False) or getattr(self, "_geosoft_process", None) is not None:
+            return
+        self._gdb_import_active = True
+        try:
+            return self._import_geosoft_gdb(source, choose_destination=choose_destination)
+        finally:
+            self._gdb_import_active = False
+
+    def _import_geosoft_gdb(self, source=None, *, choose_destination=False):
         if not source:
             source, _selected_filter = QFileDialog.getOpenFileName(
                 self,
@@ -2026,23 +2400,34 @@ class FilterStackDock(QDockWidget):
         if runtime is None:
             return
         choice_dialog = QMessageBox(self)
-        choice_dialog.setWindowTitle(text("Geosoft GeoDatabase export", "Exportación de GeoDatabase Geosoft"))
+        choice_dialog.setWindowTitle(
+            text("Geosoft GeoDatabase export", "Exportación de GeoDatabase Geosoft")
+        )
         choice_dialog.setText(
-            text("Choose what to recover from the Geosoft GeoDatabase.", "Elija qué recuperar de la GeoDatabase Geosoft.")
+            text(
+                "Choose what to recover from the Geosoft GeoDatabase.",
+                "Elija qué recuperar de la GeoDatabase Geosoft.",
+            )
         )
         choice_dialog.setInformativeText(
             text(
-                "Full extraction writes every numeric channel to open CSV, loads the points and inventories into QGIS, and may require substantially more disk space than the compressed GDB.",
-                "La extracción completa escribe cada canal numérico en CSV abierto, carga los puntos e inventarios en QGIS y puede requerir bastante más espacio que la GDB comprimida.",
+                "The recommended archive preserves native types, text, arrays, dummies and per-channel fiducials, then verifies every channel against a second GX read.",
+                "La copia recomendada conserva tipos nativos, texto, arrays, dummies y fiduciales por canal, y verifica cada canal con una segunda lectura GX.",
             )
         )
         inventory_button = choice_dialog.addButton(
-            text("Inventory only", "Solo inventario"), qt_enum(QMessageBox, "ButtonRole", "ActionRole")
+            text("Inventory only", "Solo inventario"),
+            qt_enum(QMessageBox, "ButtonRole", "ActionRole"),
         )
         extract_button = choice_dialog.addButton(
-            text("Extract all and load into QGIS", "Extraer todo y cargar en QGIS"),
+            text("Legacy numeric CSV (lossy)", "CSV numérico heredado (con pérdidas)"),
             qt_enum(QMessageBox, "ButtonRole", "AcceptRole"),
         )
+        archive_button = choice_dialog.addButton(
+            text("Convert to open archive (recommended)", "Convertir a archivo abierto (recomendado)"),
+            qt_enum(QMessageBox, "ButtonRole", "AcceptRole"),
+        )
+        choice_dialog.setDefaultButton(archive_button)
         cancel_button = choice_dialog.addButton(
             qt_enum(QMessageBox, "StandardButton", "Cancel")
         )
@@ -2051,26 +2436,58 @@ class FilterStackDock(QDockWidget):
         if choice_dialog.clickedButton() == cancel_button:
             return
         extract_all = choice_dialog.clickedButton() == extract_button
-        if choice_dialog.clickedButton() not in (inventory_button, extract_button):
+        open_archive = choice_dialog.clickedButton() == archive_button
+        if choice_dialog.clickedButton() not in (inventory_button, extract_button, archive_button):
             return
-        output = QFileDialog.getExistingDirectory(self, text("Choose GDB export folder", "Elegir carpeta de exportación GDB"))
-        if not output:
+        if open_archive and not runtime.standalone:
+            # The verified open archive needs QGIS' Python and its managed
+            # packages (pyarrow); a desktop install bundles another Python.
+            runtime = self._managed_geosoft_runtime(confirm=False)
+            if runtime is None:
+                return
+        destination = None
+        if choose_destination:
+            destination = QFileDialog.getExistingDirectory(
+                self, text("Choose GDB export folder", "Elegir carpeta de exportación GDB")
+            )
+            if not destination:
+                return
+        try:
+            output, temporary_root = self._import_destination(source, destination)
+            output = str(output)
+        except OSError as error:
+            self._import_error(error)
             return
-        bridge = (PLUGIN_ROOT / "qgis_plugin/geosoft_bridge.py")
+        bridge = PLUGIN_ROOT / "qgis_plugin/geosoft_bridge.py"
         arguments = [str(bridge), "--input", str(source), "--output", str(output)]
         if extract_all:
             arguments.append("--extract-all")
+        if open_archive:
+            arguments.append("--open-archive")
         process = QProcess(self)
         process_environment = QProcessEnvironment.systemEnvironment()
+        # The child needs TerraWorkbench's managed packages (pyarrow, etc.)
+        # with either GX engine, including the installed desktop runtime.
+        process_environment.insert(
+            "TERRAWORKBENCH_DEPENDENCY_PATH", str(dependency_directory())
+        )
         if runtime.standalone:
-            process_environment.insert(
-                "TERRAWORKBENCH_GEOSOFT_SITE", str(runtime.root)
-            )
+            process_environment.remove("TERRAWORKBENCH_GX_DESKTOP")
+            process_environment.insert("TERRAWORKBENCH_GEOSOFT_SITE", str(runtime.root))
+            from ..qgis_plugin.gx_runtime_setup import dotnet_environment
+
+            for key, value in dotnet_environment(dependency_directory() / "_gx_runtime").items():
+                process_environment.insert(key, value)
+            if runtime.redist:
+                process_environment.insert("TERRAWORKBENCH_GX_REDIST", str(runtime.redist))
             process_environment.insert(
                 "TERRAWORKBENCH_GEOSOFT_ENGINE",
                 "Geosoft GX Developer public runtime (BSD-2-Clause)",
             )
         else:
+            process_environment.insert("TERRAWORKBENCH_GX_DESKTOP", "1")
+            process_environment.remove("TERRAWORKBENCH_GX_REDIST")
+            process_environment.remove("TERRAWORKBENCH_GEOSOFT_SITE")
             process_environment.insert(
                 "TERRAWORKBENCH_GEOSOFT_ENGINE",
                 "Installed Geosoft Python runtime",
@@ -2110,25 +2527,26 @@ class FilterStackDock(QDockWidget):
             error_text = (
                 bytes(process.readAllStandardError()).decode(errors="replace").strip()
             )
+            progress.canceled.disconnect(cancel_process)
             progress.close()
             process.deleteLater()
             self._geosoft_process = None
             self._geosoft_progress = None
             if cancelled["value"]:
                 return
+            from .dependency_dialog import runtime_error_message, show_gx_error
+
             if exit_code == 0:
-                loaded = self._load_geosoft_outputs(source, output)
-                QMessageBox.information(
-                    self,
-                    "TerraWorkbench",
-                    text(
-                        "Geosoft GeoDatabase operation completed.\nAdded {loaded} open-data layer(s)/table(s) to QGIS.\n{output}\n\nThe exported files are open CSV/QGIS data.",
-                        "Se completó la operación de GeoDatabase Geosoft.\nSe añadieron {loaded} capa(s)/tabla(s) de datos abiertos a QGIS.\n{output}\n\nLos archivos exportados son datos abiertos CSV/QGIS.",
-                    ).format(loaded=loaded, output=output),
-                )
-                if extract_all and self._last_geosoft_point_layer is not None:
-                    self._offer_survey_gridding(self._last_geosoft_point_layer)
+                if open_archive:
+                    self.import_open_archive(Path(output) / (Path(source).stem + ".twarchive"))
+                else:
+                    self._load_geosoft_outputs(source, output, temporary_root)
+            elif runtime.standalone and any(marker in error_text for marker in (
+                "GX_DOTNET6:", "GX_REDIST_CONFIG:", "TW_GX_CHECK:", "geodist.dll", "hostfxr",
+            )):
+                show_gx_error(self, error_text)
             else:
+                error_text = runtime_error_message(error_text)
                 failure_text = (
                     text(
                         "The public Geosoft GX Developer reader failed.",
@@ -2159,8 +2577,156 @@ class FilterStackDock(QDockWidget):
         progress.show()
         process.start(str(runtime.python), arguments)
 
-    def _load_geosoft_outputs(self, source, output):
+    def import_open_archive(self, source=None):
+        """Load a verified open copy with existing survey layers, without GX."""
+        from ..terraworkbench_core.gdb_archive import open_archive, attach_archive
+        if source is None:
+            source, _ = QFileDialog.getOpenFileName(
+                self, text("Open converted survey archive…", "Abrir copia abierta de levantamiento…"),
+                "", "Open survey archive (archive.json catalog.sqlite *.parquet)",
+            )
+        if not source:
+            return
+        try:
+            archived, _, manifest = open_archive(source)
+            x, y = manifest.get("x_field"), manifest.get("y_field")
+            pairs = {(row["line"], row["channel"]): (row["start"], row["increment"], row["length"])
+                     for row in manifest["alignment"]}
+            if x and y and any(pairs[(line["name"], x)] != pairs[(line["name"], y)] for line in manifest["lines"]):
+                raise ValueError(text(
+                    "X/Y fiducials differ. The archive is preserved; automatic map creation would require explicit alignment.",
+                    "Los fiduciales X/Y difieren. El archivo se conserva; crear el mapa requiere una alineación explícita.",
+                ))
+        except (ValueError, OSError, KeyError) as error:
+            self._import_error(error)
+            return
+
+        def import_data(store, canceled):
+            return attach_archive(store, archived.root, canceled)
+
+        name = Path(manifest["provenance"]["source_path"]).stem
+        self._start_gdb_survey_maps(str(archived.root.parent), [(name, import_data)])
+
+    def _start_gdb_survey_maps(self, folder, jobs, workspace=None):
+        """Run the existing survey worker for point data from the GDB importers."""
+        from qgis.PyQt.QtCore import QSettings
+        from .survey_workspace_dialog import (
+            KEY_WORKSPACE,
+            StoreWorker,
+            SurveyWorkspaceDialog,
+            notify_survey_database,
+        )
+        from ..compat.survey_store import SurveyStore
+        from ..qgis_plugin.survey_map_layers import add_survey_map
+
+        saved = QSettings().value(KEY_WORKSPACE, "", type=str)
+        fallback = Path(folder) / "TerraWorkbench surveys"
+        workspace = workspace or (
+            Path(saved)
+            if saved and (Path(saved) / "catalog.sqlite").is_file()
+            else fallback
+        )
+
+        def run(cancel, progress):
+            store = SurveyStore(workspace, create=True)
+            results = []
+            for name, import_data in jobs:
+                try:
+                    database_id = import_data(store, canceled=cancel)
+                    metadata = json.loads(next(row["metadata"] for row in store.databases() if row["id"] == database_id))
+                    results.append(
+                        SurveyWorkspaceDialog._try_survey_map(
+                            store, database_id, cancel, progress, columns=metadata.get("gdb_map_columns")
+                        )
+                    )
+                except InterruptedError:
+                    raise
+                except Exception as error:
+                    results.append((None, name, None, str(error)))
+            return store, results
+
+        progress = QProgressDialog(
+            text("Building survey map…", "Construyendo mapa del levantamiento…"),
+            text("Cancel", "Cancelar"),
+            0,
+            0,
+            self,
+        )
+        worker = StoreWorker(run, self)
+
+        def complete(result):
+            if getattr(self, "_tw_disposing", False):
+                return
+            store, results = result
+            QSettings().setValue(KEY_WORKSPACE, str(store.root))
+            messages, retry = [], []
+            for database_id, name, package, error in results:
+                if database_id:
+                    notify_survey_database(self.iface, store.root, database_id, name, self)
+                if package:
+                    try:
+                        add_survey_map(
+                            QgsProject.instance(), store, database_id, name, package
+                        )
+                        if not package[2]["has_line_channel"]:
+                            messages.append(
+                                f"{name}: "
+                                + text(
+                                    "No line channel; samples and boundary only.",
+                                    "Sin canal de línea; solo muestras y contorno.",
+                                )
+                            )
+                    except Exception as failure:
+                        messages.append(f"{name}: {failure}")
+                elif error:
+                    messages.append(f"{name}: {error}")
+                else:
+                    from .survey_map_dialog import choose_map_channels
+                    from ..terraworkbench_core.survey_map import survey_map_channels
+
+                    current = survey_map_channels(store, database_id)[0]
+                    fields = [row["name"] for row in store.channels(database_id)]
+                    channels = choose_map_channels(self, current, fields)
+                    if channels is not None:
+                        store.configure_geometry(
+                            database_id,
+                            channels.x,
+                            channels.y,
+                            channels.crs,
+                            line=channels.line,
+                        )
+                        retry.append(
+                            (name, lambda _store, canceled, value=database_id: value)
+                        )
+            if retry:
+                self._start_gdb_survey_maps(
+                    store.root.parent, retry, workspace=store.root
+                )
+            if messages:
+                from qgis.utils import iface
+
+                if iface is not None:
+                    iface.messageBar().pushWarning(
+                        "TerraWorkbench", " | ".join(messages)
+                    )
+
+        def fail(message):
+            if not getattr(self, "_tw_disposing", False):
+                QMessageBox.warning(self, "TerraWorkbench", message)
+
+        worker.completed.connect(complete)
+        worker.failed.connect(fail)
+        worker.progress.connect(progress.setLabelText)
+        progress.canceled.connect(worker.requestInterruption)
+        worker.finished.connect(progress.close)
+        worker.finished.connect(progress.deleteLater)
+        worker.finished.connect(worker.deleteLater)
+        progress.show()
+        worker.start()
+
+    def _load_geosoft_outputs(self, source, output, temporary_root=None):
         self._last_geosoft_point_layer = None
+        self._geosoft_survey_map_started = False
         manifest_path = Path(output) / f"{Path(source).stem}_inventory.json"
         try:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -2184,44 +2750,35 @@ class FilterStackDock(QDockWidget):
             )
             if layer.isValid():
                 self._mark_geosoft_source(layer, source, manifest)
+                if temporary_root is not None:
+                    self._mark_import(layer, temporary_root)
                 QgsProject.instance().addMapLayer(layer)
                 loaded += 1
         csv_path = manifest.get("csv")
-        x_field, y_field = manifest.get("x_field"), manifest.get("y_field")
-        if csv_path and x_field and y_field and Path(csv_path).is_file():
-            url = QUrl.fromLocalFile(csv_path)
-            query = QUrlQuery()
-            for key, value in (
-                ("type", "csv"),
-                ("detectTypes", "yes"),
-                ("xField", x_field),
-                ("yField", y_field),
-                ("geomType", "point"),
-                ("subsetIndex", "no"),
-                ("watchFile", "no"),
-            ):
-                query.addQueryItem(key, value)
-            url.setQuery(query)
-            layer = QgsVectorLayer(
-                url.toString(),
-                f"{Path(source).stem} — all channels — Geosoft GeoDatabase",
-                "delimitedtext",
+        if csv_path and Path(csv_path).is_file():
+            from ..qgis_plugin.survey_map_import import import_geosoft_observations
+
+            name = Path(source).stem
+
+            def import_data(store, canceled):
+                return import_geosoft_observations(
+                    store, csv_path, name, manifest, canceled
+                )
+
+            self._start_gdb_survey_maps(
+                QgsApplication.qgisSettingsDirPath(), [(name, import_data)]
             )
-            wkt = manifest.get("coordinate_system", {}).get("wkt", "")
-            if wkt:
-                layer.setCrs(QgsCoordinateReferenceSystem.fromWkt(wkt))
-            if layer.isValid():
-                self._mark_geosoft_source(layer, source, manifest)
-                QgsProject.instance().addMapLayer(layer)
-                self._last_geosoft_point_layer = layer
-                loaded += 1
+            self._geosoft_survey_map_started = True
         return loaded
 
     def _offer_survey_gridding(self, point_layer):
         answer = QMessageBox.question(
             self,
             text("Create analysis grid", "Crear grilla de análisis"),
-            text("The GeoDatabase points are now open QGIS data. Open the gridding tool to select a channel and create a GeoTIFF for RTP/RTE and the Filter Stack?", "Los puntos de GeoDatabase ya son datos abiertos de QGIS. ¿Abrir la herramienta de interpolación para elegir un canal y crear un GeoTIFF para RTP/RTE y la pila de filtros?"),
+            text(
+                "The GeoDatabase points are now open QGIS data. Open the gridding tool to select a channel and create a GeoTIFF for RTP/RTE and the Filter Stack?",
+                "Los puntos de GeoDatabase ya son datos abiertos de QGIS. ¿Abrir la herramienta de interpolación para elegir un canal y crear un GeoTIFF para RTP/RTE y la pila de filtros?",
+            ),
             qt_enum(QMessageBox, "StandardButton", "Yes")
             | qt_enum(QMessageBox, "StandardButton", "No"),
             qt_enum(QMessageBox, "StandardButton", "Yes"),
@@ -2263,19 +2820,24 @@ class FilterStackDock(QDockWidget):
             "Imported from a Geosoft GeoDatabase and converted to open CSV by "
             "TerraWorkbench. The exported layer is standard QGIS data."
         )
-        metadata.addHistoryItem(
-            f"Source: Geosoft GeoDatabase: {Path(source).name}"
-        )
+        metadata.addHistoryItem(f"Source: Geosoft GeoDatabase: {Path(source).name}")
         layer.setMetadata(metadata)
 
     def import_filegdb(self, source=None):
         if not source:
-            source = QFileDialog.getExistingDirectory(self, text("Choose Esri FileGDB folder", "Elegir carpeta Esri FileGDB"))
+            source = QFileDialog.getExistingDirectory(
+                self, text("Choose Esri FileGDB folder", "Elegir carpeta Esri FileGDB")
+            )
         if not source:
             return
         if Path(source).suffix.lower() != ".gdb":
             QMessageBox.warning(
-                self, "TerraWorkbench", text("Choose a folder ending in .gdb.", "Elija una carpeta que termine en .gdb.")
+                self,
+                "TerraWorkbench",
+                text(
+                    "Choose a folder ending in .gdb.",
+                    "Elija una carpeta que termine en .gdb.",
+                ),
             )
             return
         subdatasets = list_raster_subdatasets(source)
@@ -2322,12 +2884,37 @@ class FilterStackDock(QDockWidget):
             self._finish_import(source, value)
             return
         names = vector_layers if kind == "all_vectors" else [value]
+        from functools import partial
+        from qgis.core import QgsWkbTypes
+        from ..qgis_plugin.survey_map_import import import_filegdb_points
+
+        jobs = []
         loaded = 0
         for name in names:
             layer = QgsVectorLayer(f"{source}|layername={name}", name, "ogr")
-            if layer.isValid():
+            if not layer.isValid():
+                continue
+            point = QgsWkbTypes.flatType(layer.wkbType()) == qt_enum(
+                QgsWkbTypes, "Type", "Point"
+            )
+            if point:
+                survey_name = f"{Path(source).stem} — {name}"
+                jobs.append(
+                    (
+                        survey_name,
+                        partial(
+                            import_filegdb_points,
+                            source=source,
+                            layer_name=name,
+                            name=survey_name,
+                        ),
+                    )
+                )
+            else:
                 QgsProject.instance().addMapLayer(layer)
-                loaded += 1
+            loaded += 1
+        if jobs:
+            self._start_gdb_survey_maps(Path(source).parent, jobs)
         if loaded != len(names):
             message = text(
                 "Loaded {loaded} of {total} FileGDB vector/table layers.",
@@ -2339,49 +2926,215 @@ class FilterStackDock(QDockWidget):
                 message,
             )
 
-    def _finish_import(self, source, subdataset=None):
-        suggested = str(Path(source).with_suffix(".tif"))
-        output, _selected_filter = QFileDialog.getSaveFileName(
-            self, text("Save imported GeoTIFF", "Guardar GeoTIFF importado"), suggested, "GeoTIFF (*.tif *.tiff)"
+    def _import_error(self, error):
+        QMessageBox.critical(
+            self, "TerraWorkbench",
+            text("Import failed:\n{error}", "Falló la importación:\n{error}").format(error=error),
         )
-        if not output:
-            return
+
+    @staticmethod
+    def _mark_import(layer, root=None):
+        mark_temporary_import(layer, text("temporary", "temporal"), root)
+
+    def _import_destination(self, source, destination=None):
+        directory = destination or self._active_work_directory()
+        temporary_root = temporary_import_root() if directory is None else None
+        return new_import_directory(source, directory or temporary_root), temporary_root
+
+    def _update_import_actions(self):
+        layer = self._selected_raster()
+        self.save_import_action.setText(
+            text("Save in work folder", "Guardar en la carpeta de trabajo")
+            if import_working_directory() else text("Save as…", "Guardar como…")
+        )
+        self.save_import_action.setEnabled(layer is not None and is_temporary_import(layer))
+        self.hillshade.refresh()
+
+    def _work_project_changed(self, *_args):
+        self._ignored_temporary_imports.clear()
+        self._warned_work_directories.clear()
+        self.refresh_work_directory()
+
+    def _active_work_directory(self):
+        from qgis import utils
+
+        configured = project_work_directory()
+        active = import_working_directory()
+        if (configured is not None and active is None
+                and configured not in self._warned_work_directories and utils.iface is not None):
+            self._warned_work_directories.add(configured)
+            utils.iface.messageBar().pushWarning("TerraWorkbench", text(
+                "Work folder unavailable: {path}. Using QGIS temporary storage.",
+                "Carpeta de trabajo no disponible: {path}. Se usa la carpeta temporal de QGIS.",
+            ).format(path=configured))
+        return active
+
+    def refresh_work_directory(self):
+        active = self._active_work_directory()
+        button = self.work_directory_button
+        label = text("Work folder", "Carpeta de trabajo")
+        if active is None:
+            value = text("Temporary (QGIS)", "Temporal (QGIS)")
+            button.setToolTip(str(temporary_import_root()))
+        else:
+            value = button.fontMetrics().elidedText(
+                active.name or str(active), qt_enum(Qt, "TextElideMode", "ElideMiddle"), 160
+            )
+            button.setToolTip(str(active))
+        button.setText(f"{label}: {value}")
+        self._layout_quick_tools()
+        self._update_import_actions()
+
+    def _populate_work_directory_menu(self):
+        self.refresh_work_directory()
+        menu = self.work_directory_menu
+        menu.clear()
+        menu.addAction(text("Choose folder…", "Elegir carpeta…"), self._choose_work_directory)
+        recents = recent_work_directories()
+        if recents:
+            menu.addSeparator()
+            for directory in recents:
+                path = Path(directory)
+                label = path.name or str(path)
+                action = menu.addAction(label.replace("&", "&&"))
+                action.setToolTip(str(path))
+                action.setEnabled(path.is_dir())
+                action.triggered.connect(lambda _checked=False, path=path: self._set_work_directory(path))
+        menu.addSeparator()
+        menu.addAction(
+            text("Open folder in file explorer", "Abrir carpeta en el explorador"),
+            self._open_work_directory,
+        )
+        menu.addAction(
+            text("Use QGIS temporary folder", "Usar temporal de QGIS"),
+            lambda: self._set_work_directory(None),
+        )
+
+    def _choose_work_directory(self):
+        directory = QFileDialog.getExistingDirectory(
+            self, text("Choose folder…", "Elegir carpeta…"),
+            str(import_working_directory() or QgsProject.instance().homePath()),
+        )
+        if directory:
+            self._set_work_directory(directory)
+
+    def _set_work_directory(self, directory):
+        write_project_work_directory(QgsProject.instance(), directory)
+        if directory is not None:
+            remember_work_directory(directory)
+        self.refresh_work_directory()
+
+    def _open_work_directory(self):
+        directory = self._active_work_directory()
+        if directory is None:
+            directory = temporary_import_root()
+            try:
+                directory.mkdir(parents=True, exist_ok=True)
+            except OSError as error:
+                self._import_error(error)
+                return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(directory)))
+
+    def _finish_import(self, source, subdataset=None):
+        path = Path(source)
         QApplication.setOverrideCursor(qt_enum(Qt, "CursorShape", "WaitCursor"))
         try:
-            imported, metadata = import_survey_grid(
-                source, output, subdataset=subdataset
-            )
-            layer = QgsRasterLayer(imported, Path(imported).stem)
+            native = subdataset is None and path.is_file() and path.suffix.casefold() in {".tif", ".tiff"}
+            if native:
+                imported = str(path)
+            else:
+                batch, temporary_root = self._import_destination(path)
+                destination = batch / f"{path.stem}.tif"
+                imported, _metadata = import_survey_grid(source, destination, subdataset=subdataset)
+            layer = QgsRasterLayer(imported, path.stem)
             if not layer.isValid():
-                raise QgsProcessingException(
-                    "The imported GeoTIFF is not a valid QGIS raster."
-                )
+                raise QgsProcessingException("The imported GeoTIFF is not a valid QGIS raster.")
+            if not native and temporary_root is not None:
+                self._mark_import(layer, temporary_root)
             QgsProject.instance().addMapLayer(layer)
             self.refresh_layers()
             self.layer_combo.setCurrentIndex(self.layer_combo.findData(layer.id()))
-            details = "\n".join(
-                f"{key}: {value}"
-                for key, value in metadata.items()
-                if key
-                in {
-                    "TITLE",
-                    "EPSG",
-                    "SURVEY_START",
-                    "SURVEY_END",
-                    "LINE_DIRECTION",
-                    "LINE_SPACING",
-                }
-            )
-            QMessageBox.information(
-                self,
-                "TerraWorkbench",
-                text("Grid imported and added to the map.", "La grilla se importó y añadió al mapa.")
-                + (f"\n\n{details}" if details else ""),
-            )
+            return layer
         except (OSError, ValueError, QgsProcessingException) as error:
-            QMessageBox.critical(self, "TerraWorkbench", text("Import failed:\n{error}", "Falló la importación:\n{error}").format(error=error))
+            self._import_error(error)
         finally:
             QApplication.restoreOverrideCursor()
+
+    def save_imported_grid(self):
+        layer = self._selected_raster()
+        if layer is None or not is_temporary_import(layer):
+            return
+        source = import_layer_path(layer)
+        try:
+            directory = self._active_work_directory()
+            if directory is not None:
+                path = new_import_directory(source, directory) / source.name
+            else:
+                project = QgsProject.instance()
+                suggested = Path(project.homePath() or Path.home()) / source.name
+                destination, _ = QFileDialog.getSaveFileName(
+                    self, text("Save as…", "Guardar como…"), str(suggested), "GeoTIFF (*.tif *.tiff)"
+                )
+                if not destination:
+                    return
+                path = Path(destination)
+                if path.suffix.casefold() not in {".tif", ".tiff"}:
+                    path = path.with_suffix(".tif")
+            copy_imported_raster(layer, path)
+            self.refresh_layers()
+            self.layer_combo.setCurrentIndex(self.layer_combo.findData(layer.id()))
+        except (OSError, ValueError) as error:
+            self._import_error(error)
+
+    def warn_temporary_imports(self, document):
+        project = QgsProject.instance()
+        configured = project_work_directory(project)
+        if configured is not None and configured.is_absolute():
+            write_project_work_directory(project, configured)
+        layers = [layer for layer in project.mapLayers().values()
+                  if layer.id() not in self._ignored_temporary_imports and is_temporary_import(layer)]
+        if not layers:
+            return
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle(text("Temporary survey imports", "Importaciones temporales de levantamientos"))
+        dialog.setText(text(
+            "{count} imported layer(s) will be lost when QGIS closes unless saved.",
+            "{count} capa(s) importada(s) se perderán al cerrar QGIS si no se guardan.",
+        ).format(count=len(layers)))
+        move_label = text("Choose work folder and move…", "Elegir carpeta de trabajo y mover…")
+        save = dialog.addButton(move_label,
+                                qt_enum(QMessageBox, "ButtonRole", "AcceptRole"))
+        ignore = dialog.addButton(text("Ignore", "Ignorar"),
+                                  qt_enum(QMessageBox, "ButtonRole", "RejectRole"))
+        dialog.setDefaultButton(save)
+        dialog.setEscapeButton(ignore)
+        dialog.exec()
+        clicked = dialog.clickedButton()
+        dialog.deleteLater()
+        if clicked == ignore:
+            self._ignored_temporary_imports.update(layer.id() for layer in layers)
+            return
+        if clicked != save:
+            return
+        destination = QFileDialog.getExistingDirectory(
+            self, move_label, str(import_working_directory(project) or project.homePath())
+        )
+        if not destination:
+            return
+        try:
+            save_temporary_imports(layers, destination)
+            self._set_work_directory(destination)
+        except (OSError, ValueError) as error:
+            self._import_error(error)
+        # QGIS emits writeProject after cloning the tree but before writing the layers.
+        persisted = {layer.id(): layer for layer in layers if not is_temporary_import(layer)}
+        nodes = document.elementsByTagName("layer-tree-layer")
+        for index in range(nodes.count()):
+            node = nodes.item(index).toElement()
+            if layer := persisted.get(node.attribute("id")):
+                node.setAttribute("name", layer.name())
+                node.setAttribute("source", layer.source())
+        self.refresh_layers()
 
     def update_current_parameters(self):
         item = self.step_list.currentItem()
@@ -2410,7 +3163,9 @@ class FilterStackDock(QDockWidget):
 
     def choose_output_directory(self):
         directory = QFileDialog.getExistingDirectory(
-            self, text("Choose output folder", "Elegir carpeta de salida"), self.output_directory.text()
+            self,
+            text("Choose output folder", "Elegir carpeta de salida"),
+            self.output_directory.text(),
         )
         if directory:
             self.output_directory.setText(directory)
@@ -2418,14 +3173,26 @@ class FilterStackDock(QDockWidget):
     def save_stack(self):
         if not self.update_current_parameters():
             QMessageBox.warning(
-                self, "TerraWorkbench", text("Correct the highlighted parameter values.", "Corrija los valores de parámetros resaltados.")
+                self,
+                "TerraWorkbench",
+                text(
+                    "Correct the highlighted parameter values.",
+                    "Corrija los valores de parámetros resaltados.",
+                ),
             )
             return
         if not self.steps():
-            QMessageBox.warning(self, "TerraWorkbench", text("The filter stack is empty.", "La pila de filtros está vacía."))
+            QMessageBox.warning(
+                self,
+                "TerraWorkbench",
+                text("The filter stack is empty.", "La pila de filtros está vacía."),
+            )
             return
         path, _selected_filter = QFileDialog.getSaveFileName(
-            self, text("Save filter stack", "Guardar pila de filtros"), "terraworkbench-stack.json", "JSON (*.json)"
+            self,
+            text("Save filter stack", "Guardar pila de filtros"),
+            "terraworkbench-stack.json",
+            "JSON (*.json)",
         )
         if not path:
             return
@@ -2437,7 +3204,10 @@ class FilterStackDock(QDockWidget):
 
     def load_stack(self):
         path, _selected_filter = QFileDialog.getOpenFileName(
-            self, text("Load filter stack", "Cargar pila de filtros"), "", "JSON (*.json)"
+            self,
+            text("Load filter stack", "Cargar pila de filtros"),
+            "",
+            "JSON (*.json)",
         )
         if not path:
             return
@@ -2459,7 +3229,12 @@ class FilterStackDock(QDockWidget):
                 raise ValueError(f"Unavailable filters: {', '.join(missing)}")
         except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
             QMessageBox.critical(
-                self, "TerraWorkbench", text("Could not load stack:\n{error}", "No se pudo cargar la pila:\n{error}").format(error=error)
+                self,
+                "TerraWorkbench",
+                text(
+                    "Could not load stack:\n{error}",
+                    "No se pudo cargar la pila:\n{error}",
+                ).format(error=error),
             )
             return
 
@@ -2478,13 +3253,23 @@ class FilterStackDock(QDockWidget):
     def preview_spectrum(self):
         if not self.update_current_parameters():
             QMessageBox.warning(
-                self, "TerraWorkbench", text("Correct the highlighted parameter values.", "Corrija los valores de parámetros resaltados.")
+                self,
+                "TerraWorkbench",
+                text(
+                    "Correct the highlighted parameter values.",
+                    "Corrija los valores de parámetros resaltados.",
+                ),
             )
             return
         layer = self._selected_raster()
         if layer is None:
             QMessageBox.warning(
-                self, "TerraWorkbench", text("Choose a valid input raster layer.", "Elija una capa ráster de entrada válida.")
+                self,
+                "TerraWorkbench",
+                text(
+                    "Choose a valid input raster layer.",
+                    "Elija una capa ráster de entrada válida.",
+                ),
             )
             return
 
@@ -2557,7 +3342,12 @@ class FilterStackDock(QDockWidget):
                 )
         except (OSError, ValueError, QgsProcessingException) as error:
             QMessageBox.critical(
-                self, "TerraWorkbench", text("Spectrum preview failed:\n{error}", "Falló la vista previa del espectro:\n{error}").format(error=error)
+                self,
+                "TerraWorkbench",
+                text(
+                    "Spectrum preview failed:\n{error}",
+                    "Falló la vista previa del espectro:\n{error}",
+                ).format(error=error),
             )
             return
         finally:
@@ -2570,6 +3360,7 @@ class FilterStackDock(QDockWidget):
     def review_stages(self):
         if self.last_stages:
             from .raster_stage_review import RasterStageReview
+
             dialog = RasterStageReview(self.last_stages, self)
             dialog.exec()
             dialog.deleteLater()
@@ -2577,22 +3368,42 @@ class FilterStackDock(QDockWidget):
     def run_stack(self):
         if not self.update_current_parameters():
             QMessageBox.warning(
-                self, "TerraWorkbench", text("Correct the highlighted parameter values.", "Corrija los valores de parámetros resaltados.")
+                self,
+                "TerraWorkbench",
+                text(
+                    "Correct the highlighted parameter values.",
+                    "Corrija los valores de parámetros resaltados.",
+                ),
             )
             return
         layer = self._selected_raster()
         if layer is None:
             QMessageBox.warning(
-                self, "TerraWorkbench", text("Choose a valid input raster layer.", "Elija una capa ráster de entrada válida.")
+                self,
+                "TerraWorkbench",
+                text(
+                    "Choose a valid input raster layer.",
+                    "Elija una capa ráster de entrada válida.",
+                ),
             )
             return
         steps = self.steps()
         if not steps:
-            QMessageBox.warning(self, "TerraWorkbench", text("Add at least one filter.", "Añada al menos un filtro."))
+            QMessageBox.warning(
+                self,
+                "TerraWorkbench",
+                text("Add at least one filter.", "Añada al menos un filtro."),
+            )
             return
 
         output_directory = self.output_directory.text().strip() or None
-        progress = QProgressDialog(text("Running filter stack…", "Ejecutando pila de filtros…"), text("Cancel", "Cancelar"), 0, 100, self)
+        progress = QProgressDialog(
+            text("Running filter stack…", "Ejecutando pila de filtros…"),
+            text("Cancel", "Cancelar"),
+            0,
+            100,
+            self,
+        )
         progress.setWindowModality(qt_enum(Qt, "WindowModality", "WindowModal"))
         progress.setMinimumDuration(0)
         feedback = QgsProcessingFeedback()
@@ -2615,9 +3426,29 @@ class FilterStackDock(QDockWidget):
             )
             if feedback.isCanceled():
                 return
-            self.last_stages = [{"label": "Input · " + layer.name(), "path": layer.source(), "band": self.band_spin.value()}] + [{"label": f"{index+1} · {step.algorithm_id}", "path": str(path), "band": 1, "algorithm": step.algorithm_id, "parameters": dict(step.parameters)} for index, (step, path) in enumerate(zip(steps, outputs))]
+            self.last_stages = [
+                {
+                    "label": "Input · " + layer.name(),
+                    "path": layer.source(),
+                    "band": self.band_spin.value(),
+                }
+            ] + [
+                {
+                    "label": f"{index + 1} · {step.algorithm_id}",
+                    "path": str(path),
+                    "band": 1,
+                    "algorithm": step.algorithm_id,
+                    "parameters": dict(step.parameters),
+                }
+                for index, (step, path) in enumerate(zip(steps, outputs))
+            ]
             self.review_stages_button.setEnabled(True)
-            source_identity = {"source": layer.source(), "band": self.band_spin.value(), "crs": layer.crs().toWkt(), "identity_scope": "file metadata only; not a content hash"}
+            source_identity = {
+                "source": layer.source(),
+                "band": self.band_spin.value(),
+                "crs": layer.crs().toWkt(),
+                "identity_scope": "file metadata only; not a content hash",
+            }
             source_path = Path(layer.source().split("|", 1)[0])
             if source_path.is_file():
                 state = source_path.stat()
@@ -2626,10 +3457,31 @@ class FilterStackDock(QDockWidget):
             for step in steps:
                 algorithm = self._algorithm(step.algorithm_id)
                 module_path = inspect.getsourcefile(type(algorithm))
-                implementations[step.algorithm_id] = {"module": type(algorithm).__module__, "module_sha256": hashlib.sha256(Path(module_path).read_bytes()).hexdigest() if module_path else None, "hash_scope": "algorithm module only, not transitive dependencies"}
-            manifest = {"format": PIPELINE_FORMAT_VERSION, "steps": [step.to_dict() for step in steps], "source": source_identity, "stages": self.last_stages, "implementations": implementations, "finished_utc": datetime.now(timezone.utc).isoformat(), "host": "QGIS", "scope": "execution recipe; source data are not snapshotted"}
-            recipe_path = Path(final_output).parent / ("recipe_" + uuid.uuid4().hex + ".json")
-            recipe_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+                implementations[step.algorithm_id] = {
+                    "module": type(algorithm).__module__,
+                    "module_sha256": hashlib.sha256(
+                        Path(module_path).read_bytes()
+                    ).hexdigest()
+                    if module_path
+                    else None,
+                    "hash_scope": "algorithm module only, not transitive dependencies",
+                }
+            manifest = {
+                "format": PIPELINE_FORMAT_VERSION,
+                "steps": [step.to_dict() for step in steps],
+                "source": source_identity,
+                "stages": self.last_stages,
+                "implementations": implementations,
+                "finished_utc": datetime.now(timezone.utc).isoformat(),
+                "host": "QGIS",
+                "scope": "execution recipe; source data are not snapshotted",
+            }
+            recipe_path = Path(final_output).parent / (
+                "recipe_" + uuid.uuid4().hex + ".json"
+            )
+            recipe_path.write_text(
+                json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             self.last_recipe = str(recipe_path)
             self.review_stages_button.setToolTip(self.last_recipe)
             result_layer = QgsRasterLayer(
@@ -2656,7 +3508,12 @@ class FilterStackDock(QDockWidget):
             )
         except (OSError, ValueError, TypeError, QgsProcessingException) as error:
             QMessageBox.critical(
-                self, "TerraWorkbench", text("Filter stack failed:\n{error}", "Falló la pila de filtros:\n{error}").format(error=error)
+                self,
+                "TerraWorkbench",
+                text(
+                    "Filter stack failed:\n{error}",
+                    "Falló la pila de filtros:\n{error}",
+                ).format(error=error),
             )
         finally:
             QApplication.restoreOverrideCursor()

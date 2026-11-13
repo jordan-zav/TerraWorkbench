@@ -59,7 +59,7 @@ def main():
         QgsRasterLayer,
         QgsVectorLayer,
     )
-    from qgis.PyQt.QtCore import QSettings, Qt
+    from qgis.PyQt.QtCore import QObject, QSettings, Qt, pyqtSignal
     from qgis.PyQt.QtWidgets import QAbstractItemView, QMainWindow
 
     QgsApplication.setPrefixPath(prefix, True)
@@ -79,7 +79,10 @@ def main():
         grid_convergence_degrees,
         require_metre_projected_crs,
     )
-    from TerraWorkbench.qgis_plugin.data_import import import_survey_grid, list_vector_layers
+    from TerraWorkbench.qgis_plugin.data_import import (
+        import_survey_grid,
+        list_vector_layers,
+    )
     from TerraWorkbench.qgis_plugin.provider import TerraWorkbenchProvider
     from TerraWorkbench.qgis_plugin.plugin import TerraWorkbenchPlugin
     import TerraWorkbench.qgis_plugin.plugin as plugin_module
@@ -114,13 +117,13 @@ def main():
         for requirement in read_requirements(include_inversion=True)
     }
     if "simpeg" in core_requirement_names or "simpeg" not in all_requirement_names:
-        raise AssertionError("Core and optional inversion requirements are not separated")
+        raise AssertionError(
+            "Core and optional inversion requirements are not separated"
+        )
 
     metric_crs = QgsCoordinateReferenceSystem("EPSG:32718")
     require_metre_projected_crs(metric_crs.toWkt(), "test")
-    convergence = grid_convergence_degrees(
-        metric_crs.toWkt(), 500000.0, 9000000.0
-    )
+    convergence = grid_convergence_degrees(metric_crs.toWkt(), 500000.0, 9000000.0)
     if not abs(convergence) < 0.01:
         raise AssertionError("Grid convergence at the UTM central meridian is invalid")
     nonmetric_crs = QgsCoordinateReferenceSystem("EPSG:2227")
@@ -138,12 +141,10 @@ def main():
         "testing embedded dependency progress",
         lambda _message: None,
     )
-    progress_dialog._apply_update(
-        ProgressUpdate("harmonica", "Downloading", 75, 100)
-    )
+    progress_dialog._apply_update(ProgressUpdate("harmonica", "Downloading", 75, 100))
     _row, progress_bar = progress_dialog.rows["harmonica"]
     if (
-        "QPIP" not in dependency_dialog.browser.toPlainText()
+        "QPIP" not in dependency_dialog.upstream_button.text()
         or progress_bar.value() != 75
     ):
         raise AssertionError("Embedded QPIP dependency UI failed")
@@ -514,9 +515,15 @@ def main():
             lag_features = []
             for index, time_value in enumerate(np.arange(0.0, 20.0, 0.25)):
                 feature = QgsFeature(lag_layer.fields())
-                feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(500000 + index, 9000000)))
-                reference_value = np.sin(time_value * 0.73) + 0.2 * np.cos(time_value * 1.91)
-                response_value = np.sin((time_value - 1.5) * 0.73) + 0.2 * np.cos((time_value - 1.5) * 1.91)
+                feature.setGeometry(
+                    QgsGeometry.fromPointXY(QgsPointXY(500000 + index, 9000000))
+                )
+                reference_value = np.sin(time_value * 0.73) + 0.2 * np.cos(
+                    time_value * 1.91
+                )
+                response_value = np.sin((time_value - 1.5) * 0.73) + 0.2 * np.cos(
+                    (time_value - 1.5) * 1.91
+                )
                 feature.setAttributes(
                     [
                         float(time_value),
@@ -567,10 +574,16 @@ def main():
                 "memory",
             )
             spacing_features = []
-            for line_name, easting in (("L1", 500000.0), ("L2", 500100.0), ("L4", 500300.0)):
+            for line_name, easting in (
+                ("L1", 500000.0),
+                ("L2", 500100.0),
+                ("L4", 500300.0),
+            ):
                 for northing in (8999900.0, 9000000.0, 9000100.0):
                     feature = QgsFeature(spacing_layer.fields())
-                    feature.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(easting, northing)))
+                    feature.setGeometry(
+                        QgsGeometry.fromPointXY(QgsPointXY(easting, northing))
+                    )
                     feature.setAttributes([line_name])
                     spacing_features.append(feature)
             spacing_layer.dataProvider().addFeatures(spacing_features)
@@ -584,7 +597,12 @@ def main():
                     "OUTPUT": "memory:",
                 },
             )["OUTPUT"]
-            if sum(bool(feature["qc_flag"]) for feature in spacing_output.getFeatures()) != 1:
+            if (
+                sum(
+                    bool(feature["qc_flag"]) for feature in spacing_output.getFeatures()
+                )
+                != 1
+            ):
                 raise AssertionError("Missing-line spacing QC failed")
             dem_layer = QgsRasterLayer(str(input_path), "drape DEM")
             drape_layer = QgsVectorLayer(
@@ -655,13 +673,12 @@ def main():
             if not corrected_grav.isValid():
                 raise AssertionError("Corrected gravity output could not be opened")
             corrected_grav_features = list(corrected_grav.getFeatures())
-            if any(
-                not feature["tw_grav_ok"] for feature in corrected_grav_features
-            ):
-                raise AssertionError("Moving-gravity correction produced invalid points")
+            if any(not feature["tw_grav_ok"] for feature in corrected_grav_features):
+                raise AssertionError(
+                    "Moving-gravity correction produced invalid points"
+                )
             drift_values = sorted(
-                float(feature["tw_drift"])
-                for feature in corrected_grav_features
+                float(feature["tw_drift"]) for feature in corrected_grav_features
             )
             if (
                 len(drift_values) != 4
@@ -669,8 +686,7 @@ def main():
                 or drift_values[-1] - drift_values[0] < 1.99
             ):
                 raise AssertionError(
-                    "Gravity drift restarted at a line boundary: "
-                    f"{drift_values!r}"
+                    f"Gravity drift restarted at a line boundary: {drift_values!r}"
                 )
             leveled = processing.run(
                 "terraworkbench:crossover_line_leveling",
@@ -834,7 +850,10 @@ def main():
                     },
                 )
                 ternary_dataset = gdal.Open(str(radiometric_ternary_path))
-                if not radiometric_dose_path.exists() or ternary_dataset.RasterCount != 3:
+                if (
+                    not radiometric_dose_path.exists()
+                    or ternary_dataset.RasterCount != 3
+                ):
                     raise AssertionError("Radiometric Processing outputs are invalid")
                 ternary_dataset = None
 
@@ -925,10 +944,16 @@ def main():
                 )
                 processing.run(
                     "terraworkbench:airy_isostatic_anomaly_fft",
-                    {"INPUT": complete_layer, "BAND": 1, "REGIONAL": layer,
-                     "REFERENCE_DEPTH": 30000., "DENSITY_CRUST": 2670.,
-                     "DENSITY_MANTLE": 3270., "HEIGHT": 0.,
-                     "OUTPUT": str(airy_fft_path)},
+                    {
+                        "INPUT": complete_layer,
+                        "BAND": 1,
+                        "REGIONAL": layer,
+                        "REFERENCE_DEPTH": 30000.0,
+                        "DENSITY_CRUST": 2670.0,
+                        "DENSITY_MANTLE": 3270.0,
+                        "HEIGHT": 0.0,
+                        "OUTPUT": str(airy_fft_path),
+                    },
                 )
                 processing.run(
                     "terraworkbench:reduction_to_pole_igrf",
@@ -1001,9 +1026,7 @@ def main():
                         },
                     )
                     if not result.get("OUTPUT"):
-                        raise AssertionError(
-                            f"No output from {stack_algorithm.id()}"
-                        )
+                        raise AssertionError(f"No output from {stack_algorithm.id()}")
                     exercised_stack_algorithms += 1
                 if exercised_stack_algorithms != 66:
                     raise AssertionError(
@@ -1041,9 +1064,7 @@ def main():
                         flush=True,
                     )
                     nrcan_root = (
-                        Path(__file__).resolve().parents[1]
-                        / "sample_data"
-                        / "nrcan"
+                        Path(__file__).resolve().parents[1] / "sample_data" / "nrcan"
                     )
                     nrcan_grids = sorted(
                         path
@@ -1051,11 +1072,16 @@ def main():
                         if path.is_file() and path.suffix.casefold() == ".grd"
                     )
                     if nrcan_grids and len(nrcan_grids) != 2:
-                        raise AssertionError("Incomplete optional development NRCan examples")
+                        raise AssertionError(
+                            "Incomplete optional development NRCan examples"
+                        )
                     if not nrcan_grids:
                         dock.refresh_bundled_reference_actions()
                         assert not dock.nrcan_menu.menuAction().isVisible()
-                        print("OK: optional field examples absent; synthetic GRD is covered separately", flush=True)
+                        print(
+                            "OK: optional field examples absent; synthetic GRD is covered separately",
+                            flush=True,
+                        )
                     if nrcan_grids:
                         real_output = temporary_path / "nrcan_reference_grid.tif"
                         imported, metadata = import_survey_grid(
@@ -1066,7 +1092,10 @@ def main():
                             raise AssertionError(
                                 "A local reference GRD did not convert to GeoTIFF"
                             )
-                        if nrcan_grids[0].with_suffix(".GRD.xml").is_file() and not metadata:
+                        if (
+                            nrcan_grids[0].with_suffix(".GRD.xml").is_file()
+                            and not metadata
+                        ):
                             raise AssertionError(
                                 "The local GRD sidecar metadata was not recovered"
                             )
@@ -1084,14 +1113,31 @@ def main():
                             gdb_source,
                             gdb_export,
                         )
-                        if loaded != 3:
+                        if loaded != 2 or not dock._geosoft_survey_map_started:
                             raise AssertionError(
-                                f"Expected 3 open GDB export layers, loaded {loaded}"
+                                f"Expected two inventories and a queued survey map, loaded {loaded}"
                             )
+                        from qgis.PyQt.QtCore import QElapsedTimer, QThread
+
+                        timer = QElapsedTimer()
+                        timer.start()
+                        while any(w.isRunning() for w in dock.findChildren(QThread)):
+                            application.processEvents()
+                            QThread.msleep(10)
+                            if timer.elapsed() > 120000:
+                                raise AssertionError("GDB survey map did not finish")
+                        application.processEvents()
                         added_ids = set(QgsProject.instance().mapLayers()) - before_ids
+                        added = [
+                            QgsProject.instance().mapLayer(key) for key in added_ids
+                        ]
+                        if not any(layer.name() == "Samples" for layer in added):
+                            raise AssertionError(
+                                "GDB samples missing from survey group"
+                            )
                         QgsProject.instance().removeMapLayers(list(added_ids))
                         print(
-                            "OK: GDB export loaded as points plus two QGIS tables",
+                            "OK: GDB export loaded as a styled survey plus two inventories",
                             flush=True,
                         )
                     spectrum_plot = SpectrumPlot(
@@ -1113,9 +1159,7 @@ def main():
                         not dock.algorithm_picker.isVisible()
                         or dock.algorithm_picker.width() < 560
                     ):
-                        raise AssertionError(
-                            "Expanded algorithm catalogue failed"
-                        )
+                        raise AssertionError("Expanded algorithm catalogue failed")
                     dock.algorithm_search.setText("RTP IGRF")
                     application.processEvents()
                     visible_algorithms = [
@@ -1136,20 +1180,16 @@ def main():
                         if (
                             item.text()
                             or row_widget is None
-                            or item.sizeHint().height()
-                            < row_widget.sizeHint().height()
+                            or item.sizeHint().height() < row_widget.sizeHint().height()
                         ):
                             raise AssertionError(
                                 "Filter chooser row text/height overlaps its custom widget"
                             )
-                    dock.show_algorithm_info(
-                        "terraworkbench:butterworth_lowpass"
-                    )
+                    dock.show_algorithm_info("terraworkbench:butterworth_lowpass")
                     application.processEvents()
                     if (
                         not dock.filter_info.isVisible()
-                        or "Butterworth"
-                        not in dock.filter_info.browser.toPlainText()
+                        or "Butterworth" not in dock.filter_info.browser.toPlainText()
                     ):
                         raise AssertionError(
                             "Per-filter information button/dialog failed"
@@ -1249,9 +1289,7 @@ def main():
                     flush=True,
                 )
 
-                survey_source_value = os.environ.get(
-                    "TERRAWORKBENCH_GRD_TEST_SOURCE"
-                )
+                survey_source_value = os.environ.get("TERRAWORKBENCH_GRD_TEST_SOURCE")
                 if survey_source_value and Path(survey_source_value).is_file():
                     survey_source = Path(survey_source_value)
                     imported_path = temporary_path / "mount_polley_mtf.tif"
@@ -1301,9 +1339,7 @@ def main():
                     "500100;6200100;4.0e-4\n",
                     encoding="utf-8",
                 )
-                import_survey_grid(
-                    ascii_source, temporary_path / "scientific_grid.tif"
-                )
+                import_survey_grid(ascii_source, temporary_path / "scientific_grid.tif")
 
                 duplicate_source = temporary_path / "duplicate_grid.csv"
                 duplicate_source.write_text(
@@ -1385,10 +1421,23 @@ def main():
 
         lifecycle_events = []
 
-        class FakeInterface:
+        class FakeInterface(QObject):
+            currentLayerChanged = pyqtSignal(object)
+
             def __init__(self):
+                super().__init__()
                 self.window = QMainWindow()
                 self.dock_area = None
+                self.context_actions = set()
+
+            def activeLayer(self):
+                return None
+
+            def addCustomActionForLayerType(self, action, *_args):
+                self.context_actions.add(action)
+
+            def removeCustomActionForLayerType(self, action):
+                self.context_actions.remove(action)
 
             def mainWindow(self):
                 return self.window
@@ -1414,8 +1463,8 @@ def main():
                 pass
 
         original_dependency_dialog = plugin_module.show_dependency_dialog
-        plugin_module.show_dependency_dialog = (
-            lambda _parent: lifecycle_events.append("dependencies")
+        plugin_module.show_dependency_dialog = lambda _parent: lifecycle_events.append(
+            "dependencies"
         )
         plugin = TerraWorkbenchPlugin(FakeInterface())
         settings = QSettings()
@@ -1441,8 +1490,7 @@ def main():
                 "terraworkbench:mag_dx"
             )
             if (
-                plugin.filter_stack_dock.settings_button.text()
-                != "Configuración…"
+                plugin.filter_stack_dock.settings_button.text() != "Configuración…"
                 or "Primera derivada" not in magnetic_dx.displayName()
                 or "Jordan Zavaleta (GisGeo Dev)"
                 not in plugin.filter_stack_dock.settings_dialog.about_label.text()
@@ -1469,8 +1517,7 @@ def main():
             set_language("pt")
             plugin.filter_stack_dock.preferences_changed()
             if (
-                plugin.filter_stack_dock.settings_button.text()
-                != "Configurações…"
+                plugin.filter_stack_dock.settings_button.text() != "Configurações…"
                 or "Primeira derivada"
                 not in QgsApplication.processingRegistry()
                 .algorithmById("terraworkbench:mag_dx")

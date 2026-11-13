@@ -485,10 +485,10 @@ def survey_case(paths, output):
 
 
 def radiometry_case(paths, output):
-    """Explicit development-only adapter, absent from public source exports."""
-    from importlib import import_module
-    adapter = import_module("scripts.private_" + "tellus")
-    return adapter.radiometry_case(paths, output)
+    """Licensed public adapter for the pinned Tellus A9 line-data product."""
+    from scripts.tellus_a9 import radiometry_case as run_tellus
+
+    return run_tellus(paths, output)
 
 
 def spectra_case(paths, output):

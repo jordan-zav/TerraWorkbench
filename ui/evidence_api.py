@@ -99,13 +99,23 @@ def capture_workspace(
                 app._evidence_pending_dialog = dialog
                 raise TimeoutError("Database preview did not finish")
             time.sleep(0.01)
-        if errors or not dialog.table.rowCount():
+        model = dialog.table.model()
+        if errors or model is None or not model.rowCount():
             raise RuntimeError("Database preview failed: " + str(errors))
         # Resolve offscreen layout before scrolling the selected channel into view.
         # Scrolling a hidden list uses provisional geometry on some Qt platforms.
         dialog.resize(1280, 850)
         dialog.show()
         app.processEvents()
+        # The line sheet loads pages asynchronously. Render only after the
+        # first visible cell has arrived (a stored null is the empty string).
+        while model.data(model.index(0, 0)) is None:
+            app.processEvents()
+            if errors:
+                raise RuntimeError("Database preview failed: " + str(errors))
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Database sheet page did not finish")
+            time.sleep(0.01)
         # Preview completion can rebuild the list: reacquire items after events.
         for index in range(dialog.channels_list.count()):
             item = dialog.channels_list.item(index)

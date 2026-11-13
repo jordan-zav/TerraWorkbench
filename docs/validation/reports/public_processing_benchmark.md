@@ -27,7 +27,8 @@ retain the original data-source acknowledgements as well. Britain contains
 British Geological Survey materials, UKRI 2021, under the Open Government Licence.
 The [spectra record](https://doi.org/10.5281/zenodo.20032395) currently declares
 CC BY 4.0 for v1.1.0. Cite that dataset and the
-[associated paper](https://doi.org/10.48550/arXiv.2512.18769).
+[associated paper in Nature Communications](https://doi.org/10.1038/s41467-026-78464-2)
+(preprint arXiv:2512.18769); the dataset author confirmed this citation pair.
 
 Use an existing Python environment and explicitly chosen cache/output folders:
 

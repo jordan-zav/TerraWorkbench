@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from qgis.core import QgsApplication
 from qgis.PyQt import sip
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QFont, QFontDatabase
 from qgis.PyQt.QtTest import QTest
 
@@ -82,11 +82,11 @@ def main():
                 dialog.show()
                 dialog.preview()
                 wait()
-                assert dialog.table.rowCount() == 200 and dialog.page_next.isEnabled()
+                assert dialog.table.model().rowCount() == 200 and dialog.page_next.isEnabled()
                 dialog.page_next.click()
                 wait()
                 assert dialog._page_offset == 200
-                assert dialog.table.verticalHeaderItem(0).text() == "201"
+                assert dialog.table.model().headerData(0, Qt.Vertical) == "201"
                 choose(dialog.profile_group, "line")
                 choose(dialog.profile_sensor, "sensor")
                 dialog.load_group_values()
@@ -101,7 +101,7 @@ def main():
                 dialog.sensor_values.setText("S1")
                 dialog.page_next.click()
                 wait()
-                assert dialog._page_offset == 0 and dialog.table.rowCount() == 200
+                assert dialog._page_offset == 0 and dialog.table.model().rowCount() == 200
                 assert not dialog.page_next.isEnabled()
                 choose(dialog.profile_channel, "signal")
                 choose(dialog.profile_axis, "time")

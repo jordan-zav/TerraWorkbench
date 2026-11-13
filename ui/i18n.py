@@ -1,29 +1,39 @@
-"""Runtime English/Spanish localization and persistent user preferences."""
+"""Runtime localization and persistent user preferences."""
 
 from qgis.PyQt.QtCore import QLocale, QSettings
+from qgis.core import QgsApplication
 
 
 SETTINGS_ROOT = "TerraWorkbench"
-LANGUAGE_KEY = f"{SETTINGS_ROOT}/language"
+# The old language key was also written when accepting unrelated settings.
+# It cannot reliably distinguish a manual choice from an inherited locale.
+LANGUAGE_KEY = f"{SETTINGS_ROOT}/languagePreference"
+AUTOMATIC_LANGUAGE = "auto"
+SUPPORTED_LANGUAGES = frozenset(("en", "es", "pt"))
+
+
+def language_preference():
+    """Return the explicit choice, or automatic for new and legacy settings."""
+    stored = QSettings().value(LANGUAGE_KEY, AUTOMATIC_LANGUAGE, type=str).strip().casefold()
+    return stored if stored in SUPPORTED_LANGUAGES else AUTOMATIC_LANGUAGE
 
 
 def language():
-    """Return the active language code (``en``, ``es`` or ``pt``)."""
-    stored = QSettings().value(LANGUAGE_KEY, "", type=str).strip().casefold()
-    if stored in {"en", "es", "pt"}:
-        return stored
-    system_language = QLocale.system().name().casefold()
-    if system_language.startswith("es"):
-        return "es"
-    if system_language.startswith("pt"):
-        return "pt"
-    return "en"
+    """Resolve the plug-in language from its preference or the QGIS locale."""
+    preference = language_preference()
+    if preference != AUTOMATIC_LANGUAGE:
+        return preference
+    locale = (QgsApplication.locale() or "").strip()
+    if not locale:
+        locale = QLocale.system().name()
+    code = locale.casefold().replace("-", "_").split("_", 1)[0]
+    return code if code in SUPPORTED_LANGUAGES else "en"
 
 
 def set_language(code):
-    """Persist a supported UI language."""
+    """Persist automatic mode or an explicit supported language."""
     normalized = str(code).strip().casefold()
-    if normalized not in {"en", "es", "pt"}:
+    if normalized != AUTOMATIC_LANGUAGE and normalized not in SUPPORTED_LANGUAGES:
         raise ValueError(f"Unsupported TerraWorkbench language: {code}")
     QSettings().setValue(LANGUAGE_KEY, normalized)
 
@@ -567,6 +577,9 @@ _PT_EXACT = {
     "What it does": "O que faz",
     "Numerical domain": "Domínio numérico",
     "Trusted reading": "Leitura confiável",
+    "Automatic (QGIS language)": "Automático (idioma do QGIS)",
+    "Building survey map…": "Gerando mapa do levantamento…",
+    "No line channel; samples and boundary only.": "Sem canal de linha; apenas amostras e limite.",
     "Language changes apply to TerraWorkbench only.": "As alterações de idioma se aplicam somente ao TerraWorkbench.",
     "Open parameter inspector after adding a filter": "Abrir o inspetor de parâmetros ao adicionar um filtro",
     "Confirm before clearing the complete stack": "Confirmar antes de limpar toda a pilha",
@@ -590,7 +603,7 @@ _PT_EXACT = {
     "Missing or conflicting dependencies remain.": "Ainda existem dependências ausentes ou conflitantes.",
     "Overall progress": "Progresso geral",
     "Show details": "Mostrar detalhes",
-    "Hide details": "Ocultar detalhes",
+    "Technical details": "Detalhes técnicos",
     "Pending": "Pendente",
     "Resolving": "Resolvendo",
     "Downloading": "Baixando",
@@ -654,10 +667,50 @@ _PT_EXACT = {
     "Compare the radial power spectrum of the input with the predicted FFT stack.": "Compare o espectro de potência radial da entrada com a pilha FFT prevista.",
     "Search by method, group or abbreviation": "Pesquisar por método, grupo ou abreviação",
     "Temporary output (or choose a folder)": "Saída temporária (ou escolha uma pasta)",
+    "temporary": "temporário",
+    "Work folder": "Pasta de trabalho",
+    "Databases…": "Bancos de dados…",
+    "Hillshade": "Sombreamento",
+    "Calculate hillshade…": "Calcular sombreamento…",
+    "Visual hillshade settings…": "Configurações do sombreamento visual…",
+    "Toggle visual hillshade": "Mostrar ou ocultar o sombreamento visual",
+    "Select a single-band raster": "Selecione um raster de banda única",
+    "hillshade effect": "efeito de sombreamento",
+    "Hillshade failed: {error}": "Falha no sombreamento: {error}",
+    "Classic geophysics": "Geofísica clássica",
+    "Grayscale": "Escala de cinza",
+    "Light direction (azimuth)": "Direção da luz (azimute)",
+    "Altitude": "Altura",
+    "Intensity": "Intensidade",
+    "Palette": "Paleta",
+    "Azimuth": "Azimute",
+    "Direction": "Direção",
+    "Custom": "Personalizado",
+    "Automatic z factor": "Fator z automático",
+    "Z factor": "Fator z",
+    "Several directions": "Várias direções",
+    "Combined (multidirectional)": "Combinado (multidirecional)",
+    "SW": "SO",
+    "W": "O",
+    "NW": "NO",
+    "Temporary (QGIS)": "Temporário (QGIS)",
+    "Work folder unavailable: {path}. Using QGIS temporary storage.":
+        "Pasta de trabalho indisponível: {path}. A pasta temporária do QGIS será usada.",
+    "Choose folder…": "Escolher pasta…",
+    "Open folder in file explorer": "Abrir pasta no explorador de arquivos",
+    "Use QGIS temporary folder": "Usar pasta temporária do QGIS",
+    "Save in work folder": "Salvar na pasta de trabalho",
+    "Save as…": "Salvar como…",
+    "Choose work folder and move…": "Escolher pasta de trabalho e mover…",
+    "Export Geosoft GeoDatabase to folder…": "Exportar GeoDatabase Geosoft para uma pasta…",
+    "Save as GeoTIFF…": "Salvar como GeoTIFF…",
+    "Temporary survey imports": "Importações temporárias de levantamentos",
+    "{count} imported layer(s) will be lost when QGIS closes unless saved.": "{count} camada(s) importada(s) serão perdidas ao fechar o QGIS se não forem salvas.",
+    "Ignore": "Ignorar",
     "Save every intermediate raster": "Salvar todos os rasters intermediários",
     "Survey grid file…": "Arquivo de grade do levantamento…",
     "Esri FileGDB folder…": "Pasta Esri FileGDB…",
-    "Geosoft GeoDatabase inventory/export…": "Inventário/exportação de GeoDatabase Geosoft…",
+    "Geosoft GeoDatabase inventory/export…": "Inventário e exportação do GeoDatabase Geosoft…",
     "Starting the public Geosoft GX Developer reader…": "Iniciando o leitor público Geosoft GX Developer…",
     "Starting the installed Geosoft runtime…": "Iniciando o runtime instalado da Geosoft…",
     "The public Geosoft GX Developer reader failed.": "Falha no leitor público Geosoft GX Developer.",
@@ -1023,6 +1076,7 @@ _PT_REPLACEMENTS = (
 
 
 _PT_EXACT.update({
+    "X/Y fiducials differ. The archive is preserved; automatic map creation would require explicit alignment.": "Os fiduciais X/Y diferem. O arquivo é preservado; criar o mapa requer alinhamento explícito.",
     "Some dependencies are in use in this session. Restart QGIS and use this button before opening any TerraWorkbench tool.":
         "Algumas dependências estão em uso nesta sessão. Reinicie o QGIS e use este botão antes de abrir qualquer ferramenta do TerraWorkbench.",
     "Gravity observation points": "Pontos de observação gravimétrica",
@@ -1150,7 +1204,7 @@ _BASIC_PROCESSING_TRANSLATIONS = {
     'Interpolation expansion X': ('Expansión de interpolación X', 'Expansão de interpolação X'),
     'Interpolation expansion Y': ('Expansión de interpolación Y', 'Expansão de interpolação Y'),
     'Sinc support lobes': ('Lóbulos de soporte sinc', 'Lóbulos de suporte sinc'),
-    'Interpolate a regular grid using separable windowed sin(x)/x. Original sample centres are retained. Missing support remains NoData. Expansion adds samples, not measured resolution. Independent Lanczos implementation; Geoplot equivalence is not certified.': ('Interpola una grilla regular con sin(x)/x y ventana separable. Conserva los centros originales y deja NoData donde falta soporte. Aumenta muestras, no resolución medida. Implementación Lanczos independiente sin equivalencia certificada con Geoplot.', 'Interpola uma grade regular com sin(x)/x e janela separável. Conserva centros originais e mantém NoData sem suporte. Aumenta amostras, não resolução medida. Implementação Lanczos independente sem equivalência certificada com Geoplot.'),
+    'Interpolate a regular grid using separable windowed sin(x)/x. Original sample centres are retained. Missing support remains NoData. Expansion adds samples, not measured resolution. Uses Lanczos weights.': ('Interpola una grilla regular con sin(x)/x y ventana separable. Conserva los centros originales y deja NoData donde falta soporte. Aumenta muestras, no resolución medida. Usa pesos Lanczos.', 'Interpola uma grade regular com sin(x)/x e janela separável. Conserva centros originais e mantém NoData sem suporte. Aumenta amostras, não resolução medida. Usa pesos Lanczos.'),
 
     "Sinc original Y spacing (0 = X spacing)": ("Espaciado Y original sinc (0 = espaciado X)", "Espaçamento Y original sinc (0 = espaçamento X)"),
     "Sinc original X sample spacing (required)": ("Espaciado X original sinc (obligatorio)", "Espaçamento X original sinc (obrigatório)"),
@@ -1200,12 +1254,12 @@ _BASIC_PROCESSING_TRANSLATIONS = {
     "Sinc(x)/x support radius (sample spacings)": ("Radio de soporte sinc(x)/x (espaciados de muestra)", "Raio de suporte sinc(x)/x (espaçamentos de amostra)"),
     "Sinc(x)/x sample spacing (0 = output cell size)": ("Espaciado de muestra sinc(x)/x (0 = tamaño de celda de salida)", "Espaçamento de amostra sinc(x)/x (0 = tamanho da célula de saída)"),
     "Sinc(x)/x blanking distance": ("Distancia de blanking sinc(x)/x", "Distância de blanking sinc(x)/x"),
-    "Applies a normalized 3x3 binomial kernel. Missing cells and outside edges have zero weight; original NoData cells remain missing. Each pass uses the previous result. Independent definition, not a certified equivalent of proprietary nine-point filters.": (
-        "Aplica un kernel binomial 3x3 normalizado. Las celdas ausentes y el exterior tienen peso cero; se conserva el NoData original. Cada pasada usa el resultado anterior. Definición independiente, sin equivalencia certificada con filtros propietarios de nueve puntos.",
-        "Aplica um kernel binomial 3x3 normalizado. Células ausentes e o exterior têm peso zero; o NoData original é preservado. Cada passagem usa o resultado anterior. Definição independente, sem equivalência certificada com filtros proprietários de nove pontos."),
-    "Scales the field by global RMS divided by local RMS in a square pixel window, with an RMS floor and gain cap. No mean subtraction; original NoData is preserved. This changes physical amplitudes: use for enhancement, not quantitative inversion. Independent definition, not a certified equivalent of proprietary AGC.": (
-        "Multiplica el campo por RMS global/RMS local en una ventana cuadrada de píxeles, con piso RMS y ganancia máxima. No resta la media y conserva NoData. Modifica amplitudes físicas: usar para realce, no para inversión cuantitativa. Definición independiente, sin equivalencia certificada con AGC propietario.",
-        "Multiplica o campo por RMS global/RMS local em uma janela quadrada de pixels, com piso RMS e ganho máximo. Não subtrai a média e preserva NoData. Altera amplitudes físicas: usar para realce, não para inversão quantitativa. Definição independente, sem equivalência certificada com AGC proprietário."),
+    "Applies a normalized 3x3 binomial kernel. Missing cells and outside edges have zero weight; original NoData cells remain missing. Each pass uses the previous result.": (
+        "Aplica un kernel binomial 3x3 normalizado. Las celdas ausentes y el exterior tienen peso cero; se conserva el NoData original. Cada pasada usa el resultado anterior.",
+        "Aplica um kernel binomial 3x3 normalizado. Células ausentes e o exterior têm peso zero; o NoData original é preservado. Cada passagem usa o resultado anterior."),
+    "Scales the field by global RMS divided by local RMS in a square pixel window, with an RMS floor and gain cap. No mean subtraction; original NoData is preserved. This changes physical amplitudes: use for enhancement, not quantitative inversion.": (
+        "Multiplica el campo por RMS global/RMS local en una ventana cuadrada de píxeles, con piso RMS y ganancia máxima. No resta la media y conserva NoData. Modifica amplitudes físicas: usar para realce, no para inversión cuantitativa.",
+        "Multiplica o campo por RMS global/RMS local em uma janela quadrada de pixels, com piso RMS e ganho máximo. Não subtrai a média e preserva NoData. Altera amplitudes físicas: usar para realce, não para inversão quantitativa."),
     "Global thin-plate spline minimizes bending with an affine polynomial and is limited to 2000 unique points. Local TPS uses a configurable neighborhood and is not a global minimum-curvature solution. Coincident values are averaged. Smoothing uses isotropically normalized coordinates; it is not tension. Search radius only masks TPS output by distance to the nearest observation. No RANGRID equivalence is claimed.": (
         "El spline global de placa delgada minimiza la flexión con un polinomio afín y admite hasta 2000 puntos únicos. El TPS local usa vecinos configurables y no es una solución global de mínima curvatura. Se promedian valores coincidentes. El suavizado usa coordenadas normalizadas isotrópicamente; no es tensión. El radio solo enmascara la salida TPS por distancia a la observación más cercana. No se afirma equivalencia con RANGRID.",
         "O spline global de placa fina minimiza a flexão com um polinômio afim e admite até 2000 pontos únicos. O TPS local usa vizinhos configuráveis e não é uma solução global de curvatura mínima. Valores coincidentes são promediados. A suavização usa coordenadas normalizadas isotropicamente; não é tensão. O raio apenas mascara a saída TPS pela distância à observação mais próxima. Não se afirma equivalência com RANGRID."),
@@ -1254,7 +1308,7 @@ _PT_EXACT.update({
     "TensorMesh (uniform)": "TensorMesh (uniforme)",
     "TreeMesh (adaptive OcTree)": "TreeMesh (OcTree adaptativo)",
     "Open dependency folder": "Abrir pasta de dependências",
-    "This manager is built into TerraWorkbench from modified QPIP progress components. It manages only TerraWorkbench requirements and installs into the active QGIS user profile after explicit approval.": "Este gerenciador está integrado ao TerraWorkbench com componentes de progresso QPIP modificados. Gerencia apenas os requisitos do TerraWorkbench e instala no perfil de usuário QGIS ativo após aprovação explícita.",
+    "TerraWorkbench installs these packages in your QGIS profile.": "O TerraWorkbench instala estes pacotes no seu perfil do QGIS.",
     "Output folder": "Pasta de saída",
     "Manage Python dependencies…": "Gerenciar dependências Python…",
     "Open bundled sample-data folder": "Abrir pasta dos dados de exemplo incluídos",
@@ -1338,6 +1392,18 @@ _PT_EXACT.update({
 })
 
 
+_PT_EXACT.update({
+    "Open converted survey archive…": "Abrir cópia aberta de levantamento…",
+    "Convert to open archive (recommended)": "Converter para arquivo aberto (recomendado)",
+    "Legacy numeric CSV (lossy)": "CSV numérico legado (com perdas)",
+    "Prepare GDB conversion support": "Preparar conversão de GDB",
+    "Do not show again": "Não mostrar novamente",
+    "GDB conversion requires Windows; converted archives open on any platform.": "A conversão GDB requer Windows; cópias abertas funcionam em qualquer sistema.",
+    "The recommended archive preserves native types, text, arrays, dummies and per-channel fiducials, then verifies every channel against a second GX read.": "O arquivo recomendado preserva tipos nativos, texto, arrays, dummies e fiduciais por canal, verificando cada canal com uma segunda leitura GX.",
+    "Download the official full GX 2024.2 runtime (362,081,059 bytes / 345.3 MiB)? It will be stored only in this QGIS profile's dependency folder. BSD-2-Clause notices must be retained; additional vendor/third-party terms and licensed-function restrictions still apply. This does not accept a Seequent license or sign in.": "Baixar o runtime completo oficial GX 2024.2 (362.081.059 bytes / 345,3 MiB)? Ele fica somente nas dependências deste perfil do QGIS. Os avisos BSD-2-Clause devem ser preservados; os termos do fornecedor e de terceiros e as restrições de funções licenciadas continuam aplicáveis. Isso não aceita uma licença Seequent nem inicia sessão.",
+})
+
+
 def _translate_portuguese(source):
     value = str(source)
     exact = _PT_EXACT.get(value)
@@ -1371,4 +1437,45 @@ _PT_EXACT.update({
         "Reinicie o QGIS. Se o TerraWorkbench continuar instalado, solicitará reinstalar as dependências.",
     "Cleanup stopped. Restart QGIS before using the plugin. Details: {error}":
         "A limpeza foi interrompida. Reinicie o QGIS antes de usar o plugin. Detalhes: {error}",
+})
+
+
+_PT_EXACT.update({
+    "Converting GDB requires a one-time download of the official GX runtime (about 345 MiB). Download now?":
+        "Para converter GDB, é necessário baixar uma vez o runtime oficial GX (cerca de 345 MiB). Baixar agora?",
+    "Converting GDB requires the geosoft Python package. Install it now?":
+        "Para converter GDB, é necessário o pacote Python geosoft. Instalar agora?",
+    "The download stays in this QGIS profile. It does not sign in or accept a Seequent licence. BSD-2-Clause and vendor terms apply:":
+        "O download fica neste perfil do QGIS. Não inicia sessão nem aceita uma licença Seequent. Aplicam-se BSD-2-Clause e os termos do fornecedor:",
+    "Installing GDB conversion support": "Instalando suporte de conversão GDB",
+    "Preparing GDB conversion support": "Preparando suporte de conversão GDB",
+    "GDB support is not ready. Preparation did not install both required components.":
+        "O suporte GDB não está pronto. A preparação não instalou os dois componentes necessários.",
+    "GDB support (optional, Windows only)": "Suporte GDB (opcional, somente Windows)",
+    "Managed GX 2024.2 runtime": "Runtime GX 2024.2 gerenciado",
+    "Vendor terms": "Termos do fornecedor",
+    "Not installed (optional)": "Não instalado (opcional)",
+    "Not available on this system": "Não disponível neste sistema",
+    "To import GDB, click Prepare GDB conversion support (one-time download of about 345 MiB).":
+        "Para importar GDB, clique em Preparar conversão de GDB (download único de cerca de 345 MiB).",
+    "GDB conversion support is installed.": "O suporte de conversão GDB está instalado.",
+    "All core scientific requirements are satisfied. Restart QGIS after any repair.":
+        "Todos os requisitos científicos do núcleo estão atendidos. Reinicie o QGIS após qualquer reparo.",
+    "Download": "Baixar",
+    "Install": "Instalar",
+    "Cancel": "Cancelar",
+})
+
+_PT_EXACT.update({'GX configuration is not ready. geosoft.redist must contain two existing, writable user and temporary folders. Details: {error}': 'A configuração GX não está pronta. geosoft.redist deve indicar duas pastas existentes e graváveis: usuário e temporária. Detalhes: {error}', 'GX could not load {dll}. Missing DLLs: {missing}. Details: {error}': 'GX não conseguiu carregar {dll}. DLLs ausentes: {missing}. Detalhes: {error}', 'not identified': 'não identificadas', 'The declared .NET 6 framework is missing. Install Microsoft .NET 6 Runtime; Desktop Runtime x64 includes the required desktop and core frameworks. Official download: {url}': 'O framework .NET 6 declarado está ausente. Instale Microsoft .NET 6 Runtime; Desktop Runtime x64 inclui os frameworks de desktop e núcleo necessários. Download oficial: {url}', 'The new GX runtime is ready. Remove this previous managed installation? Keeping it is safe.\n{folder}': 'O novo runtime GX está pronto. Excluir esta instalação gerenciada anterior? É seguro mantê-la.\n{folder}'})
+
+_PT_EXACT.update({
+    "Prepare GDB conversion?": "Preparar a conversão GDB?",
+    "Install in your QGIS profile. GX uses BSD-2-Clause and vendor terms.":
+        "Instale no seu perfil do QGIS. O GX usa BSD-2-Clause e os termos do fornecedor.",
+    "GX could not start. Prepare GDB support again.": "Não foi possível iniciar o GX. Prepare o suporte GDB novamente.",
+    "Repair": "Reparar",
+    "Show details": "Mostrar detalhes",
+    "Technical details": "Detalhes técnicos",
+    "Third-party licences": "Licenças de terceiros",
+    "To import GDB, prepare conversion support.": "Para importar GDB, prepare o suporte de conversão.",
 })

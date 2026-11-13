@@ -5,13 +5,16 @@ import json
 import csv
 import uuid
 from html import escape
+from threading import Event
+import weakref
 
-from qgis.PyQt.QtCore import QSettings, QThread, pyqtSignal, QUrl, QUrlQuery
+from qgis.PyQt.QtCore import QSettings, QThread, pyqtSignal
 from qgis.PyQt.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QCheckBox,
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QHBoxLayout,
     QInputDialog,
@@ -23,17 +26,16 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
     QProgressDialog,
     QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
+    QTableView,
+    QHeaderView,
     QVBoxLayout,
     QWidget,
     QSplitter,
     QTabWidget,
     QMenu,
 )
-from qgis.core import QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem
+from qgis.core import QgsProject, QgsCoordinateReferenceSystem
 
-from .i18n import language
 from ..qgis_plugin.qgis_compat import qt_enum
 from ..compat.survey_store import SurveyStore
 from ..terraworkbench_core.survey_explorer import (
@@ -43,13 +45,54 @@ from ..terraworkbench_core.survey_explorer import (
     compare_survey_profiles,
 )
 from .survey_profile_widget import SurveyProfileWidget
+from .survey_sheet import (
+    SurveySheetModel, background, channel_description, channel_tooltip, line_spans, tr,
+)
 from qgis.PyQt.QtCore import Qt
 
 KEY_WORKSPACE = "TerraWorkbench/surveyWorkspace"
 
 
-def tr(en, es, pt):
-    return {"en": en, "es": es, "pt": pt}.get(language(), en)
+def notify_survey_database(iface, root, database_id, name, owner):
+    if iface is None:
+        return
+    message_bar = iface.messageBar()
+    widget = message_bar.createMessage("TerraWorkbench", name)
+    button = QPushButton(widget)
+    widget.setWidget(button)
+    notices = owner.__dict__.setdefault("_survey_notices", {})
+    notices[id(widget)] = widget, button, name, message_bar
+    widget.destroyed.connect(lambda _object=None, key=id(widget): notices.pop(key, None))
+    translate_survey_notices(owner)
+    reference = weakref.ref(owner)
+
+    def open_database():
+        target = reference()
+        if target is None or getattr(target, "_tw_disposing", False):
+            return
+        if isinstance(target, SurveyWorkspaceDialog):
+            target._close_requested = False
+            target.select_database(root, database_id)
+            target.show()
+            target.raise_()
+        else:
+            target.workspaceRequested.emit(str(root), database_id)
+        message_bar.popWidget(widget)
+
+    button.clicked.connect(open_database)
+    widget.setDuration(0)
+    message_bar.pushItem(widget)
+
+
+def translate_survey_notices(owner):
+    for widget, button, name, _bar in getattr(owner, "_survey_notices", {}).values():
+        widget.setText(tr("Survey imported", "Levantamiento importado", "Levantamento importado") + f" · {name}")
+        button.setText(tr("Open database", "Abrir base de datos", "Abrir banco de dados"))
+
+
+def close_survey_notices(owner):
+    for widget, _button, _name, bar in tuple(getattr(owner, "_survey_notices", {}).values()):
+        bar.popWidget(widget)
 
 
 class StoreWorker(QThread):
@@ -76,10 +119,16 @@ class StoreWorker(QThread):
 
 
 class SurveyWorkspaceDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, iface=None):
         super().__init__(parent)
-        self.setWindowTitle(
-            tr("Survey databases", "Bases de levantamientos", "Bancos de levantamentos")
+        self._translations = []
+        self._results = {}
+        self._profile_axis_text = None
+        self._bind_text(
+            self.setWindowTitle,
+            "Survey databases",
+            "Bases de levantamientos",
+            "Bancos de levantamentos",
         )
         self.resize(1120, 760)
         self.setMinimumSize(780, 580)
@@ -92,6 +141,17 @@ class SurveyWorkspaceDialog(QDialog):
         self._page_context = None
         self._page_has_next = False
         self._channel_info = {}
+        self._sheet_key = None
+        self._sheet_columns = []
+        self._sheet_channel = None
+        self._sheet_row = None
+        self._lines = {}
+        self._index_cancel = Event()
+        self._page_generation = 0
+        self._profile_generation = 0
+        self._auto_profile = False
+        self._show_all_requested = False
+        self.iface = iface
         layout = QVBoxLayout(self)
         self.controls = QWidget()
         body = QVBoxLayout(self.controls)
@@ -110,23 +170,20 @@ class SurveyWorkspaceDialog(QDialog):
                 self.import_files,
             ),
         ):
-            button = QPushButton(tr(*labels))
+            button = self._translated_widget(QPushButton, *labels)
             button.clicked.connect(callback)
             buttons.addWidget(button)
-        self.path_label = QLabel(
-            tr(
-                "Choose a working folder",
-                "Elige una carpeta de trabajo",
-                "Escolha uma pasta de trabalho",
-            )
+        self.path_label = self._result_label(
+            "Choose a working folder",
+            "Elige una carpeta de trabajo",
+            "Escolha uma pasta de trabalho",
         )
         self.path_label.setWordWrap(True)
-        processes = QPushButton(
-            tr(
-                "All geophysical processes…",
-                "Todos los procesos geofísicos…",
-                "Todos os processos geofísicos…",
-            )
+        processes = self._translated_widget(
+            QPushButton,
+            "All geophysical processes…",
+            "Todos los procesos geofísicos…",
+            "Todos os processos geofísicos…",
         )
         processes.clicked.connect(self.show_processes)
         buttons.addWidget(processes)
@@ -136,13 +193,12 @@ class SurveyWorkspaceDialog(QDialog):
         sidebar = QWidget()
         side = QVBoxLayout(sidebar)
         side.setContentsMargins(0, 0, 6, 0)
-        side.addWidget(QLabel(tr("Databases", "Bases", "Bancos")))
-        hint = QLabel(
-            tr(
-                "Select databases to see their common channels.",
-                "Selecciona bases para ver sus canales comunes.",
-                "Selecione bancos para ver seus canais comuns.",
-            )
+        side.addWidget(self._translated_widget(QLabel, "Databases", "Bases", "Bancos"))
+        hint = self._translated_widget(
+            QLabel,
+            "Select databases to see their common channels.",
+            "Selecciona bases para ver sus canales comunes.",
+            "Selecione bancos para ver seus canais comuns.",
         )
         hint.setWordWrap(True)
         side.addWidget(hint)
@@ -152,6 +208,7 @@ class SurveyWorkspaceDialog(QDialog):
         view.setContentsMargins(6, 0, 0, 0)
         splitter.addWidget(viewer)
         splitter.setStretchFactor(1, 1)
+        splitter.setSizes([275, 825])
         splitter.setSizes([280, 820])
         self.databases_list = QListWidget()
         self.databases_list.setSelectionMode(
@@ -164,22 +221,20 @@ class SurveyWorkspaceDialog(QDialog):
         )
         side.addWidget(self.databases_list, 1)
         side.addWidget(
-            QLabel(
-                tr(
-                    "Channels · units · version",
-                    "Canales · unidades · versión",
-                    "Canais · unidades · versão",
-                )
+            self._translated_widget(
+                QLabel,
+                "Channels · units · version",
+                "Canales · unidades · versión",
+                "Canais · unidades · versão",
             )
         )
         side.addWidget(self.channels_list, 2)
         filtering = QHBoxLayout()
-        self.filter_toggle = QPushButton(
-            tr(
-                "View / export filters…",
-                "Filtros de vista / exportación…",
-                "Filtros de visualização / exportação…",
-            )
+        self.filter_toggle = self._translated_widget(
+            QPushButton,
+            "View / export filters…",
+            "Filtros de vista / exportación…",
+            "Filtros de visualização / exportação…",
         )
         self.filter_toggle.setCheckable(True)
         self.filter_panel = QWidget()
@@ -190,22 +245,20 @@ class SurveyWorkspaceDialog(QDialog):
         view.addWidget(self.filter_panel)
         self.filter_panel.hide()
         filtering.addWidget(
-            QLabel(
-                tr(
-                    "Additional view/export filter",
-                    "Filtro adicional de vista/exportación",
-                    "Filtro adicional de visualização/exportação",
-                )
+            self._translated_widget(
+                QLabel,
+                "Additional view/export filter",
+                "Filtro adicional de vista/exportación",
+                "Filtro adicional de visualização/exportação",
             )
         )
         self.filter_channel = QComboBox()
         self.filter_values = QLineEdit()
-        self.filter_values.setPlaceholderText(
-            tr(
-                "Values separated by commas",
-                "Valores separados por comas",
-                "Valores separados por vírgulas",
-            )
+        self._bind_text(
+            self.filter_values.setPlaceholderText,
+            "Values separated by commas",
+            "Valores separados por comas",
+            "Valores separados por vírgulas",
         )
         filtering.addWidget(self.filter_channel)
         filtering.addWidget(self.filter_values)
@@ -221,8 +274,8 @@ class SurveyWorkspaceDialog(QDialog):
             (self.sensor_choices, self.sensor_values, self.profile_sensor),
         ):
             choices.setMinimumContentsLength(8)
-            choices.addItem(
-                tr("Choose value…", "Elegir valor…", "Escolher valor…"), None
+            self._translated_option(
+                choices, None, "Choose value…", "Elegir valor…", "Escolher valor…"
             )
             choices.currentIndexChanged.connect(
                 lambda index, c=choices, e=entry, s=source: (
@@ -237,55 +290,51 @@ class SurveyWorkspaceDialog(QDialog):
                     else None
                 )
             )
-        self.group_values.setPlaceholderText(
-            # Values chosen from the selector are CSV-quoted when necessary.
-            tr(
-                "All / comma-separated values",
-                "Todas / valores separados por comas",
-                "Todos / valores separados por vírgulas",
-            )
+        self._bind_text(
+            self.group_values.setPlaceholderText,
+            "All / comma-separated values",
+            "Todas / valores separados por comas",
+            "Todos / valores separados por vírgulas",
         )
-        self.sensor_values.setPlaceholderText(
-            tr(
-                "All / comma-separated values",
-                "Todos / valores separados por comas",
-                "Todos / valores separados por vírgulas",
-            )
+        self._bind_text(
+            self.sensor_values.setPlaceholderText,
+            "All / comma-separated values",
+            "Todos / valores separados por comas",
+            "Todos / valores separados por vírgulas",
         )
         for row, (label, combo, values) in enumerate(
             (
                 (
-                    tr("Transect channel", "Canal de transecta", "Canal de transecto"),
+                    ("Transect channel", "Canal de transecta", "Canal de transecto"),
                     self.profile_group,
                     self.group_values,
                 ),
                 (
-                    tr("Sensor channel", "Canal de sensor", "Canal de sensor"),
+                    ("Sensor channel", "Canal de sensor", "Canal de sensor"),
                     self.profile_sensor,
                     self.sensor_values,
                 ),
             )
         ):
-            grouping.addWidget(QLabel(label), row, 0)
+            grouping.addWidget(self._translated_widget(QLabel, *label), row, 0)
             grouping.addWidget(combo, row, 1)
             grouping.addWidget(values, row, 2)
         grouping.setColumnStretch(2, 1)
         grouping.addWidget(self.group_choices, 0, 3)
         grouping.addWidget(self.sensor_choices, 1, 3)
-        self.discover_groups = QPushButton(
-            tr(
-                "Find transects / sensors",
-                "Buscar transectas / sensores",
-                "Buscar transectos / sensores",
-            )
+        self.discover_groups = self._translated_widget(
+            QPushButton,
+            "Find transects / sensors",
+            "Buscar transectas / sensores",
+            "Buscar transectos / sensores",
         )
         self.discover_groups.clicked.connect(self.load_group_values)
         grouping.addWidget(self.discover_groups, 2, 1, 1, 3)
         filter_layout.addLayout(grouping)
         for entry in (self.filter_values, self.group_values, self.sensor_values):
             entry.textChanged.connect(self.update_filter_caption)
-        self.actions_button = QPushButton(
-            tr("Channel actions…", "Acciones de canales…", "Ações de canais…")
+        self.actions_button = self._translated_widget(
+            QPushButton, "Channel actions…", "Acciones de canales…", "Ações de canais…"
         )
         menu = QMenu(self.actions_button)
         self.actions_button.setMenu(menu)
@@ -305,7 +354,11 @@ class SurveyWorkspaceDialog(QDialog):
                 ),
                 (("Export CSV", "Exportar CSV", "Exportar CSV"), self.export),
                 (
-                    ("To QGIS points…", "A puntos QGIS…", "Para pontos QGIS…"),
+                    (
+                        "Add survey to map…",
+                        "Añadir levantamiento al mapa…",
+                        "Adicionar levantamento ao mapa…",
+                    ),
                     self.to_qgis,
                 ),
                 (("History", "Historial", "Histórico"), self.history),
@@ -327,19 +380,47 @@ class SurveyWorkspaceDialog(QDialog):
                 ),
             )
         ):
-            action = menu.addAction(tr(*labels))
+            action = menu.addAction("")
+            self._bind_text(action.setText, *labels)
             action.triggered.connect(lambda checked=False, fn=callback: fn())
         self.views = QTabWidget()
         view.addWidget(self.views, 1)
         table_page = QWidget()
         table_layout = QVBoxLayout(table_page)
         table_layout.setContentsMargins(0, 6, 0, 0)
+        line_tools = QHBoxLayout()
+        self.line_selector = QComboBox()
+        self.line_selector.setEditable(True)
+        self.line_selector.setInsertPolicy(qt_enum(QComboBox, "InsertPolicy", "NoInsert"))
+        self.line_selector.completer().setFilterMode(qt_enum(Qt, "MatchFlag", "MatchContains"))
+        self.line_previous = self._translated_widget(QPushButton, "‹", "‹", "‹")
+        self.line_next = self._translated_widget(QPushButton, "›", "›", "›")
+        self.line_previous.setFixedWidth(30)
+        self.line_next.setFixedWidth(30)
+        self._bind_text(self.line_previous.setToolTip, "Previous line", "Línea anterior", "Linha anterior")
+        self._bind_text(self.line_next.setToolTip, "Next line", "Línea siguiente", "Próxima linha")
+        self.line_field = self._translated_widget(QPushButton, "Line channel…", "Canal de línea…", "Canal de linha…")
+        self.line_field.clicked.connect(self._choose_line_channel)
+        columns = self._translated_widget(QPushButton, "Columns…", "Columnas…", "Colunas…")
+        columns.clicked.connect(self._choose_columns)
+        for widget in (self.line_previous, self.line_selector, self.line_next, self.line_field, columns):
+            line_tools.addWidget(widget, 1 if widget is self.line_selector else 0)
+        table_layout.addLayout(line_tools)
+        self.line_previous.clicked.connect(lambda: self.line_selector.setCurrentIndex(self.line_selector.currentIndex() - 1))
+        self.line_next.clicked.connect(lambda: self.line_selector.setCurrentIndex(self.line_selector.currentIndex() + 1))
+        self.line_selector.currentIndexChanged.connect(self._select_line)
         navigation = QHBoxLayout()
-        self.page_first = QPushButton(tr("First", "Primera", "Primeira"))
-        self.page_previous = QPushButton(tr("Previous", "Anterior", "Anterior"))
-        self.page_next = QPushButton(tr("Next", "Siguiente", "Próxima"))
-        self.page_reload = QPushButton(
-            tr("Load selection", "Cargar selección", "Carregar seleção")
+        self.page_first = self._translated_widget(
+            QPushButton, "First", "Primera", "Primeira"
+        )
+        self.page_previous = self._translated_widget(
+            QPushButton, "Previous", "Anterior", "Anterior"
+        )
+        self.page_next = self._translated_widget(
+            QPushButton, "Next", "Siguiente", "Próxima"
+        )
+        self.page_reload = self._translated_widget(
+            QPushButton, "Load selection", "Cargar selección", "Carregar seleção"
         )
         self.page_size = QComboBox()
         for size in (200, 500, 1000):
@@ -362,28 +443,41 @@ class SurveyWorkspaceDialog(QDialog):
             lambda: self.load_page(self._page_offset + self.page_size.currentData())
         )
         self.page_reload.clicked.connect(self.preview)
-        self.page_size.setToolTip(
-            tr("Rows per page", "Filas por página", "Linhas por página")
+        self._bind_text(
+            self.page_size.setToolTip,
+            "Rows per page",
+            "Filas por página",
+            "Linhas por página",
         )
         self.page_first.setEnabled(False)
         self.page_previous.setEnabled(False)
         self.page_next.setEnabled(False)
-        table_layout.addLayout(navigation)
-        self.table = QTableWidget()
+        self.page_controls = QWidget()
+        navigation.setContentsMargins(0, 0, 0, 0)
+        self.page_controls.setLayout(navigation)
+        table_layout.addWidget(self.page_controls)
+        self.table = QTableView()
+        self.sheet_model = SurveySheetModel(self.table)
+        self.sheet_model.failed.connect(lambda error: self._set_result(self.page_status, error))
+        self.table.setModel(self.sheet_model)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setSectionResizeMode(qt_enum(QHeaderView, "ResizeMode", "Fixed"))
+        self.table.verticalHeader().setDefaultSectionSize(self.table.fontMetrics().height() + 8)
+        self.table.horizontalHeader().setContextMenuPolicy(qt_enum(Qt, "ContextMenuPolicy", "CustomContextMenu"))
+        self.table.horizontalHeader().customContextMenuRequested.connect(self._column_menu)
+        self.table.clicked.connect(self._sheet_clicked)
         self.table.setEditTriggers(
             qt_enum(QAbstractItemView, "EditTrigger", "NoEditTriggers")
         )
         table_layout.addWidget(self.table, 1)
-        self.page_status = QLabel(
-            tr(
-                "Select channels and load a page.",
-                "Selecciona canales y carga una página.",
-                "Selecione canais e carregue uma página.",
-            )
+        self.page_status = self._result_label(
+            "Select one database to open its sheet.",
+            "Selecciona una base para abrir su hoja.",
+            "Selecione um banco para abrir sua planilha.",
         )
         self.page_status.setWordWrap(True)
         table_layout.addWidget(self.page_status)
-        self.views.addTab(table_page, tr("Table", "Tabla", "Tabela"))
+        self._translated_tab(table_page, "Table", "Tabla", "Tabela")
         profile_page = QWidget()
         profile_layout = QVBoxLayout(profile_page)
         profile_controls = QGridLayout()
@@ -391,41 +485,53 @@ class SurveyWorkspaceDialog(QDialog):
         self.profile_axis = QComboBox()
         self.profile_compare = QComboBox()
         self.profile_compare_mode = QComboBox()
-        self.profile_compare_mode.addItem(
-            tr("Overlay A / B", "Superponer A / B", "Sobrepor A / B"), "overlay"
+        self._translated_option(
+            self.profile_compare_mode,
+            "overlay",
+            "Overlay A / B",
+            "Superponer A / B",
+            "Sobrepor A / B",
         )
-        self.profile_compare_mode.addItem(
-            tr("Difference B − A", "Diferencia B − A", "Diferença B − A"), "difference"
+        self._translated_option(
+            self.profile_compare_mode,
+            "difference",
+            "Difference B − A",
+            "Diferencia B − A",
+            "Diferença B − A",
         )
-        self.profile_load = QPushButton(
-            tr("Draw profile", "Dibujar perfil", "Desenhar perfil")
+        self.profile_load = self._translated_widget(
+            QPushButton, "Draw profile", "Dibujar perfil", "Desenhar perfil"
         )
-        profile_controls.addWidget(QLabel(tr("Channel", "Canal", "Canal")), 0, 0)
+        profile_controls.addWidget(
+            self._translated_widget(QLabel, "Channel", "Canal", "Canal"), 0, 0
+        )
         profile_controls.addWidget(self.profile_channel, 0, 1)
-        profile_controls.addWidget(QLabel(tr("X axis", "Eje X", "Eixo X")), 1, 0)
+        profile_controls.addWidget(
+            self._translated_widget(QLabel, "X axis", "Eje X", "Eixo X"), 1, 0
+        )
         profile_controls.addWidget(self.profile_axis, 1, 1)
         profile_controls.addWidget(self.profile_load, 0, 2, 2, 1)
         profile_controls.setColumnStretch(1, 1)
-        self.profile_distance = QCheckBox(
-            tr(
-                "Distance along profile (m), using saved XY / CRS",
-                "Distancia del perfil (m), usando XY / CRS guardados",
-                "Distância do perfil (m), usando XY / SRC salvos",
-            )
+        self.profile_distance = self._translated_widget(
+            QCheckBox,
+            "Distance along profile (m), using saved XY / CRS",
+            "Distancia del perfil (m), usando XY / CRS guardados",
+            "Distância do perfil (m), usando XY / SRC salvos",
         )
         self.profile_distance.toggled.connect(
             lambda checked: self.profile_axis.setEnabled(not checked)
         )
-        self.profile_distance.setToolTip(
-            tr(
-                "PyProj: CRS unit conversion and ellipsoidal horizontal distance. No vertical datum correction or 3-D path is inferred.",
-                "PyProj: conversión de unidades del CRS y distancia horizontal elipsoidal. No se infiere corrección de datum vertical ni trayectoria 3D.",
-                "PyProj: conversão de unidades do SRC e distância horizontal elipsoidal. Não se infere correção de datum vertical nem trajetória 3D.",
-            )
+        self._bind_text(
+            self.profile_distance.setToolTip,
+            "PyProj: CRS unit conversion and ellipsoidal horizontal distance. No vertical datum correction or 3-D path is inferred.",
+            "PyProj: conversión de unidades del CRS y distancia horizontal elipsoidal. No se infiere corrección de datum vertical ni trayectoria 3D.",
+            "PyProj: conversão de unidades do SRC e distância horizontal elipsoidal. Não se infere correção de datum vertical nem trajetória 3D.",
         )
         profile_controls.addWidget(self.profile_distance, 2, 0, 1, 3)
         profile_controls.addWidget(
-            QLabel(tr("Compare B", "Comparar B", "Comparar B")), 3, 0
+            self._translated_widget(QLabel, "Compare B", "Comparar B", "Comparar B"),
+            3,
+            0,
         )
         profile_controls.addWidget(self.profile_compare, 3, 1)
         profile_controls.addWidget(self.profile_compare_mode, 3, 2)
@@ -435,80 +541,181 @@ class SurveyWorkspaceDialog(QDialog):
         self.profile_legend.setTextFormat(qt_enum(Qt, "TextFormat", "RichText"))
         profile_layout.addWidget(self.profile_legend)
         self.profile_plot = SurveyProfileWidget()
-        self.profile_plot.empty_text = tr(
+        self._bind_text(
+            self._set_profile_empty_text,
             "Choose a numeric channel and draw its profile.",
             "Elige un canal numérico y dibuja su perfil.",
             "Escolha um canal numérico e desenhe seu perfil.",
         )
-        self.profile_plot.setAccessibleName(
-            tr("Channel profile", "Perfil de canal", "Perfil de canal")
+        self._bind_text(
+            self.profile_plot.setAccessibleName,
+            "Channel profile",
+            "Perfil de canal",
+            "Perfil de canal",
         )
         profile_layout.addWidget(self.profile_plot, 1)
         toolbar = QHBoxLayout()
         for caption, callback in (
-            ("+", lambda: self.profile_plot.zoom(0.8)),
-            ("−", lambda: self.profile_plot.zoom(1.25)),
-            (tr("Fit", "Ajustar", "Ajustar"), self.profile_plot.fit),
+            (("+", "+", "+"), lambda: self.profile_plot.zoom(0.8)),
+            (("−", "−", "−"), lambda: self.profile_plot.zoom(1.25)),
+            (("Fit", "Ajustar", "Ajustar"), self.profile_plot.fit),
             (
-                tr("Save view PNG…", "Guardar vista PNG…", "Salvar vista PNG…"),
+                ("Save view PNG…", "Guardar vista PNG…", "Salvar vista PNG…"),
                 self.export_profile_view,
             ),
         ):
-            button = QPushButton(caption)
+            button = self._translated_widget(QPushButton, *caption)
             button.clicked.connect(callback)
             toolbar.addWidget(button)
         profile_layout.addLayout(toolbar)
-        self.profile_cursor = QLabel(
-            tr(
-                "Wheel: zoom · drag: pan · statistics refer to the full loaded selection",
-                "Rueda: zoom · arrastrar: desplazar · estadísticas de toda la selección cargada",
-                "Roda: zoom · arrastar: deslocar · estatísticas de toda a seleção carregada",
-            )
+        self.profile_cursor = self._result_label(
+            "Wheel: zoom · drag: pan · statistics refer to the full loaded selection",
+            "Rueda: zoom · arrastrar: desplazar · estadísticas de toda la selección cargada",
+            "Roda: zoom · arrastar: deslocar · estatísticas de toda a seleção carregada",
         )
         self.profile_cursor.setWordWrap(True)
-        self.profile_plot.positionChanged.connect(self.profile_cursor.setText)
+        self.profile_plot.positionChanged.connect(
+            lambda value: self._set_result(self.profile_cursor, value)
+        )
         profile_layout.addWidget(self.profile_cursor)
-        self.profile_statistics = QLabel(
-            tr(
-                "Display only. No channel values are changed.",
-                "Solo visualización. No se modifica ningún valor.",
-                "Apenas visualização. Nenhum valor é alterado.",
-            )
+        self.profile_statistics = self._result_label(
+            "Display only. No channel values are changed.",
+            "Solo visualización. No se modifica ningún valor.",
+            "Apenas visualização. Nenhum valor é alterado.",
         )
         self.profile_statistics.setWordWrap(True)
         profile_layout.addWidget(self.profile_statistics)
         self.profile_load.clicked.connect(self.load_profile)
-        self.views.addTab(profile_page, tr("Profiles", "Perfiles", "Perfis"))
-        self.status = QLabel(
-            tr(
-                "Immutable originals · versioned channels · PyArrow/Parquet + SQLite",
-                "Originales inmutables · canales versionados · PyArrow/Parquet + SQLite",
-                "Originais imutáveis · canais versionados · PyArrow/Parquet + SQLite",
-            )
+        self._translated_tab(profile_page, "Profiles", "Perfiles", "Perfis")
+        self.views.currentChanged.connect(self._refresh_sheet_profile)
+        self.channels_list.itemSelectionChanged.connect(self._sidebar_channels_changed)
+        self.status = self._result_label(
+            "Immutable originals · versioned channels · PyArrow/Parquet + SQLite",
+            "Originales inmutables · canales versionados · PyArrow/Parquet + SQLite",
+            "Originais imutáveis · canais versionados · PyArrow/Parquet + SQLite",
         )
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
         from .task_history_widget import TaskHistoryWidget
 
         self.tasks = TaskHistoryWidget(tr, self)
+        self._bind_option(
+            self.profile_axis,
+            None,
+            "Selected sample",
+            "Muestra seleccionada",
+            "Amostra selecionada",
+        )
         self.tasks.cancelRequested.connect(
             lambda: (
                 self.worker.requestInterruption() if self.worker is not None else None
             )
         )
         layout.addWidget(self.tasks)
+        self._fill_line_selector()
+        self.line_field.setEnabled(False)
         saved = QSettings().value(KEY_WORKSPACE, "", type=str)
         if saved and (Path(saved) / "catalog.sqlite").is_file():
             try:
                 self.set_project(saved)
             except Exception as error:
-                self.status.setText(str(error))
+                self._set_result(self.status, str(error))
+
+    def _bind_text(self, setter, *labels):
+        self._translations.append((setter, labels))
+        setter(tr(*labels))
+
+    def _translated_widget(self, widget_class, *labels):
+        widget = widget_class()
+        self._bind_text(widget.setText, *labels)
+        return widget
+
+    def _translated_tab(self, page, *labels):
+        index = self.views.addTab(page, "")
+        self._bind_text(lambda value: self.views.setTabText(index, value), *labels)
+
+    def _bind_option(self, combo, key, *labels):
+        def update(value):
+            index = combo.findData(key)
+            if index >= 0:
+                combo.setItemText(index, value)
+
+        self._bind_text(update, *labels)
+
+    def _translated_option(self, combo, key, *labels):
+        combo.addItem("", key)
+        self._bind_option(combo, key, *labels)
+
+    def _set_profile_empty_text(self, value):
+        self.profile_plot.empty_text = value
+        self.profile_plot.update()
+
+    def _result_label(self, *labels):
+        widget = QLabel()
+        self._set_result(widget, lambda: tr(*labels))
+        return widget
+
+    def _set_result(self, widget, value):
+        if callable(value):
+            self._results[widget] = value
+            widget.setText(value())
+        else:
+            self._results.pop(widget, None)
+            widget.setText(value)
+
+    def retranslate(self):
+        for setter, labels in self._translations:
+            setter(tr(*labels))
+        for widget, render in self._results.items():
+            widget.setText(render())
+        self.update_filter_caption()
+        self.sheet_model.retranslate()
+        translate_survey_notices(self)
+        self._fill_line_selector(preserve=True)
+        for index in range(self.channels_list.count()):
+            item = self.channels_list.item(index)
+            if channel := self._channel_info.get(item.data(256)):
+                item.setToolTip(channel_tooltip(channel))
+        if self._profile_axis_text is not None:
+            self.profile_plot.x_label = self._profile_axis_text()
+            self.profile_plot.update()
+        self.tasks.retranslate()
+        if self.worker is not None:
+            self.progress_dialog.setCancelButtonText(
+                tr("Cancel", "Cancelar", "Cancelar")
+            )
+            rows = self.tasks.active["rows"] if self.tasks.active else None
+            self.progress_dialog.setLabelText(
+                tr("Rows: ", "Filas: ", "Linhas: ") + rows
+                if rows is not None
+                else tr("Working…", "Procesando…", "Processando…")
+            )
 
     def set_project(self, path, create=False):
         self.store = SurveyStore(path, create=create)
         QSettings().setValue(KEY_WORKSPACE, str(self.store.root))
-        self.path_label.setText(str(self.store.root))
+        self._set_result(self.path_label, str(self.store.root))
         self.refresh()
+
+    def select_database(self, path, database_id):
+        if self.store is None or self.store.root != Path(path).resolve():
+            self.set_project(path)
+        else:
+            self.refresh()
+        for index in range(self.databases_list.count()):
+            item = self.databases_list.item(index)
+            if item.data(256) == database_id:
+                self.databases_list.blockSignals(True)
+                self.databases_list.clearSelection()
+                self.databases_list.setCurrentRow(index)
+                item.setSelected(True)
+                self.databases_list.blockSignals(False)
+                self.refresh_channels()
+                self._show_all_requested = False
+                self.views.setCurrentIndex(0)
+                if self._lines:
+                    self.line_selector.setCurrentIndex(0)
+                break
 
     def show_processes(self):
         from .process_centre import ProcessCentre
@@ -573,10 +780,16 @@ class SurveyWorkspaceDialog(QDialog):
         return [item.data(256) for item in self.databases_list.selectedItems()]
 
     def selected_channels(self):
+        if self._sheet_channel in self._channel_info:
+            return [self._sheet_channel]
+        return self._sidebar_channels()
+
+    def _sidebar_channels(self):
         return [item.data(256) for item in self.channels_list.selectedItems()]
 
     def refresh_channels(self):
-        selected = set(self.selected_channels())
+        selected = set(self._sidebar_channels())
+        self.channels_list.blockSignals(True)
         filter_name = self.filter_channel.currentData()
         choices = [
             (self.profile_compare, self.profile_compare.currentData()),
@@ -607,22 +820,25 @@ class SurveyWorkspaceDialog(QDialog):
             self._page_context = None
             self._page_offset = 0
             self._page_has_next = False
-            self.table.setRowCount(0)
-            self.page_status.setText(
-                tr(
-                    "Select channels and load a page.",
-                    "Selecciona canales y carga una página.",
-                    "Selecione canais e carregue uma página.",
-                )
+            self._show_all_requested = False
+            self._set_result(
+                self.page_status,
+                lambda: tr(
+                    "Select one database to open its sheet.",
+                    "Selecciona una base para abrir su hoja.",
+                    "Selecione um banco para abrir sua planilha.",
+                ),
             )
             self.profile_plot.clear()
+            self._profile_axis_text = None
             self.profile_legend.clear()
-            self.profile_statistics.setText(
-                tr(
+            self._set_result(
+                self.profile_statistics,
+                lambda: tr(
                     "Select a channel to inspect.",
                     "Selecciona un canal para inspeccionar.",
                     "Selecione um canal para inspecionar.",
-                )
+                ),
             )
             self.page_first.setEnabled(False)
             self.page_previous.setEnabled(False)
@@ -636,6 +852,8 @@ class SurveyWorkspaceDialog(QDialog):
                     tr("Choose value…", "Elegir valor…", "Escolher valor…"), None
                 )
         if not ids or not self.store:
+            self.channels_list.blockSignals(False)
+            self._refresh_sheet(ids)
             return
         rows = self.store.channels(ids[0])
         common = {c["name"] for c in rows}
@@ -645,13 +863,9 @@ class SurveyWorkspaceDialog(QDialog):
             if row["name"] not in common:
                 continue
             self._channel_info[row["name"]] = row
-            suffix = (
-                f" · {row['data_type']} · {row['unit']} · v{row['number']}"
-                if len(ids) == 1
-                else ""
-            )
-            item = QListWidgetItem(row["name"] + suffix)
+            item = QListWidgetItem(channel_description(row) if len(ids) == 1 else row["name"])
             item.setData(256, row["name"])
+            item.setToolTip(channel_tooltip(row))
             self.channels_list.addItem(item)
             item.setSelected(row["name"] in selected)
             self.filter_channel.addItem(row["name"], row["name"])
@@ -677,6 +891,235 @@ class SurveyWorkspaceDialog(QDialog):
                 )
                 if suggested:
                     combo.setCurrentIndex(max(0, combo.findData(suggested)))
+        self.channels_list.blockSignals(False)
+        self._refresh_sheet(ids)
+
+    def _sheet_setting(self, name):
+        return f"TerraWorkbench/surveySheet/{self.selected_databases()[0]}/{name}"
+
+    def _refresh_sheet(self, ids, force=False):
+        if len(ids) != 1 or self.store is None:
+            self._index_cancel.set()
+            self._page_generation += 1
+            self._profile_generation += 1
+            self._sheet_key = None
+            self._sheet_columns = []
+            self._line_channel = None
+            self._lines = {}
+            self.sheet_model.reset([])
+            self._fill_line_selector()
+            self.line_field.setEnabled(False)
+            self.page_controls.hide()
+            return
+        from ..terraworkbench_core.survey_map import survey_map_channels
+
+        database = next(row for row in self.store.databases() if row["id"] == ids[0])
+        stored = self.store._sheet_channels(ids[0])
+        key = (self.store.root, ids[0], database["metadata"],
+               tuple((row["name"], row["unit"], row["version_id"]) for row in stored))
+        if key == self._sheet_key and not force:
+            return
+        previous = self.line_selector.currentData() if self._sheet_key and key[:2] == self._sheet_key[:2] else None
+        self._sheet_key = key
+        self._index_cancel.set()
+        self._index_cancel = Event()
+        self._page_generation += 1
+        self._profile_generation += 1
+        self._sheet_channel = self._sheet_row = None
+        channels, metadata = survey_map_channels(self.store, ids[0])
+        by_id = {channel["id"]: channel["name"] for channel in stored}
+        by_name = {channel["name"]: channel for channel in stored}
+        roles = metadata.get("channel_roles", {})
+        override = QSettings().value(self._sheet_setting("line"), "", type=str)
+        self._line_channel = by_id.get(override) or by_id.get(roles.get("line")) or channels.line
+        leading = [self._line_channel, channels.fiducial or channels.time, channels.x, channels.y]
+        ordered = dict.fromkeys(name for name in [*leading, *by_name] if name in by_name)
+        self._sheet_columns = [by_name[name] for name in ordered]
+        self._lines = {}
+        self.sheet_model.reset(self._sheet_columns)
+        self._apply_columns()
+        self._fill_line_selector()
+        self.line_field.setEnabled(bool(stored))
+        self.page_controls.hide()
+        if not self._line_channel:
+            self._select_line()
+            return
+        self._set_result(self.page_status, lambda: tr(
+            "Reading line identifiers…", "Leyendo identificadores de línea…",
+            "Lendo identificadores de linha…",
+        ))
+        store, field, canceled = self.store, self._line_channel, self._index_cancel
+        background(
+            (canceled, previous),
+            lambda: line_spans(store, ids[0], field, channels.line_type, metadata, canceled.is_set),
+            self._line_index_ready,
+        )
+
+    def _line_index_ready(self, key, result, error):
+        canceled, previous = key
+        if canceled is not self._index_cancel or canceled.is_set():
+            return
+        self._lines = result or {}
+        self._fill_line_selector(value=previous)
+        if self._show_all_requested:
+            self.line_selector.blockSignals(True)
+            self.line_selector.setCurrentIndex(self.line_selector.count() - 1)
+            self.line_selector.blockSignals(False)
+            self._update_line_arrows()
+            if self._page_context is not None or self.worker is not None:
+                return
+        self._select_line()
+        if error:
+            self._set_result(self.status, error)
+
+    def _fill_line_selector(self, preserve=False, value=None):
+        if preserve:
+            value = self.line_selector.currentData()
+        was_all = preserve and value is None
+        self.line_selector.blockSignals(True)
+        self.line_selector.clear()
+        for line, (_, _, kind) in self._lines.items():
+            title = str(line)
+            label = {
+                "traverse": tr("Traverse", "Vuelo", "Voo"),
+                "tie": tr("Tie", "Control", "Controle"),
+                "other": tr("Other", "Otra", "Outra"),
+            }.get(kind)
+            self.line_selector.addItem(f"{title} · {label}" if label else title, line)
+        self.line_selector.addItem(tr("All rows", "Todas las filas", "Todas as linhas"), None)
+        index = self.line_selector.count() - 1 if was_all else self.line_selector.findData(value)
+        self.line_selector.setCurrentIndex(max(0, index) if value is not None or was_all else 0)
+        self.line_selector.setEnabled(bool(self._lines))
+        self.line_selector.blockSignals(False)
+        channel = getattr(self, "_line_channel", None)
+        caption = tr("Line channel…", "Canal de línea…", "Canal de linha…")
+        if channel:
+            short = self.line_field.fontMetrics().elidedText(
+                channel, qt_enum(Qt, "TextElideMode", "ElideMiddle"), 135
+            )
+            self.line_field.setText(f"{caption.rstrip('…')}: {short}")
+            self.line_field.setToolTip(f"{caption.rstrip('…')}: {channel}")
+        else:
+            self.line_field.setText(caption)
+            self.line_field.setToolTip(caption)
+        self._update_line_arrows()
+
+    def _update_line_arrows(self):
+        current = self.line_selector.currentIndex()
+        count = len(self._lines)
+        self.line_previous.setEnabled(count > 0 and current > 0)
+        self.line_next.setEnabled(0 <= current < count - 1)
+
+    def _select_line(self, *_args):
+        self._update_line_arrows()
+        self._sheet_row = None
+        self.profile_plot.set_selected_sample(None)
+        self._page_generation += 1
+        line = self.line_selector.currentData()
+        self._show_all_requested = line is None and bool(self._lines)
+        self.page_controls.setVisible(line is None and bool(self._sheet_columns))
+        if line is None:
+            if self._sheet_columns:
+                self.sheet_model.reset(self._sheet_columns)
+                self._apply_columns()
+                self.load_page(0, automatic=True)
+            return
+        spans, ends, _ = self._lines[line]
+        self.sheet_model.reset(self._sheet_columns, store=self.store, spans=spans, ends=ends)
+        self._apply_columns()
+        self.table.scrollToTop()
+        self._set_result(self.page_status, lambda: tr(
+            "{count:,} rows · read-only", "{count:,} filas · solo lectura",
+            "{count:,} linhas · somente leitura",
+        ).format(count=ends[-1]))
+        self._refresh_sheet_profile()
+
+    def _choose_line_channel(self):
+        if not self._sheet_columns:
+            return
+        automatic = tr("Automatic", "Automático", "Automático")
+        names = [channel["name"] for channel in self._sheet_columns]
+        options = [automatic, *names]
+        initial = options.index(self._line_channel) if self._line_channel in names else 0
+        chosen, ok = QInputDialog.getItem(self, self.line_field.text(), tr(
+            "Line identifier", "Identificador de línea", "Identificador de linha",
+        ), options, initial, False)
+        if ok:
+            value = self._channel_info[chosen]["id"] if chosen in names else ""
+            QSettings().setValue(self._sheet_setting("line"), value)
+            self._refresh_sheet(self.selected_databases(), force=True)
+
+    def _hidden_columns(self):
+        return set(QSettings().value(self._sheet_setting("hidden"), [], type=list)) if self._sheet_columns else set()
+
+    def _apply_columns(self):
+        hidden = self._hidden_columns()
+        metrics = self.table.fontMetrics()
+        for index, channel in enumerate(self.sheet_model.channels):
+            self.table.setColumnHidden(index, channel["id"] in hidden)
+            width = max(metrics.horizontalAdvance(channel[key]) for key in ("name", "unit"))
+            self.table.setColumnWidth(index, max(92, width + 24))
+        self.table.horizontalHeader().setMinimumHeight(metrics.height() * 2 + 8)
+
+    def _save_columns(self, hidden):
+        if self._sheet_columns and len(hidden) < len(self._sheet_columns):
+            QSettings().setValue(self._sheet_setting("hidden"), sorted(hidden))
+            self._apply_columns()
+            self._refresh_sheet_profile()
+
+    def _choose_columns(self):
+        if not self._sheet_columns:
+            return
+        dialog = QDialog(self)
+        dialog.setWindowTitle(tr("Columns", "Columnas", "Colunas"))
+        layout = QVBoxLayout(dialog)
+        checks = QListWidget(dialog)
+        layout.addWidget(checks)
+        hidden = self._hidden_columns()
+        checked = qt_enum(Qt, "CheckState", "Checked")
+        unchecked = qt_enum(Qt, "CheckState", "Unchecked")
+        for channel in self._sheet_columns:
+            item = QListWidgetItem(channel_description(channel), checks)
+            item.setData(256, channel["id"])
+            item.setCheckState(unchecked if channel["id"] in hidden else checked)
+        ok = qt_enum(QDialogButtonBox, "StandardButton", "Ok")
+        cancel = qt_enum(QDialogButtonBox, "StandardButton", "Cancel")
+        buttons = QDialogButtonBox(ok | cancel, parent=dialog)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        checks.itemChanged.connect(lambda _item: buttons.button(ok).setEnabled(
+            any(checks.item(index).checkState() == checked for index in range(checks.count()))
+        ))
+        if dialog.exec():
+            self._save_columns({checks.item(index).data(256) for index in range(checks.count())
+                                if checks.item(index).checkState() != checked})
+        dialog.deleteLater()
+
+    def _column_menu(self, point):
+        header = self.table.horizontalHeader()
+        section = header.logicalIndexAt(point)
+        if section < 0:
+            return
+        channel = self.sheet_model.channels[section]
+        hidden = self._hidden_columns()
+        menu = QMenu(header)
+        hide = menu.addAction(tr("Hide column", "Ocultar columna", "Ocultar coluna"))
+        hide.setEnabled(len(hidden) < len(self._sheet_columns) - 1)
+        hide.triggered.connect(lambda: self._save_columns(hidden | {channel["id"]}))
+        menu.addAction(tr("Columns…", "Columnas…", "Colunas…"), self._choose_columns)
+        menu.exec(header.mapToGlobal(point))
+        menu.deleteLater()
+
+    def _sidebar_channels_changed(self):
+        self._sheet_channel = None
+        self._refresh_sheet_profile()
+
+    def _sheet_clicked(self, index):
+        self._sheet_channel = self.sheet_model.channels[index.column()]["name"]
+        self._sheet_row = index.row() + 1 if self.line_selector.currentData() is not None else None
+        if self._auto_profile:
+            self.profile_plot.set_selected_sample(self._sheet_row)
 
     def require_selection(self, channels=True, single=False):
         ids, names = self.selected_databases(), self.selected_channels()
@@ -770,18 +1213,22 @@ class SurveyWorkspaceDialog(QDialog):
                     choices.addItem(value, value)
                 choices.blockSignals(False)
                 choices.setEnabled(choices.count() > 1)
-            message = tr(
-                "Read {rows:,} rows · selectors loaded; blank fields include all values",
-                "Leídas {rows:,} filas · selectores cargados; campos vacíos incluyen todos los valores",
-                "Lidas {rows:,} linhas · seletores carregados; campos vazios incluem todos os valores",
-            ).format(rows=result["rows"])
-            if any(result["truncated"].values()):
-                message += " · " + tr(
-                    "List limited to 2000 values per channel; manual values still accepted",
-                    "Lista limitada a 2000 valores por canal; se aceptan valores manuales",
-                    "Lista limitada a 2000 valores por canal; valores manuais continuam aceitos",
-                )
-            self.status.setText(message)
+
+            def summary():
+                message = tr(
+                    "Read {rows:,} rows · selectors loaded; blank fields include all values",
+                    "Leídas {rows:,} filas · selectores cargados; campos vacíos incluyen todos los valores",
+                    "Lidas {rows:,} linhas · seletores carregados; campos vazios incluem todos os valores",
+                ).format(rows=result["rows"])
+                if any(result["truncated"].values()):
+                    message += " · " + tr(
+                        "List limited to 2000 values per channel; manual values still accepted",
+                        "Lista limitada a 2000 valores por canal; se aceptan valores manuales",
+                        "Lista limitada a 2000 valores por canal; valores manuais continuam aceitos",
+                    )
+                return message
+
+            self._set_result(self.status, summary)
 
         self.start(
             run,
@@ -820,12 +1267,13 @@ class SurveyWorkspaceDialog(QDialog):
         self.worker.progress.connect(self.tasks.progress)
         self.worker.cancelled.connect(lambda: setattr(self, "_task_state", "cancelled"))
         self.worker.cancelled.connect(
-            lambda: self.status.setText(
-                tr(
+            lambda: self._set_result(
+                self.status,
+                lambda: tr(
                     "Cancelled.",
                     "Cancelado.",
                     "Cancelado.",
-                )
+                ),
             )
         )
         self.worker.finished.connect(self.finished)
@@ -835,7 +1283,7 @@ class SurveyWorkspaceDialog(QDialog):
     def completed(self, result, callback):
         self._task_state = "completed"
         if callback is None:
-            self.status.setText(str(result))
+            self._set_result(self.status, str(result))
         self.refresh()
         if callback:
             try:
@@ -866,7 +1314,7 @@ class SurveyWorkspaceDialog(QDialog):
             self.close()
 
     def fail(self, message):
-        self.status.setText(message)
+        self._set_result(self.status, message)
         if not self._dispose:
             QMessageBox.warning(self, "TerraWorkbench", message)
 
@@ -880,6 +1328,10 @@ class SurveyWorkspaceDialog(QDialog):
 
     def dispose(self):
         self._dispose = True
+        self._index_cancel.set()
+        self.sheet_model.canceled.set()
+        self._profile_generation += 1
+        close_survey_notices(self)
         from ..qgis_plugin.qgis_compat import dispose_with_workers
 
         dispose_with_workers(self)
@@ -904,7 +1356,7 @@ class SurveyWorkspaceDialog(QDialog):
             return
         from .text_import_dialog import TextImportDialog
 
-        text_options = {}
+        text_options, import_metadata = {}, {}
         for path in paths:
             if Path(path).suffix.lower() != ".parquet":
                 wizard = TextImportDialog(path, self)
@@ -913,6 +1365,7 @@ class SurveyWorkspaceDialog(QDialog):
                     wizard.deleteLater()
                     return
                 text_options[path] = wizard.options
+                import_metadata[path] = wizard.survey_metadata
                 wizard.deleteLater()
         store = self.store
 
@@ -926,36 +1379,53 @@ class SurveyWorkspaceDialog(QDialog):
                     while name in used_names:
                         name = f"{base} ({suffix})"
                         suffix += 1
-                    results.append(
-                        store.import_file(
-                            path,
-                            name=name,
-                            canceled=cancel,
-                            progress=progress,
-                            text_options=text_options.get(path),
-                        )
+                    database_id = store.import_file(
+                        path,
+                        name=name,
+                        canceled=cancel,
+                        progress=progress,
+                        text_options=text_options.get(path),
+                        metadata=import_metadata.get(path),
                     )
                     used_names.add(name)
+                    results.append(
+                        self._try_survey_map(store, database_id, cancel, progress)
+                    )
+                except InterruptedError:
+                    raise
                 except Exception as error:
-                    raise RuntimeError(
-                        f"{len(results)}/{len(paths)} imported; {Path(path).name}: {error}"
-                    ) from error
-            return tr(
-                "Imported databases: ", "Bases importadas: ", "Bancos importados: "
-            ) + str(len(results))
+                    results.append((None, Path(path).name, None, str(error)))
+            return results
 
-        self.start(run)
+        def imported(results):
+            for database_id, name, _package, _error in results:
+                if database_id:
+                    notify_survey_database(self.iface, store.root, database_id, name, self)
+            self._show_survey_maps(store, results)
+
+        self.start(run, imported)
 
     def preview(self):
+        self._show_all_requested = True
+        self.line_selector.blockSignals(True)
+        self.line_selector.setCurrentIndex(self.line_selector.count() - 1)
+        self.line_selector.blockSignals(False)
+        self._update_line_arrows()
+        self.page_controls.show()
         self.load_page(0)
 
-    def load_page(self, offset=0):
-        selection = self.require_selection(single=True)
-        if not selection:
+    def load_page(self, offset=0, *, automatic=False):
+        ids = self.selected_databases()
+        if len(ids) != 1 or not self._sheet_columns:
+            if not automatic:
+                self.require_selection(channels=False, single=True)
             return
-        ids, names = selection
+        columns = self._sheet_columns
+        names = [channel["name"] for channel in columns]
         store, filters = self.store, self.filters()
         limit = self.page_size.currentData()
+        self._page_generation += 1
+        generation = self._page_generation
         context = (
             str(store.root),
             ids[0],
@@ -980,24 +1450,11 @@ class SurveyWorkspaceDialog(QDialog):
             )
 
         def display(result):
-            data = result["data"]
-            self.table.clear()
-            self.table.setColumnCount(len(names))
-            self.table.setRowCount(result["rows"])
-            self.table.setHorizontalHeaderLabels(names)
-            # Scientific channel names carry processing history. Keep them
-            # readable and allow horizontal scrolling instead of clipping them.
-            metrics = self.table.fontMetrics()
-            for column, name in enumerate(names):
-                self.table.setColumnWidth(column, max(110, metrics.horizontalAdvance(name) + 28))
-            self.table.setVerticalHeaderLabels(
-                [str(offset + i + 1) for i in range(result["rows"])]
-            )
-            for col, name in enumerate(names):
-                for row, value in enumerate(data[name]):
-                    self.table.setItem(
-                        row, col, QTableWidgetItem("" if value is None else str(value))
-                    )
+            if generation != self._page_generation or self.line_selector.currentData() is not None:
+                return
+            self.sheet_model.reset(columns, page=result["data"], offset=offset)
+            self._apply_columns()
+            self.table.scrollToTop()
             self._page_offset, self._page_has_next, self._page_context = (
                 offset,
                 result["has_next"],
@@ -1007,26 +1464,99 @@ class SurveyWorkspaceDialog(QDialog):
             self.page_previous.setEnabled(offset > 0)
             self.page_next.setEnabled(result["has_next"])
             total = next(d["rows"] for d in store.databases() if d["id"] == ids[0])
-            message = tr(
-                "Selection rows {first}–{last} · database: {total:,} rows · read-only",
-                "Filas {first}–{last} de la selección · base: {total:,} filas · solo lectura",
-                "Linhas {first}–{last} da seleção · banco: {total:,} linhas · somente leitura",
-            ).format(
-                first=offset + 1 if result["rows"] else 0,
-                last=offset + result["rows"] if result["rows"] else 0,
-                total=total,
-            )
-            self.page_status.setText(message)
-            self.status.setText(message)
+
+            def summary():
+                message = tr(
+                    "Selection rows {first}–{last} · database: {total:,} rows · read-only",
+                    "Filas {first}–{last} de la selección · base: {total:,} filas · solo lectura",
+                    "Linhas {first}–{last} da seleção · banco: {total:,} linhas · somente leitura",
+                ).format(
+                    first=offset + 1 if result["rows"] else 0,
+                    last=offset + result["rows"] if result["rows"] else 0,
+                    total=total,
+                )
+                return message
+
+            self._set_result(self.page_status, summary)
+            self._set_result(self.status, summary)
             self.views.setCurrentIndex(0)
 
-        self.start(
-            run,
-            display,
-            tr(
-                "Load table page", "Cargar página de tabla", "Carregar página da tabela"
-            ),
-        )
+        if automatic:
+            canceled = self._index_cancel
+            self._auto_page = generation, display
+            background(generation, lambda: run(canceled.is_set, None), self._automatic_page_ready)
+        else:
+            self.start(
+                run, display,
+                tr("Load table page", "Cargar página de tabla", "Carregar página da tabela"),
+            )
+
+    def _automatic_page_ready(self, generation, result, error):
+        if generation != self._page_generation or self._auto_page[0] != generation:
+            return
+        if error:
+            self._set_result(self.page_status, error)
+        else:
+            self._auto_page[1](result)
+
+    def _refresh_sheet_profile(self, *_args):
+        self._profile_generation += 1
+        if self.views.currentIndex() != 1 or self.line_selector.currentData() is None:
+            return
+        line, field = self.line_selector.currentData(), self._line_channel
+        store, database = self.store, self.selected_databases()[0]
+        hidden = self._hidden_columns()
+        selected = self._sidebar_channels() or ([self._sheet_channel] if self._sheet_channel else [])
+        numeric = [
+            channel for channel in self._sheet_columns if channel["id"] not in hidden
+            and channel["name"] != field
+            and channel["data_type"].startswith(("double", "float", "int", "uint", "decimal"))
+        ]
+        selected_rows = [channel for channel in numeric if channel["name"] in selected]
+        channel = self.profile_channel.currentData()
+        if not selected_rows and not selected:
+            selected_rows = [row for row in numeric if row["name"] == channel] or numeric[:1]
+        self._auto_profile = True
+        self.profile_plot.clear()
+        self.profile_legend.clear()
+        if not selected_rows:
+            return
+        self._set_result(self.profile_statistics, lambda: tr(
+            "Reading line profiles…", "Leyendo perfiles de línea…", "Lendo perfis de linha…",
+        ))
+        filters = {field: [line]}
+        canceled = self._index_cancel
+
+        def run():
+            profiles = []
+            for row in selected_rows:
+                result = read_survey_profile(
+                    store, database, row["name"], filters=filters, cancel=canceled.is_set,
+                )
+                label = f"{row['name']} [{row['unit']}]" if row["unit"] else row["name"]
+                profiles.extend({**segment, "label": label} for segment in result["segments"])
+            return profiles
+
+        background(self._profile_generation, run, self._sheet_profile_ready)
+
+    def _sheet_profile_ready(self, generation, segments, error):
+        if generation != self._profile_generation:
+            return
+        if error:
+            self._set_result(self.profile_statistics, error)
+            return
+        self._profile_axis_text = lambda: tr("Selected sample", "Muestra seleccionada", "Amostra selecionada")
+        self.profile_plot.set_profile({"segments": segments}, self._profile_axis_text(), "")
+        self.profile_plot.set_selected_sample(self._sheet_row)
+        self.profile_legend.setText(" &nbsp; ".join(
+            f'<span style="color:{color.name()}">■ {escape(name)}</span>'
+            for name, color in self.profile_plot.series_colors().items()
+        ))
+        self._set_result(self.profile_statistics, lambda: tr(
+            "Line profiles · units shown in the legend",
+            "Perfiles de la línea · unidades en la leyenda",
+            "Perfis da linha · unidades na legenda",
+        ))
 
     def load_profile(self):
         selection = self.require_selection(channels=False, single=True)
@@ -1034,6 +1564,9 @@ class SurveyWorkspaceDialog(QDialog):
             return
         database = selection[0][0]
         store, filters = self.store, self.filters()
+        if self.line_selector.currentData() is not None:
+            filters[self._line_channel] = [self.line_selector.currentData()]
+        self._profile_generation += 1
         channel, axis = (
             self.profile_channel.currentData(),
             self.profile_axis.currentData(),
@@ -1103,6 +1636,8 @@ class SurveyWorkspaceDialog(QDialog):
             )
 
         def display(result):
+            self._auto_profile = False
+            self.profile_plot.set_selected_sample(None)
             comparison = result if comparison_channel else None
             if comparison:
                 if comparison_mode == "difference":
@@ -1129,8 +1664,7 @@ class SurveyWorkspaceDialog(QDialog):
                 unit = info.get(name, {}).get("unit", "")
                 return f"{name} [{unit}]" if unit else name
 
-            self.profile_plot.set_profile(
-                result,
+            self._profile_axis_text = lambda: (
                 tr(
                     "Distance within continuous segment (m)",
                     "Distancia por tramo continuo (m)",
@@ -1141,7 +1675,11 @@ class SurveyWorkspaceDialog(QDialog):
                 if axis
                 else tr(
                     "Selected sample", "Muestra seleccionada", "Amostra selecionada"
-                ),
+                )
+            )
+            self.profile_plot.set_profile(
+                result,
+                self._profile_axis_text(),
                 f"{comparison_channel} − {channel} [{comparison['unit']}]"
                 if comparison and comparison_mode == "difference"
                 else f"{channel} / {comparison_channel} [{comparison['unit']}]"
@@ -1157,65 +1695,76 @@ class SurveyWorkspaceDialog(QDialog):
                 + (f" · +{len(colors) - 8}" if len(colors) > 8 else "")
             )
 
-            def number(key):
-                return "—" if result[key] is None else f"{result[key]:.6g}"
+            def statistics():
+                def number(key):
+                    return "—" if result[key] is None else f"{result[key]:.6g}"
 
-            message = tr(
-                "{valid:,}/{rows:,} valid · min {minimum} · max {maximum} · mean {mean} · SD {std}\n{shown:,} display points · gaps preserved · source values unchanged",
-                "{valid:,}/{rows:,} válidas · mín. {minimum} · máx. {maximum} · media {mean} · desv. {std}\n{shown:,} puntos de visualización · huecos conservados · valores originales sin cambios",
-                "{valid:,}/{rows:,} válidas · mín. {minimum} · máx. {maximum} · média {mean} · desvio {std}\n{shown:,} pontos de visualização · lacunas preservadas · valores originais inalterados",
-            ).format(
-                valid=result["valid_rows"],
-                rows=result["rows"],
-                shown=result["display_points"],
-                **{key: number(key) for key in ("minimum", "maximum", "mean", "std")},
-            )
-            if result["reduced"]:
-                message += "\n" + tr(
-                    "Reduced min/max envelope; statistics use the complete valid selection.",
-                    "Envolvente mín./máx. reducida; las estadísticas usan toda la selección válida.",
-                    "Envelope mín./máx. reduzido; as estatísticas usam toda a seleção válida.",
-                )
-            if comparison:
-                a, b, delta = (
-                    comparison["primary"],
-                    comparison["secondary"],
-                    comparison["difference"],
-                )
-
-                def mean_text(record):
-                    return "—" if record["mean"] is None else f"{record['mean']:.6g}"
-
-                message += "\n" + tr(
-                    "A: {a} valid, mean {am} · B: {b} valid, mean {bm} · B−A: {d} paired, mean {dm}; same database row positions, no interpolation",
-                    "A: {a} válidas, media {am} · B: {b} válidas, media {bm} · B−A: {d} pares, media {dm}; mismas filas de la base, sin interpolación",
-                    "A: {a} válidas, média {am} · B: {b} válidas, média {bm} · B−A: {d} pares, média {dm}; mesmas linhas do banco, sem interpolação",
+                message = tr(
+                    "{valid:,}/{rows:,} valid · min {minimum} · max {maximum} · mean {mean} · SD {std}\n{shown:,} display points · gaps preserved · source values unchanged",
+                    "{valid:,}/{rows:,} válidas · mín. {minimum} · máx. {maximum} · media {mean} · desv. {std}\n{shown:,} puntos de visualización · huecos conservados · valores originales sin cambios",
+                    "{valid:,}/{rows:,} válidas · mín. {minimum} · máx. {maximum} · média {mean} · desvio {std}\n{shown:,} pontos de visualização · lacunas preservadas · valores originais inalterados",
                 ).format(
-                    a=a["valid_rows"],
-                    am=mean_text(a),
-                    b=b["valid_rows"],
-                    bm=mean_text(b),
-                    d=delta["valid_rows"],
-                    dm=mean_text(delta),
+                    valid=result["valid_rows"],
+                    rows=result["rows"],
+                    shown=result["display_points"],
+                    **{
+                        key: number(key)
+                        for key in ("minimum", "maximum", "mean", "std")
+                    },
                 )
-                if comparison_mode == "overlay":
-                    message = (
-                        tr(
-                            "Primary A statistics · ",
-                            "Estadísticas del canal A · ",
-                            "Estatísticas do canal A · ",
-                        )
-                        + message
+                if result["reduced"]:
+                    message += "\n" + tr(
+                        "Reduced min/max envelope; statistics use the complete valid selection.",
+                        "Envolvente mín./máx. reducida; las estadísticas usan toda la selección válida.",
+                        "Envelope mín./máx. reduzido; as estatísticas usam toda a seleção válida.",
                     )
-            self.profile_statistics.setText(message)
-            self.status.setText(
-                tr(
+                if comparison:
+                    a, b, delta = (
+                        comparison["primary"],
+                        comparison["secondary"],
+                        comparison["difference"],
+                    )
+
+                    def mean_text(record):
+                        return (
+                            "—" if record["mean"] is None else f"{record['mean']:.6g}"
+                        )
+
+                    message += "\n" + tr(
+                        "A: {a} valid, mean {am} · B: {b} valid, mean {bm} · B−A: {d} paired, mean {dm}; same database row positions, no interpolation",
+                        "A: {a} válidas, media {am} · B: {b} válidas, media {bm} · B−A: {d} pares, media {dm}; mismas filas de la base, sin interpolación",
+                        "A: {a} válidas, média {am} · B: {b} válidas, média {bm} · B−A: {d} pares, média {dm}; mesmas linhas do banco, sem interpolação",
+                    ).format(
+                        a=a["valid_rows"],
+                        am=mean_text(a),
+                        b=b["valid_rows"],
+                        bm=mean_text(b),
+                        d=delta["valid_rows"],
+                        dm=mean_text(delta),
+                    )
+                    if comparison_mode == "overlay":
+                        message = (
+                            tr(
+                                "Primary A statistics · ",
+                                "Estadísticas del canal A · ",
+                                "Estatísticas do canal A · ",
+                            )
+                            + message
+                        )
+                return message
+
+            self._set_result(self.profile_statistics, statistics)
+            self._set_result(
+                self.status,
+                lambda: tr(
                     "Read-only profile loaded",
                     "Perfil de solo lectura cargado",
                     "Perfil somente leitura carregado",
-                )
+                ),
             )
+            self.views.blockSignals(True)
             self.views.setCurrentIndex(1)
+            self.views.blockSignals(False)
 
         self.start(
             run,
@@ -1534,12 +2083,13 @@ class SurveyWorkspaceDialog(QDialog):
                 for index in range(self.channels_list.count()):
                     item = self.channels_list.item(index)
                     item.setSelected(item.data(256) == output)
-                self.status.setText(
-                    tr(
+                self._set_result(
+                    self.status,
+                    lambda: tr(
                         "Created {output}: {rows} rows; {output_null_rows} null outputs; {short_segments} short segments; {spikes_replaced} spikes replaced. Open Channel pipeline to inspect.",
                         "Creado {output}: {rows} filas; {output_null_rows} salidas nulas; {short_segments} tramos cortos; {spikes_replaced} picos reemplazados. Abre Pipeline del canal para inspeccionar.",
                         "Criado {output}: {rows} linhas; {output_null_rows} saídas nulas; {short_segments} trechos curtos; {spikes_replaced} picos substituídos. Abra Pipeline do canal para inspecionar.",
-                    ).format(**result)
+                    ).format(**result),
                 )
 
             self.start(run, display)
@@ -1569,109 +2119,192 @@ class SurveyWorkspaceDialog(QDialog):
                     self.store.configure_geometry(
                         database_id, request["x"], request["y"], request["source"]
                     )
-                    self.status.setText(
-                        tr(
+                    self._set_result(
+                        self.status,
+                        lambda: tr(
                             "CRS assigned; coordinate values unchanged.",
                             "CRS asignado; valores de coordenadas sin cambios.",
                             "SRC atribuído; valores das coordenadas sem alterações.",
-                        )
+                        ),
                     )
                 except Exception as error:
                     self.fail(str(error))
         dialog.deleteLater()
 
+    @staticmethod
+    def _try_survey_map(
+        store, database_id, cancel, progress, channels=None, columns=None, filters=None
+    ):
+        from ..qgis_plugin.survey_map_layers import (
+            write_survey_geopackage,
+            qgis_boundary,
+        )
+        from ..terraworkbench_core.survey_map import (
+            build_survey_map,
+            survey_map_channels,
+        )
+
+        name = next(
+            row["name"] for row in store.databases() if row["id"] == database_id
+        )
+        try:
+            channels = channels or survey_map_channels(store, database_id)[0]
+            if not (
+                channels.x
+                and channels.y
+                and channels.x != channels.y
+                and QgsCoordinateReferenceSystem(channels.crs or "").isValid()
+            ):
+                return database_id, name, None, None
+            if columns is None:
+                columns = [row["name"] for row in store.channels(database_id)]
+            survey = build_survey_map(
+                store,
+                database_id,
+                channels=channels,
+                sample_columns=columns,
+                filters=filters,
+                canceled=cancel,
+                boundary_builder=qgis_boundary,
+            )
+            return (
+                database_id,
+                name,
+                write_survey_geopackage(store, database_id, survey, cancel, progress),
+                None,
+            )
+        except InterruptedError:
+            raise
+        except Exception as error:
+            return database_id, name, None, str(error)
+
+    def _show_survey_maps(self, store, results):
+        from ..qgis_plugin.survey_map_layers import add_survey_map
+
+        if self._dispose or self._close_requested:
+            return
+        messages, retry = [], []
+        for database_id, name, package, error in results:
+            if error:
+                messages.append(f"{name}: {error}")
+            elif package is None:
+                from .survey_map_dialog import choose_map_channels
+                from ..terraworkbench_core.survey_map import survey_map_channels
+
+                fields = [row["name"] for row in store.channels(database_id)]
+                current = survey_map_channels(store, database_id)[0]
+                channels = choose_map_channels(self, current, fields)
+                if channels is not None:
+                    store.configure_geometry(
+                        database_id,
+                        channels.x,
+                        channels.y,
+                        channels.crs,
+                        line=channels.line,
+                    )
+                    retry.append(database_id)
+            else:
+                add_survey_map(QgsProject.instance(), store, database_id, name, package)
+                summary = package[2]
+
+                def describe(name=name, summary=summary):
+                    message = tr(
+                        "Survey added to map",
+                        "Levantamiento añadido al mapa",
+                        "Levantamento adicionado ao mapa",
+                    )
+                    if not summary["has_line_channel"]:
+                        message += " · " + tr(
+                            "No line channel; samples and boundary only",
+                            "Sin canal de línea; solo muestras y contorno",
+                            "Sem canal de linha; apenas amostras e limite",
+                        )
+                    if summary["invalid_samples"]:
+                        message += " · " + tr(
+                            "{n} invalid coordinate pairs omitted",
+                            "{n} pares de coordenadas inválidos omitidos",
+                            "{n} pares de coordenadas inválidos omitidos",
+                        ).format(n=summary["invalid_samples"])
+                    return f"{name}: {message}"
+
+                messages.append(describe)
+        self._set_result(
+            self.status,
+            lambda: " | ".join(
+                message() if callable(message) else message for message in messages
+            ),
+        )
+        if retry:
+            # completed is emitted before finished; wait until start can own a new worker.
+            from qgis.PyQt.QtCore import QTimer
+
+            def rebuild():
+                if self._dispose or self._close_requested:
+                    return
+                if self.worker is not None:
+                    QTimer.singleShot(10, rebuild)
+                    return
+                self.start(
+                    lambda cancel, progress: [
+                        self._try_survey_map(store, db, cancel, progress)
+                        for db in retry
+                    ],
+                    lambda value: self._show_survey_maps(store, value),
+                )
+
+            QTimer.singleShot(0, rebuild)
+
     def to_qgis(self):
-        selection = self.require_selection(single=True)
+        from .survey_map_dialog import choose_map_channels
+        from ..terraworkbench_core.survey_map import survey_map_channels
+
+        selection = self.require_selection(channels=False, single=True)
         if not selection:
             return
         ids, names = selection
-        channel_rows = self.store.channels(ids[0])
-        fields = [row["name"] for row in channel_rows]
-        channel_names = {row["id"]: row["name"] for row in channel_rows}
-        metadata = json.loads(
-            next(row for row in self.store.databases() if row["id"] == ids[0])[
-                "metadata"
-            ]
-        )
-        roles = metadata.get("channel_roles", {})
-        geometry = metadata.get("geometry", {})
-        configured_axes = [
-            channel_names.get(geometry.get(axis + "_channel_id")) for axis in ("x", "y")
-        ]
-        configured_crs = QgsCoordinateReferenceSystem(geometry.get("crs", ""))
-        use_configured = all(configured_axes) and configured_crs.isValid()
-        axes = []
-        for label in ("X", "Y"):
-            suggested = channel_names.get(
-                geometry.get(label.lower() + "_channel_id", roles.get(label.lower())),
-                "",
-            )
-            index = fields.index(suggested) if suggested in fields else 0
-            field, ok = (
-                (suggested, True)
-                if use_configured
-                else QInputDialog.getItem(self, "QGIS", label, fields, index, False)
-            )
-            if not ok:
-                return
-            axes.append(field)
-        if axes[0] == axes[1]:
-            self.fail("X and Y must be different channels.")
-            return
-        crs_text, ok = (
-            (geometry["crs"], True)
-            if use_configured
-            else QInputDialog.getText(
-                self,
-                "QGIS",
-                "CRS (EPSG:...) — " + tr("required", "obligatorio", "obrigatório"),
-                text=geometry.get("crs", ""),
-            )
-        )
-        crs = QgsCoordinateReferenceSystem(crs_text)
-        if not ok:
-            return
-        if not crs.isValid():
-            self.fail(tr("Invalid CRS", "CRS inválido", "SRC inválido"))
-            return
+        database_id = ids[0]
         store, filters = self.store, self.filters()
-        try:
-            store.configure_geometry(
-                ids[0], axes[0], axes[1], crs.authid() or crs.toWkt()
-            )
-        except Exception as error:
-            self.fail(str(error))
-            return
-        path = store.root / "results" / f"points_{uuid.uuid4().hex}.csv"
-        columns = list(dict.fromkeys([*axes, *names]))
+        channels, _ = survey_map_channels(store, database_id)
+        fields = [row["name"] for row in store.channels(database_id)]
+        if (
+            not channels.x
+            or not channels.y
+            or channels.x == channels.y
+            or not QgsCoordinateReferenceSystem(channels.crs or "").isValid()
+        ):
+            channels = choose_map_channels(self, channels, fields)
+            if channels is None:
+                return
+            try:
+                store.configure_geometry(
+                    database_id,
+                    channels.x,
+                    channels.y,
+                    channels.crs,
+                    line=channels.line,
+                )
+            except Exception as error:
+                self.fail(str(error))
+                return
 
         def run(cancel, progress):
-            return store.export_csv(ids[0], columns, path, filters, cancel, progress)
-
-        def load(result):
-            url, query = QUrl.fromLocalFile(str(path)), QUrlQuery()
-            for key, value in {
-                "type": "csv",
-                "delimiter": ",",
-                "xField": axes[0],
-                "yField": axes[1],
-                "crs": crs.authid() or crs.toWkt(),
-                "detectTypes": "yes",
-                "decimalPoint": ".",
-            }.items():
-                query.addQueryItem(key, value)
-            url.setQuery(query)
-            layer = QgsVectorLayer(url.toString(), path.stem, "delimitedtext")
-            if not layer.isValid():
-                raise ValueError("QGIS could not load the exported points.")
-            if layer.featureCount() != result:
-                raise ValueError(
-                    "Some exported rows have invalid coordinates. Inspect the CSV before gridding; the incomplete layer was not added."
+            return [
+                self._try_survey_map(
+                    store,
+                    database_id,
+                    cancel,
+                    progress,
+                    channels,
+                    names or fields,
+                    filters,
                 )
-            layer.setCustomProperty("TerraWorkbench/surveyDatabase", ids[0])
-            QgsProject.instance().addMapLayer(layer)
+            ]
 
-        self.start(run, load)
+        self.start(
+            run,
+            lambda results: self._show_survey_maps(store, results),
+            tr("Build survey map", "Construir mapa", "Gerar mapa"),
+        )
 
     def history(self):
         selection = self.require_selection(channels=False, single=True)

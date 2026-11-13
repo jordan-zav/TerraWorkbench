@@ -38,7 +38,8 @@
     "title": "Importación de texto, GRD y datos geoespaciales",
     "modules": [
       "survey_text_import",
-      "text_import"
+      "text_import",
+      "gdb_archive"
     ],
     "titles": {
       "es": "Importación de texto, GRD y datos geoespaciales",
@@ -52,7 +53,8 @@
     "modules": [
       "survey_store",
       "survey_explorer",
-      "survey_recipes"
+      "survey_recipes",
+      "survey_map"
     ],
     "titles": {
       "es": "Workspaces, canales, versiones y linaje",

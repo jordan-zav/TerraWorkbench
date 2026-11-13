@@ -33,6 +33,8 @@ assets/branding/terraworkbench-icon.png
 assets/branding/terraworkbench-logo.png
 assets/legacy/icon.png
 assets/legacy/icon.svg
+assets/runtime/SHA256SUMS
+assets/runtime/SHA512SUMS
 compat/README.md
 compat/__init__.py
 compat/basic_processing.py
@@ -55,10 +57,12 @@ compat/text_import.py
 docs/README.md
 docs/assets/filter-stack.png
 docs/development/README.md
+docs/development/gdb_open_archive.md
 docs/development/repository_structure.md
 docs/development/scientific_core.md
 docs/development/standalone_acquisition.md
 docs/development/standalone_inversion.md
+docs/development/survey_map_layers.md
 docs/guides/README.md
 docs/guides/api_evidence.md
 docs/guides/basic_processing_migration.md
@@ -276,6 +280,7 @@ embedded_qpip/pip_progress.py
 examples/__init__.py
 examples/manual/__init__.py
 examples/manual/fft.py
+examples/manual/tellus_a9.py
 examples/manual/workflow.py
 examples/manual/workspace.py
 metadata.txt
@@ -288,14 +293,20 @@ qgis_plugin/data_import.py
 qgis_plugin/delimited_text.py
 qgis_plugin/dependencies.py
 qgis_plugin/dependency_cleanup.py
+qgis_plugin/gdb_archive_gx.py
 qgis_plugin/geosoft_bridge.py
 qgis_plugin/geosoft_runtime.py
+qgis_plugin/gx_runtime_setup.py
+qgis_plugin/gx_runtime_check.py
+qgis_plugin/hillshade.py
 qgis_plugin/metadata_utils.py
 qgis_plugin/microlevel.py
 qgis_plugin/plugin.py
 qgis_plugin/provider.py
 qgis_plugin/qgis_compat.py
 qgis_plugin/raster_io.py
+qgis_plugin/survey_map_import.py
+qgis_plugin/survey_map_layers.py
 reproducibility/README.md
 reproducibility/esi-replay-v1/LICENSE
 reproducibility/esi-replay-v1/README.md
@@ -476,6 +487,7 @@ scripts/check_core_install.py
 scripts/check_documentation.py
 scripts/check_localization.py
 scripts/check_manual.py
+scripts/convert_gdb_archive.py
 scripts/diagnose_mvi.py
 scripts/diagnose_mvi_large_subspace.py
 scripts/diagnose_mvi_nonlinear.py
@@ -494,6 +506,7 @@ scripts/public_files.py
 scripts/public_processing_sources.json
 scripts/qgis_python_version.py
 scripts/qgis_supports_inversion.py
+scripts/tellus_a9.py
 scripts/validate_hydraulic_backend.py
 scripts/validate_hydraulic_connected.py
 scripts/validate_inversion_campaign.py
@@ -523,6 +536,7 @@ terraworkbench_core/equivalent_sources.py
 terraworkbench_core/fdem_3d.py
 terraworkbench_core/filter_recipes.py
 terraworkbench_core/flexure.py
+terraworkbench_core/gdb_archive.py
 terraworkbench_core/geomagnetism.py
 terraworkbench_core/geostatistics.py
 terraworkbench_core/gravity_corrections.py
@@ -580,6 +594,7 @@ terraworkbench_core/survey_correction_pipeline.py
 terraworkbench_core/survey_corrections.py
 terraworkbench_core/survey_explorer.py
 terraworkbench_core/survey_grid_pipeline.py
+terraworkbench_core/survey_map.py
 terraworkbench_core/survey_processing.py
 terraworkbench_core/survey_recipes.py
 terraworkbench_core/survey_store.py
@@ -615,10 +630,13 @@ tests/qgis_full_manual_smoke.py
 tests/qgis_grd_workflow_smoke.py
 tests/qgis_gridding_methods_smoke.py
 tests/qgis_gui_smoke.py
+tests/qgis_gdb_archive_smoke.py
+tests/qgis_gdb_support_smoke.py
 tests/qgis_inversion_smoke.py
 tests/qgis_isostasy_smoke.py
 tests/qgis_layout_smoke.py
 tests/qgis_localization_smoke.py
+tests/qgis_qgis_language_smoke.py
 tests/qgis_magnetic_pipeline_smoke.py
 tests/qgis_raster_stages_smoke.py
 tests/qgis_smoke_test.py
@@ -645,6 +663,9 @@ tests/test_dispersive_ip.py
 tests/test_electrical_pde.py
 tests/test_fdem_3d.py
 tests/test_flexure.py
+tests/test_gdb_archive.py
+tests/test_gdb_metadata.py
+tests/test_gx_runtime_setup.py
 tests/test_geophysics_expansion.py
 tests/test_geosoft_runtime.py
 tests/test_gravity_conventions.py
@@ -726,6 +747,7 @@ tests/test_survey_coordinates.py
 tests/test_survey_correction_pipeline.py
 tests/test_survey_corrections.py
 tests/test_survey_explorer.py
+tests/test_survey_map.py
 tests/test_survey_recipes.py
 tests/test_survey_store.py
 tests/test_survey_tile_checkpoint.py
@@ -749,6 +771,7 @@ ui/dependency_dialog.py
 ui/depth_grid_parameter_form.py
 ui/evidence_api.py
 ui/full_manual.py
+ui/hillshade.py
 ui/i18n.py
 ui/knowledge_content.py
 ui/knowledge_methods.py
@@ -759,7 +782,9 @@ ui/processing_labels.py
 ui/raster_stage_review.py
 ui/settings_dialog.py
 ui/survey_coordinates_dialog.py
+ui/survey_map_dialog.py
 ui/survey_profile_widget.py
+ui/survey_sheet.py
 ui/survey_workspace_dialog.py
 ui/task_history_widget.py
 ui/text_import_dialog.py

@@ -26,19 +26,9 @@ class TaskHistoryWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         bar = QHBoxLayout()
-        self.toggle = QPushButton(
-            self.tr(
-                "Tasks · session history",
-                "Tareas · historial de sesión",
-                "Tarefas · histórico da sessão",
-            )
-        )
+        self.toggle = QPushButton()
         self.toggle.setCheckable(True)
-        self.cancel = QPushButton(
-            self.tr(
-                "Cancel active task", "Cancelar tarea activa", "Cancelar tarefa ativa"
-            )
-        )
+        self.cancel = QPushButton()
         self.cancel.setEnabled(False)
         self.cancel.clicked.connect(self.request_cancel)
         bar.addWidget(self.toggle, 1)
@@ -48,16 +38,6 @@ class TaskHistoryWidget(QWidget):
         detail_layout = QVBoxLayout(self.details)
         detail_layout.setContentsMargins(0, 0, 0, 0)
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(
-            [
-                self.tr("Task", "Tarea", "Tarefa"),
-                self.tr("State", "Estado", "Estado"),
-                self.tr(
-                    "Reported progress", "Progreso reportado", "Progresso informado"
-                ),
-                self.tr("Elapsed (s)", "Tiempo (s)", "Tempo (s)"),
-            ]
-        )
         self.tree.setMaximumHeight(145)
         self.tree.setColumnWidth(0, 300)
         self.message = QTextEdit()
@@ -72,13 +52,64 @@ class TaskHistoryWidget(QWidget):
         self.timer = QTimer(self)
         self.timer.setInterval(500)
         self.timer.timeout.connect(self.tick)
+        self.retranslate()
+
+    def retranslate(self):
+        self.cancel.setText(
+            self.tr(
+                "Cancel active task", "Cancelar tarea activa", "Cancelar tarefa ativa"
+            )
+        )
+        self.tree.setHeaderLabels(
+            [
+                self.tr("Task", "Tarea", "Tarefa"),
+                self.tr("State", "Estado", "Estado"),
+                self.tr(
+                    "Reported progress", "Progreso reportado", "Progresso informado"
+                ),
+                self.tr("Elapsed (s)", "Tiempo (s)", "Tempo (s)"),
+            ]
+        )
+        for record in self.records:
+            record["item"].setText(1, self._state_label(record["state"]))
+        self._update_summary()
+
+    def _state_label(self, state):
+        return {
+            "running": self.tr("Running", "En ejecución", "Em execução"),
+            "cancel_requested": self.tr(
+                "Cancel requested", "Cancelación solicitada", "Cancelamento solicitado"
+            ),
+            "not_converged": self.tr("Not converged", "Sin converger", "Sem convergir"),
+            "completed": self.tr("Completed", "Completada", "Concluída"),
+            "failed": self.tr("Failed", "Fallida", "Falhou"),
+            "cancelled": self.tr("Cancelled", "Cancelada", "Cancelada"),
+        }[state]
+
+    def _update_summary(self):
+        if self.active is not None:
+            self.tick()
+        elif self.records:
+            self.toggle.setText(
+                self.tr(
+                    "Tasks · {n} in this session",
+                    "Tareas · {n} en esta sesión",
+                    "Tarefas · {n} nesta sessão",
+                ).format(n=len(self.records))
+            )
+        else:
+            self.toggle.setText(
+                self.tr(
+                    "Tasks · session history",
+                    "Tareas · historial de sesión",
+                    "Tarefas · histórico da sessão",
+                )
+            )
 
     def begin(self, title):
         if self.active is not None:
             raise RuntimeError("A task is already running")
-        item = QTreeWidgetItem(
-            [title, self.tr("Running", "En ejecución", "Em execução"), "—", "0"]
-        )
+        item = QTreeWidgetItem([title, self._state_label("running"), "—", "0"])
         record = {
             "title": title,
             "started": datetime.now(timezone.utc).isoformat(),
@@ -106,14 +137,8 @@ class TaskHistoryWidget(QWidget):
 
     def request_cancel(self):
         if self.active is not None:
-            self.active["item"].setText(
-                1,
-                self.tr(
-                    "Cancel requested",
-                    "Cancelación solicitada",
-                    "Cancelamento solicitado",
-                ),
-            )
+            self.active["state"] = "cancel_requested"
+            self.active["item"].setText(1, self._state_label("cancel_requested"))
             self.cancel.setEnabled(False)
             self.cancelRequested.emit()
 
@@ -125,23 +150,11 @@ class TaskHistoryWidget(QWidget):
         record = self.active
         record["state"], record["message"] = state, str(message)
         record["finished"] = datetime.now(timezone.utc).isoformat()
-        labels = {
-            "not_converged": self.tr("Not converged", "Sin converger", "Sem convergir"),
-            "completed": self.tr("Completed", "Completada", "Concluída"),
-            "failed": self.tr("Failed", "Fallida", "Falhou"),
-            "cancelled": self.tr("Cancelled", "Cancelada", "Cancelada"),
-        }
-        record["item"].setText(1, labels[state])
+        record["item"].setText(1, self._state_label(state))
         record["item"].setToolTip(0, record["message"])
         self.active = None
         self.cancel.setEnabled(False)
-        self.toggle.setText(
-            self.tr(
-                "Tasks · {n} in this session",
-                "Tareas · {n} en esta sesión",
-                "Tarefas · {n} nesta sessão",
-            ).format(n=len(self.records))
-        )
+        self._update_summary()
         if state in ("failed", "not_converged"):
             self.toggle.setChecked(True)
         self.selected(self.tree.currentItem())

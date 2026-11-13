@@ -39,6 +39,26 @@
     "license": "CC-BY-4.0 processed product; BGS source under Open Government Licence; retain UKRI 2021 attribution",
     "pin_basis": "Ensaio v0.7.1 published MD5 verified; SHA-256 recorded from verified bytes"
   },
+  "tellus": {
+    "filename": "GSI_Tellus_A9_RAD_DATA_2022.zip",
+    "url": "https://gsi.geodata.gov.ie/downloads/Geophysics/Data/GSI_Tellus_A9_RAD_DATA_2022.zip",
+    "sha256": "dc67851b9b419cea5d79b1ffd709e05bfc931b73ed10ef6eeced187517d23394",
+    "bytes": 14361824,
+    "reference": "https://www.gsi.ie/data-and-maps/geophysics/",
+    "attribution": "Contains Irish Public Sector Data (Geological Survey Ireland) licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) licence",
+    "license": "CC BY 4.0",
+    "pin_basis": "SHA-256 of official download retrieved 2026-10-28; no separate publisher checksum located",
+    "enabled_by_default": true,
+    "rights_confirmed": true,
+    "distribution": "public benchmark metadata and adapter; retrieve original data from publisher",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "rights_confirmation": {
+      "date": "2026-11-11",
+      "institution": "Geological Survey Ireland",
+      "basis": "Product-specific institutional email confirmation supplied by the author",
+      "general_terms": "https://gsi.ie/data-and-maps/"
+    }
+  },
   "topography": {
     "filename": "southern-africa-topography.nc",
     "url": "https://github.com/fatiando-data/southern-africa-topography/releases/download/v1/southern-africa-topography.nc",
@@ -55,7 +75,7 @@
     "sha256": "63ccfd3bc72cc7f26dd4e880a137f8a717fbe9a23a1273af71edc955518ea280",
     "bytes": 706783,
     "reference": "https://doi.org/10.5281/zenodo.20032395",
-    "attribution": "Breitenmoser, Stabilini, Kasprzak and Mayer; Quantitative mobile gamma-ray spectrometry through Bayesian inference, dataset v1.1.0 and arXiv:2512.18769",
+    "attribution": "Breitenmoser, Stabilini, Kasprzak and Mayer; Quantitative mobile gamma-ray spectrometry through Bayesian inference, dataset v1.1.0 and Nature Communications, https://doi.org/10.1038/s41467-026-78464-2 (preprint arXiv:2512.18769)",
     "license": "CC-BY-4.0; Zenodo record 20032395, dataset v1.1.0; cite dataset and associated publication",
     "pin_basis": "Zenodo published MD5 b5b720db2b79d3502e81886ef5c39297 verified; SHA-256 recorded from verified bytes"
   }

@@ -33,7 +33,7 @@ def render(locale):
     chapters = []
     for chapter in content.CHAPTERS:
         chapters.append(
-            "#" + content.chapter_text(chapter[0], locale).replace("\n## ", "\n### ")
+            "#" + content.chapter_text(chapter[0], locale, include_publication_scope=True).replace("\n## ", "\n### ")
         )
     return "# " + title + "\n\n" + note + "\n\n" + "\n\n".join(chapters) + "\n"
 

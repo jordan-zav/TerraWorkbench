@@ -12,7 +12,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from qgis.core import QgsApplication, QgsProject
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtTest import QTest
-from qgis.PyQt.QtWidgets import QInputDialog
 from qgis.PyQt.QtGui import QFont, QFontDatabase
 from qgis.PyQt import sip
 
@@ -74,25 +73,20 @@ def main():
                 wait()
                 dialog.preview()
                 wait()
-                assert dialog.table.rowCount() == 3
+                assert dialog.table.model().rowCount() == 3
                 dialog.filter_channel.setCurrentIndex(dialog.filter_channel.findData("line"))
                 dialog.filter_values.setText("001")
                 dialog.preview()
                 wait()
-                assert dialog.table.rowCount() == 2
-                get_item, get_text = QInputDialog.getItem, QInputDialog.getText
-                axes = iter(["x", "y"])
-                try:
-                    QInputDialog.getItem = lambda *args, **kwargs: (next(axes), True)
-                    QInputDialog.getText = lambda *args, **kwargs: ("EPSG:32617", True)
-                    dialog.to_qgis()
-                    wait()
-                finally:
-                    QInputDialog.getItem, QInputDialog.getText = get_item, get_text
+                assert dialog.table.model().rowCount() == 2
+                dialog.store.configure_geometry(database, "x", "y", "EPSG:32617", line="line")
+                dialog.to_qgis()
+                wait()
                 layers = list(QgsProject.instance().mapLayers().values())
-                assert len(layers) == 1 and layers[0].featureCount() == 2
-                assert layers[0].crs().authid() == "EPSG:32617"
-                assert layers[0].fields().names() == ["x", "y", "base", "mag"]
+                samples = next(layer for layer in layers if "layername=samples" in layer.source())
+                assert samples.featureCount() == 2
+                assert samples.crs().authid() == "EPSG:32617"
+                assert {"x", "y", "base", "mag"}.issubset(samples.fields().names())
                 QgsProject.instance().clear()
                 layers.clear()
                 screenshot = Path(tempfile.gettempdir()) / f"tw_workspace_{lang}.png"

@@ -40,6 +40,277 @@ def grid_info(path):
     return info
 
 
+def temporary_import_smoke(app, source, evidence):
+    from time import monotonic, sleep
+    from types import SimpleNamespace
+    from xml.etree import ElementTree
+
+    from qgis import utils
+    from qgis.PyQt.QtCore import QObject, QPoint, QSettings, pyqtSignal
+    from qgis.PyQt.QtGui import QPixmap, QPainter
+    from qgis.core import QgsCoordinateReferenceSystem, QgsLayerTreeModel, QgsProcessingUtils
+    from qgis.gui import QgsLayerTreeView
+
+    from TerraWorkbench.qgis_plugin.data_import import (
+        WORK_DIRECTORY_KEY, WORK_DIRECTORY_SCOPE, import_layer_path, is_temporary_import,
+        recent_work_directories, temporary_import_root, write_project_work_directory,
+    )
+    from TerraWorkbench.ui.settings_dialog import KEY_OUTPUT
+    from TerraWorkbench.ui import workflow_dock
+
+    project = QgsProject.instance()
+    settings = QSettings()
+    settings.setValue(KEY_OUTPUT, str(evidence / "filter-output"))
+    evidence.mkdir(parents=True)
+    set_language("es")
+    dock = FilterStackDock()
+    temp_root = temporary_import_root().resolve()
+
+    def unexpected_dialog(*args, **kwargs):
+        raise AssertionError(f"Unexpected dialog: {args}, {kwargs}")
+
+    def convert():
+        with (
+            patch.object(QFileDialog, "getSaveFileName", new=unexpected_dialog),
+            patch.object(QFileDialog, "getExistingDirectory", new=unexpected_dialog),
+            patch.object(QMessageBox, "information", new=unexpected_dialog),
+            patch.object(QMessageBox, "critical", new=unexpected_dialog),
+        ):
+            return dock._finish_import(str(source))
+
+    def save_project(decision, folder=None):
+        decisions = []
+
+        def choose(box):
+            decisions.append(box.windowTitle())
+            return box.defaultButton() if decision == "save" else box.escapeButton()
+
+        with (
+            patch.object(QMessageBox, "exec", return_value=0),
+            patch.object(QMessageBox, "clickedButton", new=choose),
+            patch.object(QFileDialog, "getExistingDirectory", return_value=str(folder or "")),
+        ):
+            assert project.write(str(evidence / "project.qgs"))
+        return decisions
+
+    try:
+        # The Processing preference maps to QgsProcessing::settingsTempPath in QGIS 3.44.
+        qgis_temp_setting = "qgis/configuration/temp-path"
+        alternate_temp = evidence.parent / "processing-custom-temp"
+        alternate_temp.mkdir()
+        zone_a = evidence / "zone-a"
+        zone_b = evidence / "zone-b"
+        work_a = zone_a / "North"
+        work_b = zone_b / "South"
+        work_a.mkdir(parents=True)
+        work_b.mkdir(parents=True)
+        project_a = zone_a / "north.qgz"
+        project_b = zone_b / "south.qgz"
+        with patch.object(QFileDialog, "getExistingDirectory", return_value=str(work_a)):
+            dock._choose_work_directory()
+        assert project.write(str(project_a))
+        assert project.readEntry(WORK_DIRECTORY_SCOPE, WORK_DIRECTORY_KEY) == ("North", True)
+        project.clear()
+        assert dock.work_directory_button.text().endswith("Temporal (QGIS)")
+        dock._set_work_directory(work_b)
+        assert project.write(str(project_b))
+        for project_file, work in ((project_a, work_a), (project_b, work_b)):
+            assert project.read(str(project_file))
+            assert dock.work_directory_button.text().endswith(work.name)
+            assert Path(dock.work_directory_button.toolTip()) == work
+        for number in range(5):
+            folder = zone_b / f"Sector {number + 1}"
+            folder.mkdir()
+            dock._set_work_directory(folder)
+        dock._set_work_directory(work_b)
+        assert len(recent_work_directories()) == 5
+        assert Path(recent_work_directories()[0]) == work_b
+        dock.show()
+        app.processEvents()
+        button = dock.work_directory_button
+        menu = dock.work_directory_menu
+        origin = dock.mapToGlobal(QPoint(0, 0))
+        menu.popup(button.mapToGlobal(QPoint(0, button.height())))
+        app.processEvents()
+        panel_image, menu_image = dock.grab(), menu.grab()
+        offset = menu.pos() - origin
+        image = QPixmap(panel_image)
+        painter = QPainter(image)
+        painter.drawPixmap(offset, menu_image)
+        painter.end()
+        assert image.save(str(evidence / "work-folder-menu.png"))
+        menu.close()
+        assert project.read(str(project_a))
+        missing = zone_a / "Missing"
+        write_project_work_directory(project, missing)
+        messages = []
+        iface = SimpleNamespace(messageBar=lambda: SimpleNamespace(pushWarning=lambda *args: messages.append(args)))
+        with patch.object(utils, "iface", iface):
+            dock.refresh_work_directory()
+            dock.refresh_work_directory()
+            assert len(messages) == 1 and str(missing) in messages[0][1]
+            assert dock.work_directory_button.text().endswith("Temporal (QGIS)")
+            first = convert()
+            assert len(messages) == 1
+        assert first is not None and is_temporary_import(first)
+        original = import_layer_path(first).resolve()
+        assert original.is_relative_to(temp_root) and original.is_file()
+        assert first.name().endswith("(temporal)")
+        panel = QgsLayerTreeView()
+        model = QgsLayerTreeModel(project.layerTreeRoot(), panel)
+        panel.setModel(model)
+        panel.resize(530, 180)
+        panel.show()
+        app.processEvents()
+        assert panel.grab().save(str(evidence / "temporary-layer.png"))
+        panel.close()
+        panel.deleteLater()
+
+        set_language("pt")
+        dock.retranslate()
+        assert first.name().endswith("(temporário)")
+        assert dock.save_import_action.text() == "Salvar como…"
+        assert dock.work_directory_button.text() == "Pasta de trabalho: Temporário (QGIS)"
+        set_language("es")
+        dock.retranslate()
+
+        saved = evidence / "retained.tif"
+        layer_id = first.id()
+        with patch.object(QFileDialog, "getSaveFileName", return_value=(str(saved), "")):
+            dock.save_import_action.trigger()
+        assert first.id() == layer_id and import_layer_path(first) == saved
+        assert saved.read_bytes() == original.read_bytes()
+        assert not is_temporary_import(first)
+
+        bundled = Path(__file__).resolve().parents[1] / "sample_data/synthetic/synthetic_dem.tif"
+        with (
+            patch.object(workflow_dock, "import_survey_grid", new=unexpected_dialog),
+            patch.object(QFileDialog, "getSaveFileName", new=unexpected_dialog),
+        ):
+            native = dock._finish_import(str(bundled))
+        assert import_layer_path(native).resolve() == bundled.resolve()
+        assert not is_temporary_import(native)
+
+        temporary = convert()
+        QgsSettings().setValue(qgis_temp_setting, alternate_temp.as_posix())
+        temp_root = temporary_import_root().resolve()
+        assert Path(QgsProcessingUtils.tempFolder()).is_relative_to(alternate_temp)
+        print(f"Processing temporary imports: {temp_root}")
+        duplicate = convert()
+        assert import_layer_path(duplicate).is_relative_to(temp_root)
+        assert temporary.source() != duplicate.source()
+        assert is_temporary_import(temporary) and is_temporary_import(duplicate)
+        configured = evidence / "imports"
+        configured.mkdir()
+        dock._set_work_directory(configured)
+        dock.settings_dialog.load()
+        assert dock.settings_dialog.output_directory.text() == str(evidence / "filter-output")
+        permanent = convert()
+        assert import_layer_path(permanent).resolve().is_relative_to(configured.resolve())
+        assert not is_temporary_import(permanent)
+        dock.layer_combo.setCurrentIndex(dock.layer_combo.findData(duplicate.id()))
+        assert dock.save_import_action.text() == "Guardar en la carpeta de trabajo"
+        with patch.object(QFileDialog, "getSaveFileName", new=unexpected_dialog):
+            dock.save_import_action.trigger()
+        assert not is_temporary_import(duplicate)
+        assert import_layer_path(duplicate).is_relative_to(configured)
+        assert len(save_project("ignore")) == 1
+        assert not save_project("ignore")
+        project.removeMapLayer(temporary.id())
+        assert not save_project("ignore")
+        dock._set_work_directory(None)
+
+        gdb = evidence / "test.gdb"
+        gdb.write_bytes(b"!CBD")
+
+        class MockProcess(QObject):
+            readyReadStandardOutput = pyqtSignal()
+            finished = pyqtSignal(int, int)
+
+            def setProcessEnvironment(self, environment):
+                pass
+
+            def readAllStandardOutput(self):
+                return b""
+
+            def readAllStandardError(self):
+                return b""
+
+            def kill(self):
+                raise AssertionError("The mocked Geosoft import must finish normally.")
+
+            def start(self, executable, arguments):
+                assert "--extract-all" in arguments
+                output = Path(arguments[arguments.index("--output") + 1])
+                assert output.resolve().is_relative_to(temp_root)
+                channels, lines, csv = (output / name for name in ("channels.csv", "lines.csv", "samples.csv"))
+                channels.write_text("channel\nMAG\n", encoding="utf-8")
+                lines.write_text("line\nL1\nT1\n", encoding="utf-8")
+                csv.write_text(
+                    "LINE,FIDUCIAL,X,Y,MAG\nL1,1,400000,100000,1\nL1,2,400100,100000,2\n"
+                    "T1,1,400000,100000,3\nT1,2,400000,100100,4\n",
+                    encoding="utf-8",
+                )
+                (output / "test_inventory.json").write_text(json.dumps({
+                    "source": str(gdb), "channels_csv": str(channels), "lines_csv": str(lines),
+                    "csv": str(csv), "x_field": "X", "y_field": "Y",
+                    "coordinate_system": {"wkt": QgsCoordinateReferenceSystem("EPSG:27700").toWkt()},
+                    "lines": [{"name": "L1", "kind": "traverse"}, {"name": "T1", "kind": "tie"}],
+                }), encoding="utf-8")
+                self.finished.emit(0, 0)
+
+        def extract(box):
+            return next(button for button in box.buttons()
+                        if box.buttonRole(button) == QMessageBox.AcceptRole)
+
+        with (
+            patch.object(dock, "_geosoft_runtime", return_value=SimpleNamespace(standalone=False, python="mock")),
+            patch.object(workflow_dock, "QProcess", MockProcess),
+            patch.object(QMessageBox, "exec", return_value=0),
+            patch.object(QMessageBox, "clickedButton", new=extract),
+            patch.object(QFileDialog, "getExistingDirectory", new=unexpected_dialog),
+            patch.object(QMessageBox, "warning", new=unexpected_dialog),
+        ):
+            dock.import_geosoft_gdb(str(gdb))
+            deadline = monotonic() + 10
+            group = None
+            while group is None and monotonic() < deadline:
+                app.processEvents()
+                group = project.layerTreeRoot().findGroup("test")
+                sleep(0.02)
+            assert group is not None
+        group_layers = [node.layer() for node in group.findLayers()]
+        assert len(group_layers) == 4, [layer.name() for layer in group_layers]
+        assert all(".gpkg|" in layer.source() and not Path(layer.source().split("|")[0]).resolve()
+                   .is_relative_to(temp_root) for layer in group_layers)
+        gdb_tables = [layer for layer in project.mapLayers().values()
+                      if layer.providerType() == "delimitedtext" and is_temporary_import(layer)]
+        assert len(gdb_tables) == 2
+        kept = evidence / "saved-on-project-write"
+        kept.mkdir()
+        new_temporary = convert()
+        assert len(save_project("save", kept)) == 1
+        assert project.readEntry(WORK_DIRECTORY_SCOPE, WORK_DIRECTORY_KEY) == (kept.name, True)
+        assert all(not is_temporary_import(layer) and import_layer_path(layer).is_relative_to(kept)
+                   for layer in [new_temporary, *gdb_tables])
+        expected = {layer.id(): layer.name() for layer in [new_temporary, *gdb_tables]}
+        xml = ElementTree.parse(evidence / "project.qgs")
+        for element in xml.findall(".//projectlayers/maplayer"):
+            if element.findtext("id") in expected:
+                assert "saved-on-project-write" in element.findtext("datasource")
+        assert project.read(str(evidence / "project.qgs"))
+        assert all(project.mapLayer(key).isValid() and project.mapLayer(key).name() == name
+                   for key, name in expected.items())
+        print(f"PASS: temporary root {temp_root}", flush=True)
+        print("PASS: GRD default/configured, TIFF in place, save/repoint, project warnings and simulated Geosoft", flush=True)
+    finally:
+        dock.disconnect_project()
+        dock.close()
+        dock.deleteLater()
+        project.clear()
+        app.processEvents()
+
+
 def main():
     QgsApplication.setPrefixPath(os.environ["QGIS_PREFIX_PATH"], True)
     app = QgsApplication([], False)
@@ -78,6 +349,19 @@ def main():
         .sortby("easting")
     )
     np.testing.assert_array_equal(reference.values, synthetic[::-1])
+    if destination := os.environ.get("TW_TEMP_IMPORT_EVIDENCE"):
+        import traceback
+
+        sample = Path(__file__).resolve().parents[1] / "sample_data/nrcan/Hydraulic/BC_2004_G_Hydraulic_dem.GRD"
+        try:
+            temporary_import_smoke(app, sample if sample.is_file() else source, Path(destination))
+        except Exception:
+            print(traceback.format_exc(), flush=True)
+            raise
+        finally:
+            QgsApplication.processingRegistry().removeProvider(provider)
+            app.exitQgis()
+        return
     dock = None
     errors = []
     report = []
@@ -109,13 +393,12 @@ def main():
             QgsProject.instance().addMapLayer(old)
             dock.refresh_layers()
             dock.layer_combo.setCurrentIndex(dock.layer_combo.findData(old.id()))
-            imported = root / f"imported_{locale}.tif"
             with (
                 patch.object(
                     QFileDialog, "getOpenFileName", return_value=(str(source), "")
                 ),
                 patch.object(
-                    QFileDialog, "getSaveFileName", return_value=(str(imported), "")
+                    QFileDialog, "getSaveFileName", side_effect=AssertionError("Import asked where to save")
                 ),
                 patch.object(QMessageBox, "information"),
                 patch.object(
@@ -126,7 +409,7 @@ def main():
             ):
                 dock.import_grid()
             assert not errors, errors
-            assert Path(dock._selected_raster().source()) == imported
+            imported = Path(dock._selected_raster().source())
             transform, crs, original = grid_info(imported)
             np.testing.assert_allclose(
                 original, reference.values, equal_nan=True, rtol=0, atol=0

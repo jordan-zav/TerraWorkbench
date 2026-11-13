@@ -6,6 +6,7 @@ before publication can leave an unreferenced file, never a partial channel.
 """
 
 from contextlib import closing, contextmanager, ExitStack
+from bisect import bisect_left, bisect_right
 import ast
 import csv
 from datetime import datetime, timezone
@@ -222,6 +223,59 @@ class SurveyStore:
                     (database_id,),
                 )
             ]
+
+    def _sheet_channels(self, database_id):
+        """Latest versions in catalogue insertion order, for the survey sheet."""
+        channels = {channel["id"]: channel for channel in self.channels(database_id)}
+        with self._connection() as db:
+            return [
+                channels[row["id"]]
+                for row in db.execute(
+                    "SELECT id FROM channels WHERE database_id=? ORDER BY rowid",
+                    (database_id,),
+                )
+                if row["id"] in channels
+            ]
+
+    def _sheet_rows(self, snapshot, positions):
+        """Read sorted zero-based row positions with bounded Parquet batches."""
+        pa, pq = _arrow()
+        files = {}
+        for channel in snapshot:
+            files.setdefault(channel["path"], []).append(channel)
+        output = {channel["name"]: [] for channel in snapshot}
+        for path, columns in files.items():
+            fields = sorted({channel["field"] for channel in columns})
+            with pq.ParquetFile(self._path(path)) as reader:
+                boundaries = [0]
+                for group in range(reader.num_row_groups):
+                    boundaries.append(boundaries[-1] + reader.metadata.row_group(group).num_rows)
+                if not positions:
+                    continue
+                if positions[-1] >= boundaries[-1]:
+                    raise ValueError("Channel lengths disagree; project data is damaged.")
+                index = 0
+                while index < len(positions):
+                    group = bisect_right(boundaries, positions[index]) - 1
+                    offset = boundaries[group]
+                    end = bisect_left(positions, boundaries[group + 1], index)
+                    for batch in reader.iter_batches(
+                        batch_size=4096, row_groups=[group], columns=fields
+                    ):
+                        stop = offset + len(batch)
+                        next_index = bisect_left(positions, stop, index, end)
+                        if next_index > index:
+                            take = pa.array(
+                                [row - offset for row in positions[index:next_index]],
+                                type=pa.int32(),
+                            )
+                            for channel in columns:
+                                array = batch.column(batch.schema.get_field_index(channel["field"]))
+                                output[channel["name"]].extend(array.take(take).to_pylist())
+                        offset, index = stop, next_index
+                        if index == end:
+                            break
+        return output
 
     def history(self, database_id):
         with self._connection() as db:
@@ -532,8 +586,15 @@ class SurveyStore:
                 yield batch.select(names)
 
     def publish_channels(
-        self, database_id, values, *, units, inputs, provenance,
-        max_bytes=256 * 1024**2, canceled=None,
+        self,
+        database_id,
+        values,
+        *,
+        units,
+        inputs,
+        provenance,
+        max_bytes=256 * 1024**2,
+        canceled=None,
     ):
         """Atomically publish row-aligned numerical outputs and exact input versions.
 
@@ -543,21 +604,34 @@ class SurveyStore:
         """
         import hashlib
 
-        if not isinstance(values, dict) or not values or not isinstance(inputs, dict) or not inputs:
+        if (
+            not isinstance(values, dict)
+            or not values
+            or not isinstance(inputs, dict)
+            or not inputs
+        ):
             raise ValueError("Provide output arrays and exact input version IDs")
         if not isinstance(units, dict) or set(units) != set(values):
             raise ValueError("Declare a unit for every output channel")
-        if not isinstance(provenance, dict) or not isinstance(provenance.get("operation"), str) or not provenance["operation"].strip():
+        if (
+            not isinstance(provenance, dict)
+            or not isinstance(provenance.get("operation"), str)
+            or not provenance["operation"].strip()
+        ):
             raise ValueError("An explicit processing operation is required")
         if {"inputs", "unit", "output", "invalid_rows"}.intersection(provenance):
-            raise ValueError("Input lineage and output metadata are assigned by the store")
+            raise ValueError(
+                "Input lineage and output metadata are assigned by the store"
+            )
         recipe = json.loads(json.dumps(provenance, allow_nan=False))
         if type(max_bytes) is not int or max_bytes <= 0:
             raise ValueError("A positive array byte budget is required")
         snapshot = self._snapshot(database_id, list(inputs))
         _verify_input_versions(snapshot, inputs)
         with self._connection() as db:
-            rows = db.execute("SELECT rows FROM databases WHERE id=?", (database_id,)).fetchone()[0]
+            rows = db.execute(
+                "SELECT rows FROM databases WHERE id=?", (database_id,)
+            ).fetchone()[0]
         if rows * len(values) * 8 > max_bytes:
             raise ValueError("Computed channels exceed the declared array byte budget")
         existing = {row["name"] for row in self.channels(database_id)}
@@ -565,11 +639,17 @@ class SurveyStore:
         for name, value in values.items():
             if _name(name) != name or name in existing:
                 raise ValueError("Computed outputs require new canonical channel names")
-            if not isinstance(units[name], str) or len(units[name]) > 200 or "\x00" in units[name]:
+            if (
+                not isinstance(units[name], str)
+                or len(units[name]) > 200
+                or "\x00" in units[name]
+            ):
                 raise ValueError("Channel units must be strings")
             array = np.ma.asarray(value, dtype=float).filled(np.nan)
             if array.shape != (rows,) or np.isinf(array).any():
-                raise ValueError("Computed channels require aligned rows without infinities")
+                raise ValueError(
+                    "Computed channels require aligned rows without infinities"
+                )
             arrays[name] = array
         _check_cancel(canceled)
         pa, pq = _arrow()
@@ -581,10 +661,18 @@ class SurveyStore:
             with pq.ParquetWriter(staging, schema, compression="zstd") as writer:
                 for first in range(0, rows, BATCH_SIZE):
                     _check_cancel(canceled)
-                    parts = [value[first:first+BATCH_SIZE] for value in arrays.values()]
-                    writer.write_batch(pa.record_batch([
-                        pa.array(value, mask=~np.isfinite(value)) for value in parts
-                    ], schema=schema))
+                    parts = [
+                        value[first : first + BATCH_SIZE] for value in arrays.values()
+                    ]
+                    writer.write_batch(
+                        pa.record_batch(
+                            [
+                                pa.array(value, mask=~np.isfinite(value))
+                                for value in parts
+                            ],
+                            schema=schema,
+                        )
+                    )
             _check_cancel(canceled)
             staging.replace(target)
             digest = hashlib.sha256()
@@ -594,26 +682,60 @@ class SurveyStore:
             checksum = digest.hexdigest()
             with self._connection() as db:
                 db.execute("BEGIN IMMEDIATE")
-                current = db.execute("""SELECT c.name,v.id AS version_id FROM channels c
+                current = db.execute(
+                    """SELECT c.name,v.id AS version_id FROM channels c
                     JOIN versions v ON c.id=v.channel_id WHERE c.database_id=?
                     AND v.number=(SELECT MAX(number) FROM versions WHERE channel_id=c.id)""",
-                    (database_id,)).fetchall()
+                    (database_id,),
+                ).fetchall()
                 current = {row["name"]: row["version_id"] for row in current}
-                if any(current.get(name) != version for name, version in inputs.items()):
-                    raise ValueError("Input versions changed before channel publication")
+                if any(
+                    current.get(name) != version for name, version in inputs.items()
+                ):
+                    raise ValueError(
+                        "Input versions changed before channel publication"
+                    )
                 if set(arrays).intersection(current):
                     raise ValueError("Output channel appeared before publication")
                 for name, value in arrays.items():
                     channel_id, version_id = uuid.uuid4().hex, uuid.uuid4().hex
-                    record = {**recipe, "inputs": dict(inputs), "output": name,
-                              "unit": units[name], "invalid_rows": int(np.count_nonzero(~np.isfinite(value)))}
-                    db.execute("INSERT INTO channels VALUES(?,?,?,?)", (channel_id, database_id, name, units[name]))
-                    db.execute("INSERT INTO versions VALUES(?,?,?,?,?,?,?,?)", (
-                        version_id, channel_id, 1, target.relative_to(self.root).as_posix(),
-                        name, "double", json.dumps(record, allow_nan=False), _now()))
+                    record = {
+                        **recipe,
+                        "inputs": dict(inputs),
+                        "output": name,
+                        "unit": units[name],
+                        "invalid_rows": int(np.count_nonzero(~np.isfinite(value))),
+                    }
+                    db.execute(
+                        "INSERT INTO channels VALUES(?,?,?,?)",
+                        (channel_id, database_id, name, units[name]),
+                    )
+                    db.execute(
+                        "INSERT INTO versions VALUES(?,?,?,?,?,?,?,?)",
+                        (
+                            version_id,
+                            channel_id,
+                            1,
+                            target.relative_to(self.root).as_posix(),
+                            name,
+                            "double",
+                            json.dumps(record, allow_nan=False),
+                            _now(),
+                        ),
+                    )
                     published[name] = version_id
-                self._event(db, database_id, "publish_channels", {**recipe, "inputs": inputs, "outputs": published})
-            return {"rows": rows, "outputs": published, "path": str(target), "sha256": checksum}
+                self._event(
+                    db,
+                    database_id,
+                    "publish_channels",
+                    {**recipe, "inputs": inputs, "outputs": published},
+                )
+            return {
+                "rows": rows,
+                "outputs": published,
+                "path": str(target),
+                "sha256": checksum,
+            }
         except BaseException:
             staging.unlink(missing_ok=True)
             target.unlink(missing_ok=True)
@@ -1189,7 +1311,7 @@ class SurveyStore:
                 db, database_id, "duplicate", {**provenance, "output": output_name}
             )
 
-    def configure_geometry(self, database_id, x, y, crs):
+    def configure_geometry(self, database_id, x, y, crs, *, line=None):
         if x == y or not str(crs).strip():
             raise ValueError("Distinct X/Y channels and an explicit CRS are required.")
         channels = self._snapshot(database_id, [x, y])
@@ -1198,6 +1320,8 @@ class SurveyStore:
             "y_channel_id": channels[1]["id"],
             "crs": str(crs),
         }
+        if line:
+            geometry["line_channel_id"] = self._snapshot(database_id, [line])[0]["id"]
         with self._connection() as db:
             metadata = json.loads(
                 db.execute(

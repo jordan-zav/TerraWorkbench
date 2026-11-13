@@ -491,7 +491,7 @@ TerraWorkbench no inventa una transformación vertical ausente.
 | Inversión 3D (gravedad, magnética escalar, MVI, conjunta) | Cubierto, con soporte de malla adaptativa y topografía |
 | Diferenciación espacial vs. frecuencia como parte visible del producto | **Nuevo en v0.12.0** — etiquetas de dominio en la UI (§9) + motor Fourier con acondicionamiento de bordes (§9.2) |
 
-**Versión y validación actual (v1.0.1):** 90 algoritmos registrados, 53 pruebas locales y Ruff correctos, ejecución real de los 62 algoritmos compatibles con Filter Stack y prueba integral en QGIS 3.44. El registro añade remoción IGRF-14 por punto, QC de vuelo, lag automático, QC de estación base, espaciamiento/líneas faltantes, drape contra DEM, comparación de líneas repetidas y nivelación de crossovers constante, lineal o cuadrática.
+**Versión y validación actual (v1.0.2):** 90 algoritmos registrados, 53 pruebas locales y Ruff correctos, ejecución real de los 62 algoritmos compatibles con Filter Stack y prueba integral en QGIS 3.44. El registro añade remoción IGRF-14 por punto, QC de vuelo, lag automático, QC de estación base, espaciamiento/líneas faltantes, drape contra DEM, comparación de líneas repetidas y nivelación de crossovers constante, lineal o cuadrática.
 
 **Resuelto en v0.11.1–v0.12.0 (ya no son limitaciones abiertas):**
 - La continuación ascendente usa una altura configurable (§1.5) y su identidad no codifica una distancia fija.

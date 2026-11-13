@@ -88,7 +88,8 @@ def main():
             }
             for key in core_keys:
                 centre.tree.setCurrentItem(items[key])
-                assert "base_libraries" in centre.browser.toPlainText(), (
+                description = centre.browser.toPlainText()
+                assert key.removeprefix("core:") in description and "base_libraries" not in description, (
                     key,
                     centre.browser.toPlainText(),
                 )
@@ -157,7 +158,7 @@ def main():
             tasks.begin("Synthetic read")
             tasks.progress(650)
             tasks.request_cancel()
-            assert tasks.active["state"] == "running" and requests
+            assert tasks.active["state"] == "cancel_requested" and requests == [True]
             tasks.finish("cancelled", "Reader acknowledged cancellation")
             assert tasks.records[-1]["state"] == "cancelled"
             tasks.begin("Synthetic failure")

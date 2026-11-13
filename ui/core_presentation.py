@@ -709,9 +709,9 @@ OPERATION_NOTES = {
         "As janelas de suporte/profundidade são hipóteses fornecidas pelo usuário. O modo rígido fixa o fundo externo; o modo suave adiciona pesos de regularização. A inclusão usa centros de célula. Os limites MVI restringem componentes, não amplitude nem cones angulares.",
     ),
     "inversion.recovery_metrics": (
-        "Requires independently known truth and predeclared tolerances. Location, volume, support, contrast and direction are assessed separately from fitting anomalies. Truth is used for scoring only; passing synthetic cases does not certify a field model.",
-        "Requiere una verdad conocida independientemente y tolerancias predeclaradas. Evalúa ubicación, volumen, soporte, contraste y dirección por separado del ajuste de anomalías. La verdad solo se usa para puntuar; aprobar casos sintéticos no certifica un modelo de campo.",
-        "Requer verdade conhecida independentemente e tolerâncias predeclaradas. Avalia localização, volume, suporte, contraste e direção separadamente do ajuste de anomalias. A verdade é usada apenas na avaliação; aprovar casos sintéticos não certifica um modelo de campo.",
+        "Requires independently known truth and predeclared tolerances. Location, volume, support, contrast and direction are assessed separately from fitting anomalies. Truth is used for scoring only.",
+        "Requiere una verdad conocida independientemente y tolerancias predeclaradas. Evalúa ubicación, volumen, soporte, contraste y dirección por separado del ajuste de anomalías. La verdad solo se usa para puntuar.",
+        "Requer verdade conhecida independentemente e tolerâncias predeclaradas. Avalia localização, volume, suporte, contraste e direção separadamente do ajuste de anomalias. A verdade é usada apenas na avaliação.",
     ),
     "gravity.prism_density_fit": (
         "Requires known prism geometry and independent absolute errors. Signed density contrasts are kg/m3; mGal gravity follows the explicit up/down component. Covariance excludes geometry uncertainty.",

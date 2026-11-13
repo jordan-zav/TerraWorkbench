@@ -6,7 +6,7 @@
 
 Documento generado desde el código. Las firmas, IDs y docstrings originales conservan su idioma técnico; las notas editoriales y navegación se localizan. Una dataclass puede generar un constructor: los campos anotados no implican que todos sean argumentos. Los defaults no son parámetros físicos recomendados. Las definiciones no equivalen a métodos científicos independientes ni garantizan API estable.
 
-90 módulo · 364 definiciones · 120 operaciones registradas.
+92 módulo · 378 definiciones · 120 operaciones registradas.
 
 | Módulo | Capítulo | Definiciones | Operaciones registradas |
 | --- | --- | ---: | ---: |
@@ -31,6 +31,7 @@ Documento generado desde el código. Las firmas, IDs y docstrings originales con
 | fdem_3d | [20](../../manuals/es/20_em_mt.md) | 2 | 2 |
 | filter_recipes | [09](../../manuals/es/09_fft_espectros.md) | 2 | 0 |
 | flexure | [12](../../manuals/es/12_terreno_isostasia.md) | 2 | 2 |
+| gdb_archive | [04](../../manuals/es/04_importacion.md) | 6 | 0 |
 | geomagnetism | [10](../../manuals/es/10_magnetometria.md) | 2 | 1 |
 | geostatistics | [07](../../manuals/es/07_nivelacion_gridding.md) | 2 | 2 |
 | gravity_corrections | [11](../../manuals/es/11_gravimetria.md) | 11 | 0 |
@@ -88,11 +89,12 @@ Documento generado desde el código. Las firmas, IDs y docstrings originales con
 | survey_corrections | [06](../../manuals/es/06_perfiles_qc.md) | 9 | 0 |
 | survey_explorer | [05](../../manuals/es/05_bases_canales.md) | 4 | 0 |
 | survey_grid_pipeline | [07](../../manuals/es/07_nivelacion_gridding.md) | 1 | 0 |
+| survey_map | [05](../../manuals/es/05_bases_canales.md) | 6 | 0 |
 | survey_processing | [07](../../manuals/es/07_nivelacion_gridding.md) | 1 | 0 |
 | survey_recipes | [05](../../manuals/es/05_bases_canales.md) | 1 | 0 |
 | survey_store | [05](../../manuals/es/05_bases_canales.md) | 22 | 0 |
 | survey_text_import | [04](../../manuals/es/04_importacion.md) | 11 | 0 |
-| terrain_analysis | [23](../../manuals/es/23_integracion_experimentos.md) | 2 | 0 |
+| terrain_analysis | [23](../../manuals/es/23_integracion_experimentos.md) | 4 | 0 |
 | terrain_gravity | [12](../../manuals/es/12_terreno_isostasia.md) | 1 | 1 |
 | terrain_tree_walk | [12](../../manuals/es/12_terreno_isostasia.md) | 2 | 0 |
 | text_import | [04](../../manuals/es/04_importacion.md) | 3 | 0 |
@@ -1002,6 +1004,61 @@ Returns the full misfit curve, best supplied candidate, ties and edge flags;
 not geological Te uncertainty, continuous optimization or an inferred prior.
 Mask can exclude missing observations, never missing pressure cells. No offset
 is fitted, no mean is removed. A uniform load contains no Te information.
+
+
+## gdb_archive
+
+Typed open survey archives with independent, exact source verification.
+
+The writer accepts a reader protocol (catalogue/read); it never imports Geosoft,
+Qt or QGIS. SurveyStore format 1 is extended with additive archive tables.
+
+[Fuente](../../../terraworkbench_core/gdb_archive.py) · [Capítulo](../../manuals/es/04_importacion.md)
+
+### encode_metadata
+
+    encode_metadata(value, *, conversions=None)
+
+Represent metadata safely and record typed conversions and unknown values.
+
+Sample arrays use the separate native-data path. Unknown metadata never
+aborts conversion or silently claims complete, lossless metadata.
+
+### file_sha256
+
+    file_sha256(path)
+
+Hash a source or artifact using bounded reads.
+
+### convert_database
+
+    convert_database(reader, output, provenance, *, verify=True, canceled=None)
+
+Archive all channels/lines and verify a second independent source read.
+
+A failed conversion leaves a diagnostic archive marked incomplete. Existing
+destinations are never overwritten. Memory use is bounded by one source line.
+
+### open_archive
+
+    open_archive(path, *, require_verified=True, check_integrity=True)
+
+Open a folder, JSON, SQLite or Parquet archive entry without Geosoft.
+
+The return value is (SurveyStore, database_id, manifest). Unverified or
+incomplete conversions are refused by default, even when readable.
+
+### source_provenance
+
+    source_provenance(path, gxpy_version, terraworkbench_version)
+
+Record the immutable source identity and conversion software versions.
+
+### attach_archive
+
+    attach_archive(store, path, canceled=None)
+
+Add a verified archive to an existing SurveyStore without changing its API.
 
 
 ## geomagnetism
@@ -3986,6 +4043,113 @@ Coordina el procesamiento de canales de una base y su publicación sobre una gri
 Nota editorial basada en la implementación; no equivale a una nueva prueba científica.
 
 
+## survey_map
+
+Construct survey map geometry from row-aligned SurveyStore observations.
+
+[Fuente](../../../terraworkbench_core/survey_map.py) · [Capítulo](../../manuals/es/05_bases_canales.md)
+
+### MapChannels
+
+    class MapChannels
+
+Channel names used to place a survey database on the map.
+
+Each field holds the channel that supplies easting, northing, CRS, line
+identifier, sample order (fiducial or time), acquisition date and declared
+line type. None means the database does not provide that role.
+
+Campos anotados en la clase:
+
+    x: str | None
+    y: str | None
+    crs: str | None
+    line: str | None
+    fiducial: str | None
+    time: str | None
+    date: str | None
+    line_type: str | None
+
+### FlightSegment
+
+    class FlightSegment
+
+One continuous piece of a survey line, split at distance gaps.
+
+Holds the line label and number, segment index, kind (traverse, tie or
+other), whether the kind came from metadata or was inferred, mean azimuth,
+length in metres, ordered map coordinates, date range and local line
+spacing when it could be measured.
+
+Campos anotados en la clase:
+
+    line: str
+    number: str
+    segment: int
+    kind: str
+    type_source: str
+    azimuth: float | None
+    length_m: float
+    xy: np.ndarray
+    date_start: str | None
+    date_end: str | None
+    spacing_m: float | None = None
+
+### SurveyMap
+
+    class SurveyMap
+
+Map layers derived from a survey database, independent of QGIS.
+
+Contains the CRS as WKT, valid sample coordinates and attributes, flight
+line segments, the coverage boundary geometry and a summary with line
+counts, measured spacings, total kilometres and the boundary buffer.
+
+Campos anotados en la clase:
+
+    crs_wkt: str
+    sample_xy: np.ndarray
+    samples: object
+    segments: tuple[FlightSegment, ...]
+    boundary: object
+    summary: dict
+
+### survey_map_channels
+
+    survey_map_channels(store, database_id)
+
+Resolve configured channels, import roles and unambiguous header aliases.
+
+### build_survey_map
+
+    build_survey_map(store, database_id, *, channels=None, sample_columns=(), filters=None, max_gap_m=None, canceled=None, boundary_builder=None)
+
+Read a store snapshot and construct lines and a buffered coverage estimate.
+
+Lengths and thresholds are metres. Geographic samples are projected to a local
+azimuthal equidistant CRS. Original channels in the sample table stay unchanged.
+An optional boundary_builder receives metric line arrays, valid metric sample
+coordinates, a BoundaryPlan and output unit factor, and returns an object with
+WKB bytes. The default standalone builder requires the survey-map extra.
+
+### BoundaryPlan
+
+    class BoundaryPlan
+
+Metre-based coverage parameters shared by standalone and host GEOS.
+
+Campos anotados en la clase:
+
+    spacing_m: float | None
+    line_buffer_m: tuple[float, ...]
+    closing_m: float
+    hole_area_m2: float
+    fragment_area_m2: float
+    simplify_m: float
+    degenerate_buffer_m: float
+    concavity: float = 0.3
+
+
 ## survey_processing
 
 Tiled survey gridding and directional crosshatch fusion.
@@ -4183,7 +4347,7 @@ Zero-copy alias of one immutable version; future versions are independent.
 
 ### SurveyStore.configure_geometry
 
-    SurveyStore.configure_geometry(self, database_id, x, y, crs)
+    SurveyStore.configure_geometry(self, database_id, x, y, crs, *, line=None)
 
 Asocia canales X/Y y definición de CRS al catálogo de la base. Asigna significado espacial, sin reproyectar coordenadas ni transformar elevaciones.
 
@@ -4328,6 +4492,24 @@ Return suggestions, warnings and numbered sample lines, never import.
 Terrain relief and explicit spatial comparison with magnetic grids.
 
 [Fuente](../../../terraworkbench_core/terrain_analysis.py) · [Capítulo](../../manuals/es/23_integracion_experimentos.md)
+
+### automatic_hillshade_z
+
+    automatic_hillshade_z(values, pixel_transform)
+
+Return tan(30°) divided by the 90th percentile of finite gradient magnitudes.
+
+The four affine coefficients map (column, row) offsets to (east, north).
+Flat or unsupported gradients use a factor of one.
+
+### hillshade_arrays
+
+    hillshade_arrays(values, pixel_transform, directions, altitude=45, z_factor=None, canceled=None)
+
+Yield one shaded array per direction and the shared, effective z factor.
+
+Azimuths are clockwise from north. Edges and neighbours of holes use
+one-sided differences where possible. Original holes stay masked.
 
 ### relief_arrays
 

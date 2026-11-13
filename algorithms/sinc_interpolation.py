@@ -36,7 +36,7 @@ class SincInterpolationAlgorithm(RasterAlgorithmBase):
                 defaultValue=value, minValue=1, maxValue=maximum))
 
     def shortHelpString(self):
-        return self.tr("Interpolate a regular grid using separable windowed sin(x)/x. Original sample centres are retained. Missing support remains NoData. Expansion adds samples, not measured resolution. Independent Lanczos implementation; Geoplot equivalence is not certified.")
+        return self.tr("Interpolate a regular grid using separable windowed sin(x)/x. Original sample centres are retained. Missing support remains NoData. Expansion adds samples, not measured resolution. Uses Lanczos weights.")
 
     def processAlgorithm(self, parameters, context, feedback):
         grid = self.input_grid(parameters, context, require_projected=True)

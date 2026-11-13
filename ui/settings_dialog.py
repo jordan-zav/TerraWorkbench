@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from qgis.PyQt.QtCore import QLocale, QSettings, Qt, QUrl, pyqtSignal
+from qgis.PyQt.QtCore import QSettings, Qt, QUrl, pyqtSignal
 from qgis.PyQt.QtGui import QDesktopServices, QPixmap
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
@@ -24,7 +24,7 @@ from qgis.PyQt.QtWidgets import (
 
 from ._paths import PLUGIN_ROOT
 from ..embedded_qpip import dependency_directory
-from .i18n import language, set_language, text
+from .i18n import AUTOMATIC_LANGUAGE, language_preference, set_language, text
 from ..qgis_plugin.metadata_utils import plugin_metadata, plugin_version
 from ..qgis_plugin.qgis_compat import qt_enum
 
@@ -81,6 +81,7 @@ class SettingsDialog(QDialog):
         self.general_tab = QWidget()
         form = QFormLayout(self.general_tab)
         self.language_combo = QComboBox()
+        self.language_combo.addItem("", AUTOMATIC_LANGUAGE)
         self.language_combo.addItem("Español", "es")
         self.language_combo.addItem("English", "en")
         self.language_combo.addItem("Português", "pt")
@@ -230,7 +231,7 @@ class SettingsDialog(QDialog):
             self.geosoft_location.setText(selected)
 
     def load(self):
-        index = self.language_combo.findData(language())
+        index = self.language_combo.findData(language_preference())
         self.language_combo.setCurrentIndex(max(0, index))
         self.output_directory.setText(
             self._settings.value(KEY_OUTPUT, "", type=str)
@@ -261,16 +262,8 @@ class SettingsDialog(QDialog):
         )
 
     def restore_defaults(self):
-        system_language = QLocale.system().name().casefold()
-        default_language = (
-            "es"
-            if system_language.startswith("es")
-            else "pt"
-            if system_language.startswith("pt")
-            else "en"
-        )
         self.language_combo.setCurrentIndex(
-            self.language_combo.findData(default_language)
+            self.language_combo.findData(AUTOMATIC_LANGUAGE)
         )
         self.output_directory.clear()
         self.keep_intermediate.setChecked(False)
@@ -306,6 +299,10 @@ class SettingsDialog(QDialog):
         self.tabs.setTabText(3, text("About", "Acerca de"))
         form = self.general_tab.layout()
         form.labelForField(self.language_combo).setText(text("Language", "Idioma"))
+        self.language_combo.setItemText(
+            self.language_combo.findData(AUTOMATIC_LANGUAGE),
+            text("Automatic (QGIS language)", "Automático (idioma de QGIS)"),
+        )
         self.open_inspector.setText(text("Open parameter inspector after adding a filter", "Abrir el inspector de parámetros al añadir un filtro"))
         self.confirm_clear.setText(text("Confirm before clearing the complete stack", "Confirmar antes de borrar toda la pila"))
         self.scientific_tooltips.setText(text("Show scientific tooltips and domain labels", "Mostrar ayudas científicas y etiquetas de dominio"))

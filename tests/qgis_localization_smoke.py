@@ -49,6 +49,121 @@ def catalogue(provider):
     return result
 
 
+def cached_windows_smoke(app, destination):
+    from threading import Event
+    from time import monotonic, sleep
+    from qgis.PyQt.QtWidgets import QMainWindow, QTreeWidgetItemIterator
+
+    from TerraWorkbench.qgis_plugin.plugin import TerraWorkbenchPlugin
+
+    def selected_process(centre, key):
+        items = QTreeWidgetItemIterator(centre.tree)
+        while items.value() is not None:
+            if items.value().data(0, 256) == key:
+                return items.value()
+            items += 1
+        raise AssertionError(key)
+
+    def wait_for_workspace(dialog):
+        deadline = monotonic() + 8
+        while dialog.worker is not None and monotonic() < deadline:
+            app.processEvents()
+            sleep(0.01)
+        assert dialog.worker is None
+
+    class Interface:
+        def __init__(self):
+            self.window = QMainWindow()
+
+        def mainWindow(self):
+            return self.window
+
+    set_language("es")
+    plugin = TerraWorkbenchPlugin(Interface())
+    plugin.filter_stack_dock = dock = FilterStackDock(plugin.iface.mainWindow())
+    dock.languageChanged.connect(plugin.retranslate)
+    plugin.show_processes()
+    plugin.show_workspace()
+    centre, workspace = plugin.process_dialog, plugin.workspace_dialog
+    destination.mkdir(parents=True, exist_ok=True)
+    workspace.set_project(destination / "workspace", create=True)
+    source = destination / "source.csv"
+    source.write_text("x,y,mag\n1,2,3\n4,5,6\n", encoding="utf-8")
+    workspace.store.import_file(source)
+    workspace.refresh()
+    workspace.databases_list.item(0).setSelected(True)
+    workspace.channels_list.item(0).setSelected(True)
+    workspace.preview()
+    wait_for_workspace(workspace)
+    workspace.filter_values.setText("3")
+    workspace.tasks.toggle.setChecked(True)
+
+    key = "core:depth.euler_window"
+    centre.mode.setCurrentIndex(centre.mode.findData("core"))
+    centre.search.setText("euler_window")
+    centre.tree.setCurrentItem(selected_process(centre, key))
+    assert "Procesos geofísicos" in centre.windowTitle()
+    assert "Ventana Euler" in centre.browser.toPlainText()
+    assert "Filas 1" in workspace.page_status.text()
+    assert dock.import_geosoft_action.text() == "Inventario y exportación de GeoDatabase Geosoft…"
+    previous_rows = workspace.table.model().rowCount()
+    previous_selection = workspace.selected_databases(), workspace.selected_channels()
+
+    settings = dock.settings_dialog
+    settings.load()
+    settings.language_combo.setCurrentIndex(settings.language_combo.findData("en"))
+    settings.save()
+    app.processEvents()
+    assert plugin.process_dialog is centre and plugin.workspace_dialog is workspace
+    assert "Geophysical processes" in centre.windowTitle()
+    assert centre.search.text() == "euler_window" and centre.mode.currentData() == "core"
+    assert centre.tree.currentItem().data(0, 256) == key
+    assert "Source depth" in centre.tree.currentItem().parent().text(0)
+    assert centre.tree.currentItem().text(0) == "Euler window"
+    assert "Euler window" in centre.browser.toPlainText()
+    assert "Ventana Euler" not in centre.browser.toPlainText()
+    assert "visible /" in centre.count.text()
+    assert workspace.windowTitle() == "Survey databases"
+    assert workspace.views.tabText(0) == "Table"
+    assert workspace.filter_values.placeholderText() == "Values separated by commas"
+    assert workspace.filter_values.text() == "3"
+    assert "Selection rows 1" in workspace.page_status.text()
+    assert workspace.status.text() == workspace.page_status.text()
+    assert workspace.table.model().rowCount() == previous_rows
+    assert (workspace.selected_databases(), workspace.selected_channels()) == previous_selection
+    assert workspace.tasks.tree.topLevelItem(0).text(1) == "Completed"
+    assert workspace.tasks.toggle.isChecked()
+    assert "Knowledge Base" in dock.knowledge_base.windowTitle()
+    centre.resize(1180, 780)
+    centre.show()
+    app.processEvents()
+    assert centre.grab().save(str(destination / "process-centre-en.png"))
+
+    completed = Event()
+    def operation(cancel, progress):
+        assert completed.wait(5)
+        return "Test task"
+
+    workspace.start(operation)
+    worker = workspace.worker
+    try:
+        settings.load()
+        settings.language_combo.setCurrentIndex(settings.language_combo.findData("pt"))
+        settings.save()
+        assert workspace.worker is worker
+        assert workspace.tasks.active["item"].text(1) == "Em execução"
+    finally:
+        completed.set()
+        wait_for_workspace(workspace)
+    assert dock.import_geosoft_action.text() == "Inventário e exportação do GeoDatabase Geosoft…"
+    assert workspace.windowTitle() == "Bancos de levantamentos"
+    centre.close()
+    workspace.close()
+    dock.disconnect_project()
+    plugin.iface.mainWindow().close()
+    print("PASS: cached process centre, survey workspace and Geosoft action switch languages live")
+
+
 def main():
     QgsApplication.setPrefixPath(os.environ["QGIS_PREFIX_PATH"], True)
     app = QgsApplication([], False)
@@ -66,6 +181,18 @@ def main():
     QgsApplication.processingRegistry().addProvider(provider)
     settings = QgsSettings()
     previous = settings.value(LANGUAGE_KEY) if settings.contains(LANGUAGE_KEY) else None
+    if destination := os.environ.get("TW_HOT_LANGUAGE_CAPTURE"):
+        try:
+            cached_windows_smoke(app, Path(destination))
+        finally:
+            if previous is None:
+                settings.remove(LANGUAGE_KEY)
+            else:
+                settings.setValue(LANGUAGE_KEY, previous)
+            QgsProject.instance().clear()
+            QgsApplication.processingRegistry().removeProvider(provider)
+            app.exitQgis()
+        return
     root = Path(tempfile.gettempdir()) / "localization"
     root.mkdir()
     dock = None
