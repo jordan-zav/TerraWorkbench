@@ -52,17 +52,17 @@ def test_minimum_curvature_supports_explicit_manhattan_blanking():
         MinimumCurvatureGridder(xy, values, 1., blanking_metric="grid_steps")
 
 
-def test_minimum_curvature_oasis_grid_blanking_rounds_points_to_cells():
+def test_minimum_curvature_cell_manhattan_blanking_rounds_points_to_cells():
     xy = np.array([[.49, .49], [3.49, .49], [.49, 3.49], [3.49, 3.49]])
     values = np.zeros(4)
     model = MinimumCurvatureGridder(xy, values, 1., blanking_distance=1.5,
-                                    blanking_metric="oasis_grid", coarse_grid=1)
+                                    blanking_metric="cell_manhattan", coarse_grid=1)
     result = model.grid(np.arange(5.), np.arange(5.))
     assert np.isnan(result[1, 1])
     assert np.isfinite(result[0, 1])
-    assert model.metadata["blanking_metric"] == "oasis_grid"
+    assert model.metadata["blanking_metric"] == "cell_manhattan"
     with pytest.raises(ValueError, match="desample_factor=1"):
-        MinimumCurvatureGridder(xy, values, 1., blanking_metric="oasis_grid",
+        MinimumCurvatureGridder(xy, values, 1., blanking_metric="cell_manhattan",
                                 desample_factor=2)
 
 

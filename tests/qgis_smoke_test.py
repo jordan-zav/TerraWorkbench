@@ -1427,6 +1427,9 @@ def main():
             def __init__(self):
                 super().__init__()
                 self.window = QMainWindow()
+                from qgis.gui import QgsMapCanvas
+
+                self.canvas = QgsMapCanvas(self.window)
                 self.dock_area = None
                 self.context_actions = set()
 
@@ -1441,6 +1444,9 @@ def main():
 
             def mainWindow(self):
                 return self.window
+
+            def mapCanvas(self):
+                return self.canvas
 
             def addDockWidget(self, area, dock):
                 lifecycle_events.append("dock")

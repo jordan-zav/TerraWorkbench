@@ -8,6 +8,16 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_i18n_has_no_question_marks_inside_words():
+    """Catch lossy shell encoding, while allowing punctuation and regex syntax."""
+    source = (ROOT / "ui/i18n.py").read_bytes()
+    assert not source.startswith(b'\xef\xbb\xbf')
+    content = source.decode('utf-8')
+    assert not re.search(r'[^\W\d_]\?[^\W\d_]', content), 'Question mark inside a word in i18n.py'
+    assert 'Prévia ao vivo' in content
+    assert '"Preview": "Prévia"' in content
+
+
 def load_file(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)

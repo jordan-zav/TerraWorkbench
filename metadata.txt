@@ -1,10 +1,11 @@
 [general]
+plugin_dependencies=GeoRamp
 name=TerraWorkbench
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=Batch-ready geophysical processing for QGIS
 about=Provides QGIS Processing algorithms for magnetic, gravity and gamma-ray spectrometry data, including calibrated K/eU/eTh products, survey-specific radiometric corrections, GRS80, Bouguer and Airy reductions, IGRF-14, survey preparation, and optional SimPEG 3D inversion. Its dependency manager reads requirements/base.txt and keeps core 2D and optional 3D requirements separate in a TerraWorkbench-specific profile directory while preserving QGIS host-package precedence. TerraWorkbench is an independent community plugin.
-version=1.0.2
+version=1.1.0
 author=Jordan Zavaleta (GisGeo Dev)
 email=jordanzav@gisgeo.dev
 repository=https://github.com/jordan-zav/TerraWorkbench
@@ -12,7 +13,7 @@ tracker=https://github.com/jordan-zav/TerraWorkbench/issues
 homepage=https://github.com/jordan-zav/TerraWorkbench
 experimental=False
 deprecated=False
-changelog=1.0.2 - Simplifies the dependency manager and adds verified GDB conversion with a free Seequent ID. Adds flight and tie lines, direction arrows and a survey outline. Adds visual and calculated hillshade and a per-line database sheet. Follows the QGIS language automatically and retranslates open windows. Uses temporary imports by default and a work folder per QGIS project. Preserves runtime SHA-256 verification and credits Tellus A9 data and PSI spectra. 1.0.1 - Adds the reproducibility package of the software article under reproducibility/ (not shipped in the plugin) and a 256 px plugin icon. 1.0.0 - First public release: explicit public source boundary, clean-profile dependency bootstrap, active-profile dependency isolation, explicit dependency and preference cleanup, localized dependency manager, responsive manual and single optional-parameter markers. 0.15.0 - Added per-point IGRF-14 main-field removal, flight-line navigation/clearance/channel QC, repeat-line comparison with optional robust offset, and constant/linear/quadratic crossover leveling. 0.14.0 - Added gamma-ray spectrometry, survey-wide MAG/GRAV corrections, equivalent sources, pseudogravity, inversion hardening, optional 3D dependencies, and QGIS CI.
+changelog=1.1.0 - API change: removes the optional GX-example 9x9 least-squares coefficients and constants; smooth_least_squares_9x9 now raises NotImplementedError with EN/ES/PT migration guidance to TerraWorkbench smooth_nine_point or circular_median. Adds axis tick marks to the profile viewer. Improves gridding robustness and warns when the requested grid scale is unsuitable for minimum curvature. Corrects IGRF and tilt processing. Preserves the mean by default in reduction to the pole (RTP), including the live filter preview. Adds live previews for the filter stack and recommends GeoRamp for color ramps. 1.0.2 - Simplifies the dependency manager and adds verified GDB conversion with a free Seequent ID. Adds flight and tie lines, direction arrows and a survey outline. Adds visual and calculated hillshade and a per-line database sheet. Follows the QGIS language automatically and retranslates open windows. Uses temporary imports by default and a work folder per QGIS project. Preserves runtime SHA-256 verification and credits Tellus A9 data and PSI spectra. 1.0.1 - Adds the reproducibility package of the software article under reproducibility/ (not shipped in the plugin) and a 256 px plugin icon. 1.0.0 - First public release: explicit public source boundary, clean-profile dependency bootstrap, active-profile dependency isolation, explicit dependency and preference cleanup, localized dependency manager, responsive manual and single optional-parameter markers. 0.15.0 - Added per-point IGRF-14 main-field removal, flight-line navigation/clearance/channel QC, repeat-line comparison with optional robust offset, and constant/linear/quadratic crossover leveling. 0.14.0 - Added gamma-ray spectrometry, survey-wide MAG/GRAV corrections, equivalent sources, pseudogravity, inversion hardening, optional 3D dependencies, and QGIS CI.
 hasProcessingProvider=yes
 icon=assets/branding/terraworkbench-icon.png
 category=Raster

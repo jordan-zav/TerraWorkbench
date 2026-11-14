@@ -10,6 +10,12 @@ from osgeo import gdal
 from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
+    QgsFeatureRequest,
+    QgsProcessing,
+    QgsProcessingParameterBoolean,
+    QgsProcessingParameterDefinition,
+    QgsVariantUtils,
+    QgsWkbTypes,
     QgsProcessingException,
     QgsProcessingParameterCrs,
     QgsProcessingParameterEnum,
@@ -24,7 +30,10 @@ from .base import ProcessingAlgorithmBase
 from ..qgis_plugin.qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
 from ..ui.i18n import translate
 from ..compat.basic_processing import ThinPlateGridder
-from ..compat.gridding_methods import MinimumCurvatureGridder, SincGridder
+from ..terraworkbench_core.gridding_methods import (
+    BidirectionalGridder, MinimumCurvatureGridder, MinimumCurvatureNodeLimitError, SincGridder,
+    _MULTILEVEL_NODE_LIMIT, minimum_curvature_cell_size, suggest_flight_cell_size,
+)
 
 
 class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
@@ -32,7 +41,6 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
     implementation_details = (
         ("Numerical backend", "NumPy / SciPy cKDTree, multilevel minimum-curvature and windowed sinc solvers"),
         ("Host and raster I/O", "QGIS Processing and GDAL"),
-        ("Compatibility", "Independent experimental minimum-curvature solver; sinc(x)/x is a separate interpolator; no proprietary byte-identical claim"),
     )
     INPUT = "INPUT"
     VALUE_FIELD = "VALUE_FIELD"
@@ -43,6 +51,21 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
     NEIGHBORS = "NEIGHBORS"
     SEARCH_RADIUS = "SEARCH_RADIUS"
     OUTPUT = "OUTPUT"
+    ALLOW_LARGE_GRID = "ALLOW_LARGE_MINIMUM_CURVATURE_GRID"
+    NODE_LIMIT_MESSAGE = (
+        "Minimum curvature needs {nodes:,} working nodes; the limit is {limit:,}. "
+        "Try a cell size of at least {size:.3g} in CRS units, or reduce the extent."
+    )
+
+    def createCustomParametersWidget(self, parent=None):
+        from ..ui.survey_gridding_dialog import SurveyGriddingDialog
+
+        return SurveyGriddingDialog(self, parent=parent)
+
+    def _node_limit_message(self, nodes, size):
+        return self.tr(self.NODE_LIMIT_MESSAGE).format(
+            nodes=nodes, limit=_MULTILEVEL_NODE_LIMIT, size=size
+        ) + " " + self.tr("To proceed, enable Allow large minimum-curvature grids in Advanced parameters.")
 
     def name(self):
         return "grid_survey_points"
@@ -93,7 +116,7 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                     "Minimum curvature (global thin-plate spline)",
                     "Local thin-plate spline (approximation)",
                     "Sinc(x)/x (windowed 2D interpolator)",
-                    "Minimum curvature (experimental multilevel solver)",
+                    "Minimum curvature (multilevel solver)", "Bidirectional flight-line gridding",
                 )],
                 defaultValue=0,
             )
@@ -102,7 +125,7 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
             QgsProcessingParameterNumber(
                 self.CELL_SIZE,
                 self.tr(
-                    "Cell size in output CRS units (0 = automatic from point density)"
+                    "Cell size in output CRS units (0 = automatic)"
                 ),
                 type=PROCESSING_NUMBER_DOUBLE,
                 defaultValue=0.0,
@@ -139,11 +162,46 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
             )
         )
         self.addParameter(QgsProcessingParameterNumber(
+            "DUMMY_VALUE", self.tr("Numeric dummy value (optional)"),
+            type=PROCESSING_NUMBER_DOUBLE, optional=True))
+        self.addParameter(QgsProcessingParameterField(
+            "LINE_FIELD", self.tr("Flight-line ID field"), parentLayerParameterName=self.INPUT,
+            optional=True))
+        self.addParameter(QgsProcessingParameterEnum(
+            "LINE_SPACING_DIVISOR", self.tr("Automatic cell size: fraction of flight-line spacing"),
+            options=["1/4", "1/5"], defaultValue=0))
+        self.addParameter(QgsProcessingParameterEnum(
+            "CROSS_METHOD", self.tr("Cross-line interpolation"),
+            options=[self.tr("Piecewise linear"), self.tr("Shape-preserving cubic (PCHIP)")], defaultValue=0))
+        self.addParameter(QgsProcessingParameterBoolean(
+            "LINE_TREND", self.tr("Remove and restore a planar trend"), defaultValue=False))
+        for key, label in (
+            ("LINE_GAP", "Maximum gap between flight lines (0 = unlimited)"),
+            ("SAMPLE_GAP", "Maximum gap along a flight line (0 = unlimited)"),
+            ("LINE_BLANKING", "Bidirectional blanking distance (0 = disabled)"),
+        ):
+            self.addParameter(QgsProcessingParameterNumber(
+                key, self.tr(label), type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
+        self.addParameter(QgsProcessingParameterFeatureSource(
+            "BOUNDARY", self.tr("Survey coverage polygon (survey_boundary)"),
+            types=[QgsProcessing.TypeVectorPolygon], optional=True))
+        self.addParameter(QgsProcessingParameterBoolean(
+            "RANGRID_AVERAGE", self.tr("Average observations within each cell before minimum curvature"),
+            defaultValue=True))
+        self.addParameter(QgsProcessingParameterNumber(
             "TPS_SMOOTHING", self.tr("TPS smoothing (normalized coordinates; not tension)"),
             type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.0, minValue=0.0))
         self.addParameter(QgsProcessingParameterNumber(
             "TPS_NEIGHBORS", self.tr("Local TPS neighbors"),
             type=PROCESSING_NUMBER_INTEGER, defaultValue=64, minValue=3, maxValue=512))
+        allow_large_grid = QgsProcessingParameterBoolean(
+            self.ALLOW_LARGE_GRID, self.tr("Allow large minimum-curvature grids"),
+            defaultValue=False,
+        )
+        allow_large_grid.setFlags(
+            allow_large_grid.flags() | QgsProcessingParameterDefinition.FlagAdvanced
+        )
+        self.addParameter(allow_large_grid)
         self.addParameter(QgsProcessingParameterNumber(
             "RANGRID_TOLERANCE", self.tr("Minimum-curvature tolerance (channel units)"),
             type=PROCESSING_NUMBER_DOUBLE, defaultValue=0.01258, minValue=1e-12))
@@ -215,37 +273,68 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                 source_crs, target_crs, context.transformContext()
             )
 
-        coordinates = []
-        values = []
+        method = self.parameterAsInt(parameters, self.METHOD, context)
+        line_field = self.parameterAsString(parameters, "LINE_FIELD", context)
+        if method == 6 and not line_field:
+            raise QgsProcessingException(self.tr("Choose a flight-line ID field for bidirectional gridding."))
+        if line_field and source.fields().indexOf(line_field) < 0:
+            raise QgsProcessingException(self.tr("The flight-line ID field does not exist."))
+        dummy = (self.parameterAsDouble(parameters, "DUMMY_VALUE", context)
+                 if parameters.get("DUMMY_VALUE") not in (None, "") else None)
+        blocks = []
+        block = np.empty((65536, 4 if line_field else 3))
+        used = 0
+        line_codes = {}
         total = source.featureCount()
-        for index, feature in enumerate(source.getFeatures()):
+        request = QgsFeatureRequest().setSubsetOfAttributes(
+            [value_field, line_field] if line_field else [value_field], source.fields())
+        for index, feature in enumerate(source.getFeatures(request)):
             if feedback.isCanceled():
                 return {}
             geometry = feature.geometry()
             if not geometry or geometry.isEmpty():
                 continue
-            point = geometry.centroid().asPoint()
+            point = geometry.asPoint() if geometry.type() == QgsWkbTypes.PointGeometry and not geometry.isMultipart() else geometry.centroid().asPoint()
             if transform is not None:
                 point = transform.transform(point)
             try:
                 value = float(feature[value_field])
             except (TypeError, ValueError):
                 continue
-            if (
-                math.isfinite(point.x())
-                and math.isfinite(point.y())
-                and math.isfinite(value)
-            ):
-                coordinates.append((point.x(), point.y()))
-                values.append(value)
+            if math.isfinite(point.x()) and math.isfinite(point.y()) and math.isfinite(value) and value != dummy:
+                block[used, :3] = point.x(), point.y(), value
+                if line_field:
+                    label = feature[line_field]
+                    if QgsVariantUtils.isNull(label):
+                        continue
+                    block[used, 3] = line_codes.setdefault(label, len(line_codes))
+                used += 1
+                if used == len(block):
+                    blocks.append(block)
+                    block = np.empty_like(block)
+                    used = 0
             if total > 0 and index % 10000 == 0:
                 feedback.setProgress(min(20.0, 20.0 * index / total))
-        if len(values) < 3:
-            raise QgsProcessingException(
-                "At least three finite survey points are required."
-            )
-        coordinates = np.asarray(coordinates, dtype=np.float64)
-        values = np.asarray(values, dtype=np.float64)
+        blocks.append(block[:used])
+        observations = np.concatenate(blocks)
+        del blocks, block
+        if len(observations) < 3:
+            raise QgsProcessingException("At least three finite survey points are required.")
+        coordinates = np.ascontiguousarray(observations[:, :2])
+        values = observations[:, 2].copy()
+        line_ids = observations[:, 3].astype(np.int32) if line_field else None
+        del observations
+        try:
+            bidirectional = BidirectionalGridder(
+                coordinates, values, line_ids,
+                trend=self.parameterAsBool(parameters, "LINE_TREND", context),
+                cross_method=("linear", "pchip")[self.parameterAsInt(parameters, "CROSS_METHOD", context)],
+                blanking_distance=self.parameterAsDouble(parameters, "LINE_BLANKING", context),
+                max_line_gap=self.parameterAsDouble(parameters, "LINE_GAP", context),
+                max_sample_gap=self.parameterAsDouble(parameters, "SAMPLE_GAP", context),
+            ) if method == 6 else None
+        except ValueError as error:
+            raise QgsProcessingException(str(error)) from error
         minimum = coordinates.min(axis=0)
         maximum = coordinates.max(axis=0)
         width, height = maximum - minimum
@@ -256,21 +345,33 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
 
         cell_size = self.parameterAsDouble(parameters, self.CELL_SIZE, context)
         if cell_size <= 0.0:
-            cell_size = math.sqrt(width * height / len(values))
-            feedback.pushInfo(
-                f"Automatic cell size from survey density: {cell_size:.3f} CRS units."
-            )
+            divisor = 4 + self.parameterAsInt(parameters, "LINE_SPACING_DIVISOR", context)
+            try:
+                if bidirectional is not None:
+                    cell_size = bidirectional.line_spacing/divisor
+                elif line_ids is not None:
+                    cell_size = suggest_flight_cell_size(coordinates, line_ids, divisor)
+                else:
+                    cell_size = math.sqrt(width * height / len(values))
+            except ValueError as error:
+                raise QgsProcessingException(str(error)) from error
+            feedback.pushInfo(self.tr("Automatic cell size: {size:.3f} CRS units.").format(size=cell_size))
         columns = int(math.ceil(width / cell_size)) + 1
         rows = int(math.ceil(height / cell_size)) + 1
         cell_count = rows * columns
+        allow_large_grid = self.parameterAsBool(parameters, self.ALLOW_LARGE_GRID, context)
+        working_nodes = (rows+4)*(columns+4)
+        if method == 5 and working_nodes > _MULTILEVEL_NODE_LIMIT and not allow_large_grid:
+            raise QgsProcessingException(self._node_limit_message(
+                working_nodes, minimum_curvature_cell_size(width, height)
+            ))
         if cell_count > 100_000_000:
             raise QgsProcessingException(
                 f"Requested grid has {cell_count:,} cells. Increase cell size to stay below 100 million."
             )
         radius = self.parameterAsDouble(parameters, self.SEARCH_RADIUS, context)
         query_radius = np.inf if radius <= 0.0 else radius
-        method = self.parameterAsInt(parameters, self.METHOD, context)
-        if method not in (0, 1, 2, 3, 4, 5):
+        if method not in range(7):
             raise QgsProcessingException("Unknown interpolation method.")
         neighbors = min(
             self.parameterAsInt(parameters, self.NEIGHBORS, context), len(values)
@@ -283,7 +384,7 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
             raise QgsProcessingException(
                 "SciPy is required for survey gridding. Use TerraWorkbench's built-in dependency manager."
             ) from error
-        tree = cKDTree(coordinates)
+        tree = cKDTree(coordinates) if method in (0, 1, 2, 3) else None
         tps = None
         minimum_curvature = None
         sinc = None
@@ -298,8 +399,6 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                               f"neighbors={tps.neighbors or 'global'}; normalized smoothing={smoothing}. "
                               "Search radius masks output by nearest-point distance; it does not restrict TPS fitting points.")
         if method == 5:
-            if cell_count > 250_000:
-                raise QgsProcessingException("Minimum curvature is limited to 250000 working nodes (including margins); increase cell size.")
             coarse_options = (16, 8, 4, 2, 1)
             coarse_index = self.parameterAsInt(parameters, "RANGRID_COARSE_GRID", context)
             coarse_grid = coarse_options[max(0, min(coarse_index, len(coarse_options) - 1))]
@@ -309,6 +408,7 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                     coordinates,
                     values,
                     cell_size,
+                    average_cells=self.parameterAsBool(parameters, "RANGRID_AVERAGE", context),
                     blanking_distance=self.parameterAsDouble(parameters, "RANGRID_BLANKING", context),
                     desample_factor=self.parameterAsInt(parameters, "RANGRID_DESAMPLE", context),
                     search_radius=rangrid_radius,
@@ -319,14 +419,10 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                     max_iterations=self.parameterAsInt(parameters, "RANGRID_MAX_ITERATIONS", context),
                     tension=self.parameterAsDouble(parameters, "RANGRID_TENSION", context),
                     coarse_grid=coarse_grid,
+                    allow_large_grid=allow_large_grid,
                 )
             except ValueError as error:
                 raise QgsProcessingException(str(error)) from error
-            feedback.pushInfo(
-                "Minimum curvature: independent multilevel experimental solver; "
-                "off-node constraints and residual checks at each refinement level; "
-                "not a proprietary byte-identical implementation."
-            )
         if method == 4:
             sinc_spacing = self.parameterAsDouble(parameters, "SINC_SPACING", context)
             if sinc_spacing <= 0.0:
@@ -345,6 +441,26 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                 "Sinc(x)/x: windowed two-dimensional interpolator; "
                 f"spacing={sinc_spacing:g}, radius={sinc.radius} sample spacings."
             )
+        x_centers = minimum[0] + np.arange(columns) * cell_size
+        y_ascending = (maximum[1] - np.arange(rows) * cell_size)[::-1]
+        boundary = self._coverage_mask(parameters, context, target_crs)
+        solved = None
+        try:
+            if minimum_curvature is not None:
+                solved = minimum_curvature.grid(
+                    x_centers, y_ascending, canceled=feedback.isCanceled,
+                    progress=lambda fraction: feedback.setProgress(20.0 + 60.0 * fraction),
+                )[::-1]
+            elif bidirectional is not None:
+                solved = bidirectional.grid(x_centers, y_ascending, canceled=feedback.isCanceled)[::-1]
+        except InterruptedError:
+            return {}
+        except MinimumCurvatureNodeLimitError as error:
+            raise QgsProcessingException(self._node_limit_message(
+                error.nodes, error.suggested_cell_size
+            )) from error
+        except ValueError as error:
+            raise QgsProcessingException(str(error)) from error
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
         dataset = gdal.GetDriverByName("GTiff").Create(
             output,
@@ -375,9 +491,11 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                     "Global thin-plate spline",
                     "Local thin-plate spline approximation",
                     "Sinc(x)/x windowed 2D interpolator",
-                    "Minimum curvature (experimental multilevel)",
+                    "Minimum curvature (multilevel)",
+                    "Bidirectional flight-line gridding",
                 )[method],
                 "CELL_SIZE": str(cell_size),
+                "DUMMY_VALUE": "" if dummy is None else str(dummy),
                 "SEARCH_RADIUS": "unlimited" if radius <= 0.0 else str(radius),
                 "NEIGHBORS": str(neighbors),
                 "IDW_POWER": str(power),
@@ -391,6 +509,7 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
             dataset.SetMetadataItem("TPS_COORDINATE_SCALE", str(tps.scale))
             dataset.SetMetadataItem("TPS_DUPLICATES_AVERAGED", str(tps.duplicate_count))
             dataset.SetMetadataItem("TPS_RADIUS_MEANING", "Output nearest-point distance mask only")
+        dataset.SetMetadataItem("COVERAGE_MASK", str(boundary is not None))
         if minimum_curvature is not None:
             dataset.SetMetadataItem("RANGRID_ALGORITHM", "Independent multilevel minimum-curvature solver")
             dataset.SetMetadataItem("RANGRID_TOLERANCE", str(minimum_curvature.tolerance))
@@ -410,34 +529,22 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
             dataset.SetMetadataItem("SINC_SPACING_Y", str(sinc.spacing[1]))
             dataset.SetMetadataItem("SINC_RADIUS", str(sinc.radius))
             dataset.SetMetadataItem("SINC_BLANKING", str(sinc.blanking_distance))
+        if bidirectional is not None:
+            dataset.SetMetadataItem("FLIGHT_LINE_SPACING", str(bidirectional.line_spacing))
+            dataset.SetMetadataItem("CROSS_METHOD", bidirectional.cross_method)
+            dataset.SetMetadataItem("LINE_TREND", str(bidirectional.trend))
+            dataset.SetMetadataItem("LINE_BLANKING", str(bidirectional.blanking_distance))
+            dataset.SetMetadataItem("MAX_LINE_GAP", str(bidirectional.max_line_gap))
+            dataset.SetMetadataItem("MAX_SAMPLE_GAP", str(bidirectional.max_sample_gap))
         band = dataset.GetRasterBand(1)
         nodata = -3.4028234663852886e38
         band.SetNoDataValue(nodata)
-        x_centers = minimum[0] + np.arange(columns) * cell_size
-        minimum_curvature_grid = None
         if minimum_curvature is not None:
-            # The core solver uses ascending y coordinates; GeoTIFF rows are
-            # written north to south, so flip the completed grid once.
-            y_ascending = np.sort(maximum[1] - np.arange(rows) * cell_size)
-            try:
-                minimum_curvature_grid = np.flipud(
-                    minimum_curvature.grid(
-                        x_centers,
-                        y_ascending,
-                        canceled=feedback.isCanceled,
-                        progress=lambda fraction: feedback.setProgress(20.0 + 60.0 * fraction),
-                    )
-                )
-            except (InterruptedError, ValueError) as error:
-                dataset = None
-                if isinstance(error, InterruptedError):
-                    return {}
-                raise QgsProcessingException(str(error)) from error
             dataset.SetMetadataItem("TW_MINIMUM_CURVATURE", json.dumps(minimum_curvature.metadata))
             if not minimum_curvature.metadata["converged"]:
                 feedback.reportError("Minimum curvature reached the iteration limit without meeting convergence tolerance.", fatalError=False)
             feedback.pushInfo(f"Minimum-curvature levels: {minimum_curvature.metadata['levels']}")
-        block_rows = 128
+        block_rows = max(1, min(128, 65536 // columns))
         for row_start in range(0, rows, block_rows):
             if feedback.isCanceled():
                 dataset = None
@@ -446,8 +553,10 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
             y_centers = maximum[1] - np.arange(row_start, row_end) * cell_size
             grid_x, grid_y = np.meshgrid(x_centers, y_centers)
             query = np.column_stack((grid_x.ravel(), grid_y.ravel()))
-            if minimum_curvature_grid is not None:
-                result = minimum_curvature_grid[row_start:row_end].ravel()
+            if solved is not None:
+                result = solved[row_start:row_end].ravel()
+                if boundary is not None:
+                    result = np.where(boundary(query), result, np.nan)
                 if np.any(np.abs(result[np.isfinite(result)]) > np.finfo(np.float32).max):
                     dataset = None
                     raise QgsProcessingException("Interpolation output exceeds Float32 range.")
@@ -474,6 +583,8 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                 if np.any(np.abs(result[supported]) > np.finfo(np.float32).max):
                     dataset = None
                     raise QgsProcessingException("TPS output exceeds Float32 range; rescale the input.")
+                if boundary is not None:
+                    result[~boundary(query)] = nodata
                 band.WriteArray(result.reshape(row_end - row_start, columns).astype(np.float32), 0, row_start)
                 feedback.setProgress(20.0 + 80.0 * row_end / rows)
                 continue
@@ -487,6 +598,8 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                     dataset = None
                     raise QgsProcessingException("Interpolation output exceeds Float32 range.")
                 result = np.where(np.isfinite(result), result, nodata).astype(np.float32)
+                if boundary is not None:
+                    result[~boundary(query)] = nodata
                 band.WriteArray(result.reshape(row_end - row_start, columns), 0, row_start)
                 feedback.setProgress(20.0 + 80.0 * row_end / rows)
                 continue
@@ -517,6 +630,8 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
                     exact_indices = safe_indices[exact_rows, first_exact]
                     result[exact_rows] = values[exact_indices]
                 result = result.astype(np.float32)
+            if boundary is not None:
+                result[~boundary(query)] = nodata
             band.WriteArray(result.reshape(row_end - row_start, columns), 0, row_start)
             feedback.setProgress(20.0 + 80.0 * row_end / rows)
         band.SetDescription(f"Gridded {value_field}")
@@ -524,6 +639,45 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
         dataset.FlushCache()
         dataset = None
         return {self.OUTPUT: output}
+
+    def _coverage_mask(self, parameters, context, target_crs):
+        from qgis.core import QgsGeometry, QgsPointXY
+
+        source = self.parameterAsSource(parameters, "BOUNDARY", context)
+        if source is None:
+            return None
+        if not source.sourceCrs().isValid():
+            raise QgsProcessingException(self.tr("The coverage polygon needs a valid CRS."))
+        transform = QgsCoordinateTransform(source.sourceCrs(), target_crs, context.transformContext())
+        polygons = []
+        for feature in source.getFeatures():
+            polygon = feature.geometry()
+            if not polygon.isEmpty():
+                polygon.transform(transform)
+                polygons.append(polygon)
+        coverage = QgsGeometry.unaryUnion(polygons)
+        if coverage.isEmpty():
+            raise QgsProcessingException(self.tr("The coverage polygon is empty."))
+        try:
+            from shapely import from_wkb, intersects_xy, prepare
+        except ImportError:
+            engine = QgsGeometry.createGeometryEngine(coverage.constGet())
+            engine.prepareGeometry()
+
+            def intersects(query):
+                # Bind the coverage so the engine's const geometry stays alive.
+                point_factory = QgsGeometry.fromPointXY
+                return np.fromiter(
+                    (engine.intersects(point_factory(QgsPointXY(x, y)).constGet()) for x, y in query),
+                    dtype=bool, count=len(query)) if not coverage.isEmpty() else np.zeros(len(query), dtype=bool)
+        else:
+            shape = from_wkb(bytes(coverage.asWkb()))
+            prepare(shape)
+
+            def intersects(query):
+                return intersects_xy(shape, query[:, 0], query[:, 1])
+
+        return intersects
 
     @staticmethod
     def _automatic_target_crs(source, source_crs):
@@ -537,17 +691,9 @@ class SurveyPointGriddingAlgorithm(ProcessingAlgorithmBase):
 
     def shortHelpString(self):
         return self.tr(
-            "Interpolates a numeric channel from survey points to a regular GeoTIFF. "
-            "Geographic inputs are automatically reprojected to the local WGS 84 UTM zone "
-            "unless a projected CRS is chosen. Cell size 0 estimates spacing from point "
-            "density. Search radius 0 fills the complete bounding rectangle, which is ready "
-            "for FFT filters but extrapolates at edges and across unsampled gaps. Set a finite "
-            "radius to constrain extrapolation and leave unsupported cells as NoData. IDW is "
-            "deterministic and does not perform line leveling. Minimum curvature uses an "
-            "independent multilevel experimental solver. Sinc(x)/x is a separate windowed "
-            "interpolator, not a raster smoothing filter."
-        ) + "\n\n" + self.tr(
-            "Global thin-plate spline minimizes bending with an affine polynomial and is limited to 2000 unique points. Local TPS uses a configurable neighborhood and is not a global minimum-curvature solution. Coincident values are averaged. Smoothing uses isotropically normalized coordinates; it is not tension. Search radius only masks TPS output by distance to the nearest observation. The minimum-curvature and sinc methods are independent implementations with explicit metadata; no proprietary byte-identical claim is made."
-        ) + "\n\n" + self.tr(
-            "Numerical backend: NumPy and SciPy (cKDTree, finite-difference minimum curvature, windowed sinc, RBFInterpolator). Raster I/O: QGIS and GDAL."
+            "Grid a numeric survey channel in a projected CRS. With a flight-line ID field, "
+            "automatic cell size uses one quarter or one fifth of the median line spacing. "
+            "Without line IDs, automatic cell size uses point density. Bidirectional gridding "
+            "requires roughly parallel flight lines. Select production lines and exclude tie lines. "
+            "Distance limits and the coverage polygon write unsupported cells as NoData."
         )

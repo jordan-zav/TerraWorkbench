@@ -55,6 +55,16 @@ Ver [workspaces](../../guides/survey_workspaces.md), [explorador](../../guides/s
 
 [survey_store](../../../terraworkbench_core/survey_store.py), [survey_explorer](../../../terraworkbench_core/survey_explorer.py), [survey_recipes](../../../terraworkbench_core/survey_recipes.py)
 
+## Perfiles por línea
+
+En la hoja de bases, elige una línea y pulsa **Perfiles**. En QGIS también puedes activar **Elegir perfil en el mapa** y hacer clic sobre una línea del levantamiento, o seleccionar una entidad de línea o muestra. El panel marca la muestra más cercana a esa posición. Al pasar el cursor sobre el perfil, QGIS marca la muestra en el mapa.
+
+Marca los canales que quieres ver. Cada gráfico tiene su propia escala vertical. Elige el eje de fiducial o distancia acumulada en metros, según los canales y el CRS de la base. Usa la rueda para acercar, arrastra con el botón derecho para desplazar y pulsa las flechas izquierda y derecha sobre el gráfico para recorrer las líneas.
+
+Haz clic para seleccionar una muestra o arrastra con el botón izquierdo para seleccionar un tramo. El gráfico activo es el canal que se edita. **Dummy** marca las muestras como nulas y **Deshacer** y **Rehacer** recorren el historial. **Interpolar** rellena huecos interiores por el eje actual con un método lineal o Akima. Si no hay tramo seleccionado, se usa toda la línea. Akima requiere cinco posiciones válidas distintas. Las estadísticas se calculan con todas las muestras del tramo.
+
+En **Herramientas**, revisa candidatos a picos con una ventana de cinco muestras y un umbral relativo a la MAD o absoluto en unidades del canal. Aplica la vista previa para marcar los candidatos como dummy. La cuarta diferencia centrada muestra cambios rápidos en el orden de adquisición. **Guardar canal** publica los cambios de las líneas editadas del canal activo bajo un nombre nuevo y registra el origen, sus versiones y las operaciones en el catálogo. Las demás muestras conservan sus valores de origen.
+
 ---
 
 [Índice](README.md) · [Anterior](04_importacion.md) · [Siguiente](06_perfiles_qc.md)

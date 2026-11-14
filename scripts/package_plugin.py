@@ -39,6 +39,8 @@ PLUGIN_FILES = (
     "qgis_plugin/__init__.py",
     "ui/__init__.py",
     "ui/_paths.py",
+    "ui/live_preview.py",
+    "qgis_plugin/georamp.py",
     "__init__.py",
     "metadata.txt",
     "qgis_plugin/metadata_utils.py",
@@ -74,9 +76,14 @@ PLUGIN_FILES = (
     "compat/text_import.py",
     "ui/text_import_dialog.py",
     "ui/survey_coordinates_dialog.py",
+    "ui/survey_gridding_dialog.py",
     "ui/survey_workspace_dialog.py",
     "ui/survey_sheet.py",
     "ui/survey_profile_widget.py",
+    "terraworkbench_core/survey_profile_edits.py",
+    "ui/profile_canvas.py",
+    "ui/survey_profile_dock.py",
+    "qgis_plugin/profile_map_tool.py",
     "ui/process_centre.py",
     "ui/core_job_dialog.py",
     "ui/core_workflow_dialog.py",
@@ -260,8 +267,8 @@ def update_version(version: str) -> None:
             ROOT / "docs" / "handbook" / "geofisica_potencial_referencia.md",
             (
                 (
-                    r"Versión y validación actual \(v[0-9A-Za-z.+-]+\)",
-                    f"Versión y validación actual (v{version})",
+                    r"Versión del plugin \(v[0-9A-Za-z.+-]+\)",
+                    f"Versión del plugin (v{version})",
                 ),
             ),
         ),
@@ -309,7 +316,8 @@ def package_files() -> list[Path]:
                                     "qgis_plugin/", "ui/", "embedded_qpip/", "assets/",
                                     "docs/", "sample_data/", "requirements/"))
             or relative in PLUGIN_FILES or relative in ("__init__.py", "metadata.txt", "LICENSE", "README.md",
-                            "README.es.md", "README.pt.md", "public_manifest.txt"))]
+                            "README.es.md", "README.pt.md", "CHANGELOG.md", "CHANGELOG.es.md",
+                            "CHANGELOG.pt.md", "public_manifest.txt"))]
 
 
 def validate_source() -> list[str]:
@@ -330,9 +338,9 @@ def validate_source() -> list[str]:
     version = general.get("version", "").strip()
     if version and VERSION_PATTERN.fullmatch(version) is None:
         errors.append(f"invalid semantic version: {version}")
-    if general.get("plugin_dependencies", "").strip():
+    if general.get("plugin_dependencies", "").strip() != "GeoRamp":
         errors.append(
-            "plugin_dependencies must remain empty while the dependency manager is embedded"
+            "plugin_dependencies must declare the published QGIS plugin name GeoRamp"
         )
     if "requirements/base.txt" not in general.get("about", ""):
         errors.append(

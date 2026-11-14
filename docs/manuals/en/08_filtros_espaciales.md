@@ -6,7 +6,7 @@
 
 A spatial filter works on raster neighbourhoods; an FFT filter applies a spectral transfer. Some linear filters have related representations in both domains, but a median is nonlinear and has no single Fourier transfer. The 2D circular median and a 1D channel median are distinct tools.
 
-smooth_nine_point and smooth_least_squares_9x9 implement different local smoothers. circular_median uses circular support; its size follows the API or form contract. automatic_gain_control changes local contrast: an enhanced anomaly does not necessarily retain its original amplitude for physical-property estimation.
+smooth_nine_point provides TerraWorkbench binomial smoothing. The optional smooth_least_squares_9x9 API was removed in 1.1.0 and always raises NotImplementedError; migrate explicitly to smooth_nine_point or circular_median. These alternatives are different filters, with no numerical equivalence claimed. circular_median uses circular support; its size follows the API or form contract. automatic_gain_control changes local contrast: an enhanced anomaly does not necessarily retain its original amplitude for physical-property estimation.
 
 ## Recommended procedure
 

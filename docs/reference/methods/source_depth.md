@@ -1,6 +1,6 @@
 # Source-depth interpretation
 
-terraworkbench_core.source_depth contains independent NumPy/SciPy implementations of Euler deconvolution, thin-sheet Werner deconvolution and model-dependent profile SPI. The backend APIs are exposed through Core forms in QGIS, including a grid parameter form where applicable; this does not mean each API has a separate native Processing algorithm. They do not establish complete functional or numerical equivalence with Oasis montaj.
+terraworkbench_core.source_depth contains independent NumPy/SciPy implementations of Euler deconvolution, thin-sheet Werner deconvolution and model-dependent profile SPI. The backend APIs are exposed through Core forms in QGIS, including a grid parameter form where applicable; this does not mean each API has a separate native Processing algorithm.
 
 All horizontal coordinates, elevations and depths use one consistent projected length unit, normally metres. Elevations and vertical derivatives increase upwards. Source z is an elevation; depth is the positive separation below the observation elevation, not automatically depth below terrain. CRS is preserved as a declaration when exporting; these methods do not reproject inputs.
 

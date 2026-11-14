@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from .spectral import prepare_fft_grid, finish_fft_grid, frequency_grid, magnetic_field_transform, apply_transfer
+from .spectral import prepare_fft_grid, finish_fft_grid, frequency_grid, magnetic_field_transform, apply_transfer, set_rtp_mean
 
 
 @dataclass
@@ -28,6 +28,7 @@ class MagneticPipelineOptions:
     taper_percent: float = 0.0
     nodata_policy: str = "nearest"
     max_gain: float = 100.0
+    preserve_rtp_mean: bool = True
 
     def validate(self):
         if not np.isfinite([self.inclination, self.declination, self.grid_convergence,
@@ -56,7 +57,7 @@ class MagneticPipelineOptions:
 def magnetic_grid_products(values, spacing, options, canceled=None):
     """Branch from one padded RTP; crop/mask only final products.
 
-    No removed trend is restored to transformed anomalies. RMI retains the input.
+    Only the published RTP receives the selected mean. RMI retains the input.
     True-north declination follows the host convention: grid angle = true angle
     + supplied grid convergence. Callers must derive convergence for their CRS.
     """
@@ -84,7 +85,7 @@ def magnetic_grid_products(values, spacing, options, canceled=None):
     uc = apply_transfer(rtp, np.exp(-radial * options.continuation_height))
     composite_recipe = None
     if options.composite_preparation != "reflect":
-        from .oasis_style import composite_derivatives
+        from .classic_style import composite_derivatives
         supported_rtp = finish_fft_grid(rtp, state, restore_trend=False)
         cx, cy, cz, cz2, composite_recipe = composite_derivatives(supported_rtp, spacing, options.vertical_positive, options.composite_preparation)
         def margins(a):
@@ -106,9 +107,10 @@ def magnetic_grid_products(values, spacing, options, canceled=None):
         products[key] = finish_fft_grid(products[key], state, restore_trend=False)
         if options.angle_units == "degrees" and key in ("Tilt", "TDX", "Theta"):
             products[key] = np.degrees(products[key])
+    products["RTP"] = set_rtp_mean(products["RTP"], values, options.preserve_rtp_mean)
     products["RMI"] = np.asarray(values, dtype=float).copy()
     products["RMI"][state["missing"]] = np.nan
-    return products, {"recipe_version": 2, "operation": "magnetic_grid_pipeline", "parameters": asdict(options),
+    return products, {"recipe_version": 3, "operation": "magnetic_grid_pipeline", "parameters": asdict(options),
         "preparation": "nearest fill only in workspace; reflect pad once; crop and restore mask at publication",
         "composite_preparation": composite_recipe,
         "vertical_derivative_sign": "+radial (positive down)" if options.vertical_positive == "down" else "-radial (positive up; legacy)",

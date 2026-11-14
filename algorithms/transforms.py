@@ -3,6 +3,7 @@
 from qgis.core import QgsProcessingParameterNumber
 
 from .base import RasterAlgorithmBase
+from ..compat.spectral import set_rtp_mean
 from ..qgis_plugin.dependencies import import_harmonica
 from ..qgis_plugin.qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
 from ..qgis_plugin.raster_io import (
@@ -25,6 +26,9 @@ class HarmonicaTransformBase(RasterAlgorithmBase):
     def calculate(self, harmonica, data, parameters, context):
         raise NotImplementedError
 
+    def finalize_values(self, values, source_values, parameters, context):
+        return values
+
     def processAlgorithm(self, parameters, context, feedback):
         grid = self.input_grid(parameters, context, require_projected=True)
         feedback.setProgress(10)
@@ -32,7 +36,7 @@ class HarmonicaTransformBase(RasterAlgorithmBase):
         harmonica = import_harmonica()
         feedback.setProgress(25)
         result = self.calculate(harmonica, orientation.data, parameters, context)
-        values = restore_raster_order(result.values, orientation)
+        values = self.finalize_values(restore_raster_order(result.values, orientation), grid.values, parameters, context)
         feedback.setProgress(85)
         output = self.output_path(parameters, context)
         write_geotiff(output, values, grid, self.output_description, output_nodata=float("nan"))
@@ -182,6 +186,14 @@ class ReductionToPoleAlgorithm(HarmonicaTransformBase):
                 maxValue=360.0,
             )
         )
+
+        self.addParameter(QgsProcessingParameterNumber(
+            "PRESERVE_MEAN", self.tr("Preserve input mean in RTP"),
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=1, minValue=0, maxValue=1))
+
+    def finalize_values(self, values, source_values, parameters, context):
+        return set_rtp_mean(values, source_values,
+                            self.parameterAsInt(parameters, "PRESERVE_MEAN", context) == 1)
 
     def _optional_double(self, parameters, key, context):
         value = parameters.get(key)

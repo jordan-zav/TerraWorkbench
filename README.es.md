@@ -3,19 +3,29 @@
 
 # TerraWorkbench
 
+La Pila de filtros incluye Vista previa en vivo: actualiza una única capa temporal al editar parámetros o mover el mapa, hasta el filtro seleccionado. F6 alterna antes/después. Aplicar procesa toda la pila a resolución nativa y conserva su procedencia. La vista previa usa una ventana ampliada a resolución de pantalla; los filtros de longitud de onda regional pueden diferir del resultado completo.
+
+TerraWorkbench declara GeoRamp como dependencia QGIS para ajustar interactivamente paletas científicas, colores e histogramas. El botón Ajustar colores (GeoRamp) abre la capa de vista previa o la entrada. Si falta GeoRamp, Instalar GeoRamp abre el gestor de complementos; el procesamiento sigue disponible. La instalación desde ZIP puede requerir instalar GeoRamp por separado.
+
 [![Status: internal testing](https://img.shields.io/badge/status-internal%20testing-f59e0b)](#project-status)
-[![Version 1.0.2](https://img.shields.io/badge/version-1.0.2-2563eb)](metadata.txt)
+[![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-2563eb)](metadata.txt)
 [![QGIS 3.28–3.x](https://img.shields.io/badge/QGIS-3.28%E2%80%933.x-589632?logo=qgis&logoColor=white)](metadata.txt)
 [![Python Core ≥3.10; inversion ≥3.11](https://img.shields.io/badge/Python-Core%203.10%2B%20%7C%20inversion%203.11%2B-3776ab)](pyproject.toml)
 [![2D dependencies](https://img.shields.io/badge/2D-requirements%2Fbase.txt-3776ab)](requirements/base.txt)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-0f766e)](LICENSE)
 </div>
 
+Añade marcas de graduación a los ejes del visor de perfiles. Mejora la robustez de la interpolación y avisa cuando la escala de la grilla solicitada no es adecuada para mínima curvatura. Corrige el cálculo de IGRF y tilt. Conserva por defecto el nivel medio en la reducción al polo (RTP), también en la vista previa. Incorpora la vista previa en vivo de la pila de filtros y recomienda GeoRamp para las rampas de color.
+
+GeoRamp es un plugin de QGIS del mismo autor y se recomienda para las rampas de color. [GeoRamp](https://plugins.qgis.org/plugins/georamp/) · [CHANGELOG.es.md](CHANGELOG.es.md)
+
 <p align="center"><a href="README.md">English</a> · <strong>Español</strong> · <a href="README.pt.md">Português</a></p>
 
 TerraWorkbench es un entorno abierto en QGIS para gestionar levantamientos geofísicos, procesar sus datos e invertirlos. Su motor Python, <code>terraworkbench_core</code>, también funciona sin QGIS; algunos flujos aún requieren adaptadores QGIS/GDAL o dependencias científicas opcionales.
 
-![Panel Filter Stack de TerraWorkbench en QGIS para configurar una secuencia de filtros geofísicos](docs/assets/filter-stack.png)
+[![Ventana real de QGIS con el mapa de anomalía magnética de Gran Bretaña, sombreado y paleta geofísica clásica, capas automáticas del levantamiento y la pila de filtros de TerraWorkbench con carpeta de trabajo y ejemplo THDR](docs/assets/readme-hero.png)](docs/assets/readme-hero.png)
+
+Gran Bretaña, grilla local por spline de placa delgada (TPS) de 1 km → derivada horizontal total (nT/m). Datos de [Uieda (2022)](https://doi.org/10.5281/zenodo.5879260) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)), con materiales del British Geological Survey © UKRI 2021 bajo la [Open Government Licence](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/). Costa de [Natural Earth](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastline/). [Simbología con GeoRamp](https://github.com/jordan-zav/GeoRamp). [Generador](docs/assets/generate_readme_hero.py) · [Parámetros y hashes](docs/assets/readme-hero-record.json).
 
 
 ## Funciones clave
@@ -38,7 +48,7 @@ Organiza levantamientos desde **Raster → TerraWorkbench → Survey databases�
 | Interpolación física | Fuentes equivalentes de Harmonica y predicción a altura relativa declarada |
 | Automatización | Processing, lotes, Modelador y recetas JSON reutilizables de Filter Stack |
 
-El procesamiento básico incluye TPS global hasta 2.000 puntos únicos, aproximación TPS explícitamente local para entradas mayores, suavizado binomial de nueve puntos y control automático de ganancia por RMS local. Funcionan sin Oasis Montaj; no se afirma equivalencia numérica propietaria. Consulta [alcance y límites](docs/guides/basic_processing_migration.md).
+El procesamiento básico incluye TPS global hasta 2.000 puntos únicos, aproximación TPS explícitamente local para entradas mayores, suavizado binomial de nueve puntos y control automático de ganancia por RMS local. Consulta [alcance y límites](docs/guides/basic_processing_migration.md).
 
 #### Entradas de levantamiento compatibles
 
@@ -53,7 +63,7 @@ El procesamiento básico incluye TPS global hasta 2.000 puntos únicos, aproxima
 
 Una base de canales Geosoft no es una Esri FileGDB. El puente opcional no modifica levantamientos originales ni incorpora código Geosoft al paquete.
 
-En Windows, la conversión de GDB requiere Geosoft Connect y una cuenta Seequent ID gratuita. El administrador de dependencias solicita autorización antes de descargar GX 2024.2 completo (unos 345 MiB). Si falta .NET 6, instale [Microsoft .NET 6 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/6.0), que incluye los frameworks de escritorio y núcleo. Si una cuenta de organización muestra el checkout, seleccione While app is running. La reserva termina al cerrar GX. La conversión se verificó con una cuenta gratuita sin organización y sin cargar DLL de Oasis montaj. Para trabajar sin una cuenta Seequent, importe XYZ o CSV. [GDB](docs/development/gdb_open_archive.md).
+En Windows, la conversión de GDB requiere Seequent Connect y una cuenta Seequent ID gratuita. El administrador de dependencias solicita autorización antes de descargar GX 2024.2 completo (unos 345 MiB). Si falta .NET 6, instale [Microsoft .NET 6 Desktop Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/6.0), que incluye los frameworks de escritorio y núcleo. Si una cuenta de organización muestra el checkout, seleccione While app is running. La reserva termina al cerrar GX. Para trabajar sin una cuenta Seequent, importe XYZ o CSV. [GDB](docs/development/gdb_open_archive.md).
 
 <details>
 <summary><strong>Magnetic and gravity exploration filters</strong></summary>
@@ -266,7 +276,7 @@ Desde una copia del repositorio, genera el ZIP con el empaquetador de lista expl
 python scripts/package_plugin.py
 ~~~
 
-Valida fuentes/metadatos y crea <code>dist/TerraWorkbench-1.0.2.zip</code>. En QGIS, abre **Plugins → Manage and Install Plugins → Install from ZIP** y selecciona ese archivo. La alternativa interactiva Windows es <code>scripts/build_dist.bat</code>; pide una versión, por lo que debes conservar la actual si solo empaquetas.
+Valida fuentes/metadatos y crea <code>dist/TerraWorkbench-1.1.0.zip</code>. En QGIS, abre **Plugins → Manage and Install Plugins → Install from ZIP** y selecciona ese archivo. La alternativa interactiva Windows es <code>scripts/build_dist.bat</code>; pide una versión, por lo que debes conservar la actual si solo empaquetas.
 
 El instalador Windows actual comprueba la detección y después instala/actualiza el perfil activo:
 
@@ -354,7 +364,7 @@ TerraWorkbench usa [GPL-3.0-or-later](LICENSE). Las bibliotecas de terceros cons
 
 ## Estado del proyecto
 
-El plugin **1.0.2** es el candidato preparado localmente, pendiente de autorización para publicar; el paquete Core independiente es **0.1.0**. Las correcciones se publican como versiones 1.0.x. Los métodos documentados como experimentales conservan esa condición.
+El plugin **1.1.0** es el candidato preparado localmente, pendiente de autorización para publicar; el paquete Core independiente es **0.1.0**. Los métodos documentados como experimentales conservan esa condición.
 
 La [campaña pública de procesamiento](docs/validation/reports/public_processing_benchmark.md) registra entradas fijadas y referencias numéricas independientes; los [informes de inversión](docs/validation/README.md) distinguen ejecución, convergencia y recuperación. Las comprobaciones históricas de QGIS 3.44, Processing/Filter Stack y estructura ZIP son evidencia de sus revisiones registradas.
 
@@ -365,3 +375,5 @@ Antes de publicar oficialmente en QGIS quedan validación y envío al repositori
 Primero abre el gestor de dependencias de TerraWorkbench y pulsa **Eliminar dependencias y preferencias**. Revisa la carpeta exacta del perfil activo, el número de archivos, los bytes totales y las claves; después confirma. Reinicia QGIS como se indica; si el complemento sigue instalado, pedirá reinstalar las dependencias. Para desinstalar completamente, elimina TerraWorkbench desde **Administrar e instalar complementos** de QGIS después de la limpieza.
 
 Alternativa manual: cierra QGIS y elimina únicamente <code>PERFIL_ACTIVO/python/dependencies/TerraWorkbench/PYTHON_MAJOR.MINOR</code>, usando el perfil que informa QGIS, incluida una raíz de perfiles personalizada. Elimina solo las claves bajo <code>TerraWorkbench/</code> de la configuración QSettings de ese perfil: defaultOutputDirectory, keepIntermediate, defaultBand, openInspectorAfterAdd, confirmClearStack, addFinalResultToProject, showScientificTooltips, geosoftLocation, localTestDataDirectory, language, dependencyDialogVersion y surveyWorkspace. Revisa cualquier clave adicional del mismo espacio. Conserva otros perfiles, versiones de Python y complementos. La acción automática rechaza enlaces y uniones; nunca borra al ejecutar unload ni al desactivar el complemento. En Windows, las DLL cargadas pueden impedir el borrado; deja de usar el complemento, reinicia QGIS y aplica la alternativa manual si hace falta.
+
+Oasis montaj, Geosoft y Seequent son marcas de sus respectivos titulares. TerraWorkbench no está afiliado a ellos ni cuenta con su respaldo.

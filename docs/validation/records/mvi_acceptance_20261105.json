@@ -2281,7 +2281,6 @@
       "terraworkbench_core/matrix_free_resolution.py": "73f38698505d0ebe0c32307d61fe35be87c0692219eb503aae1e7eaf5d49b54b",
       "terraworkbench_core/multisensor_fusion.py": "f597ae3e8eebd1359eda6bcfc7c54be149de1b913fb29df4d6a64c8676dd7d6a",
       "terraworkbench_core/multisensor_project.py": "f8a9810431741c327f5b15648b642c687529f17b4eb902a1262145ba72dc064e",
-      "terraworkbench_core/oasis_style.py": "39e8d784314dd0e3fef8aa1eb95ea2e889c043c16a44490c17b0b32d221af04c",
       "terraworkbench_core/operations.py": "3799b55420e3c2065b68ebc5e09fd2b5fd21eaf922772f3b8a783a6c3790439c",
       "terraworkbench_core/operation_jobs.py": "70aac16f2dc6d660bcc89a11bee7161cb67a74ac99c35093349fc05fec4e1566",
       "terraworkbench_core/operation_workflows.py": "5e25ac9e9cd387df0e9b294e6150cb99c069eda94d20f5c2f2a2486c42628b91",
@@ -2329,7 +2328,8 @@
       "terraworkbench_core/__init__.py": "1fa70283d5cf9a12d780bcbd4b59d6fda35d61634e389bb571fba9a781d28b78",
       "scripts/benchmark_mvi_acceptance.py": "4a69a038312bdbc4352927a40a663cc29f5cc0cd9a629f31b75c46ab9ebe6c83",
       "scripts/benchmark_voxel_recovery.py": "b3458420f330e0910dcface445ccd8b9033f63640392fb651a1bfbc4804fd1aa",
-      "scripts/validate_inversion_campaign.py": "fe784088bb9a8e3f94022624a5164d340c38b6922166897d60ad179d4571f3e8"
+      "scripts/validate_inversion_campaign.py": "fe784088bb9a8e3f94022624a5164d340c38b6922166897d60ad179d4571f3e8",
+      "terraworkbench_core/classic_style.py": "39e8d784314dd0e3fef8aa1eb95ea2e889c043c16a44490c17b0b32d221af04c"
     },
     "readiness_passed": false
   },
@@ -2864,7 +2864,6 @@
       "terraworkbench_core/matrix_free_resolution.py": "73f38698505d0ebe0c32307d61fe35be87c0692219eb503aae1e7eaf5d49b54b",
       "terraworkbench_core/multisensor_fusion.py": "f597ae3e8eebd1359eda6bcfc7c54be149de1b913fb29df4d6a64c8676dd7d6a",
       "terraworkbench_core/multisensor_project.py": "f8a9810431741c327f5b15648b642c687529f17b4eb902a1262145ba72dc064e",
-      "terraworkbench_core/oasis_style.py": "39e8d784314dd0e3fef8aa1eb95ea2e889c043c16a44490c17b0b32d221af04c",
       "terraworkbench_core/operations.py": "3799b55420e3c2065b68ebc5e09fd2b5fd21eaf922772f3b8a783a6c3790439c",
       "terraworkbench_core/operation_jobs.py": "70aac16f2dc6d660bcc89a11bee7161cb67a74ac99c35093349fc05fec4e1566",
       "terraworkbench_core/operation_workflows.py": "5e25ac9e9cd387df0e9b294e6150cb99c069eda94d20f5c2f2a2486c42628b91",
@@ -2912,7 +2911,8 @@
       "terraworkbench_core/__init__.py": "1fa70283d5cf9a12d780bcbd4b59d6fda35d61634e389bb571fba9a781d28b78",
       "scripts/benchmark_downloaded_potential_fields.py": "11f4f738db96b92a0a45c8233032a3b3fb6ff0580de0ff06b79565d0335865c9",
       "scripts/fetch_acceptance_references.py": "09a0899feb890a16ee008cdb2e9f82f00fe5db4a5cf12429ad6112bb854dd143",
-      "scripts/mvi_acceptance_sources.json": "3051887c4bfb9c370e9a1863ad24b61f37373487f7fff9d39555447331763413"
+      "scripts/mvi_acceptance_sources.json": "3051887c4bfb9c370e9a1863ad24b61f37373487f7fff9d39555447331763413",
+      "terraworkbench_core/classic_style.py": "39e8d784314dd0e3fef8aa1eb95ea2e889c043c16a44490c17b0b32d221af04c"
     }
   },
   "data_policy": "Public pinned archives and authored synthetic cases only. Private survey paths, rows and acquisition details are excluded.",
@@ -2930,5 +2930,14 @@
     "downloaded/protocol.json": "9b0e2c7c65ae2de029ae131fc8da4c76e034f8836ec1efc75286248963eacefb",
     "downloaded/report.json": "c7ae2322663aea60a03171894769bd0bc2cd34a6e142c68a9a92f6d440638dcd",
     "downloaded/susceptibility.npz": "f1f31425bd40ef361b2eb201bb092a38b07eb4bc1be800362453f26df4642b19"
+  },
+  "module_rename_note": {
+    "note": "The module was renamed to classic_style.py. Provenance keys use the current path; all historical digest values and results are preserved and do not certify current source bytes.",
+    "original_module_basename": "oasis_style.py",
+    "original_source_sha256": [
+      "39e8d784314dd0e3fef8aa1eb95ea2e889c043c16a44490c17b0b32d221af04c"
+    ],
+    "original_record_sha256": "c66e5eb90b7793b4599cc881948239a51e4427372ab9446ba2ea258da6f8e8ac",
+    "original_record_sha256_lf": "1253a665d81aa8737ecc626595e38151f2ced8c4c374b3ac400a2a0268bd48ab"
   }
 }

@@ -90,7 +90,7 @@ def grid_survey(
 
             support_points = (
                 np.floor((points[:, :2] - low) / cell + 0.5)
-                if options.blanking_metric == "oasis_grid"
+                if options.blanking_metric == "cell_manhattan"
                 else points[:, :2]
             )
             support_tree = cKDTree(support_points)
@@ -114,16 +114,16 @@ def grid_survey(
             if support_tree is not None:
                 qx, qy = np.meshgrid(x[c0:c1], y[r0:r1])
                 query = np.column_stack((qx.ravel(), qy.ravel()))
-                if options.blanking_metric == "oasis_grid":
+                if options.blanking_metric == "cell_manhattan":
                     query = np.floor((query - low) / cell + 0.5)
                 distances, _ = support_tree.query(
                     query,
                     k=1,
                     p=1
-                    if options.blanking_metric in ("oasis_grid", "manhattan")
+                    if options.blanking_metric in ("cell_manhattan", "manhattan")
                     else 2,
                 )
-                if options.blanking_metric == "oasis_grid":
+                if options.blanking_metric == "cell_manhattan":
                     distances *= cell
                 if not np.any(distances <= options.blanking):
                     tile_records.append(

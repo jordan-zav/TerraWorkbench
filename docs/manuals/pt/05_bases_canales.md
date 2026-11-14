@@ -55,6 +55,16 @@ Ver [workspaces](../../guides/survey_workspaces.md), [explorador](../../guides/s
 
 [survey_store](../../../terraworkbench_core/survey_store.py), [survey_explorer](../../../terraworkbench_core/survey_explorer.py), [survey_recipes](../../../terraworkbench_core/survey_recipes.py)
 
+## Perfis por linha
+
+Escolha uma linha na planilha da base e clique em **Perfis**. No QGIS, ative **Escolher perfil no mapa** e clique em uma linha do levantamento, ou selecione uma feição de linha ou amostra. O painel marca a amostra mais próxima da posição escolhida. Passe o cursor pelo perfil para marcar a amostra original no mapa.
+
+Marque os canais que deseja exibir. Cada gráfico tem sua própria escala vertical. Escolha o eixo fiducial ou a distância acumulada em metros, conforme os campos e o SRC da base. Use a roda para ampliar, arraste com o botão direito para deslocar e pressione as setas esquerda e direita no gráfico para percorrer as linhas.
+
+Clique para selecionar uma amostra ou arraste com o botão esquerdo para selecionar um trecho. Edite o canal ativo com **Dummy**, **Desfazer** e **Refazer**. **Interpolar** preenche lacunas internas no eixo atual por método linear ou Akima. Sem seleção, considera a linha inteira. Akima exige cinco posições válidas distintas. As estatísticas usam todas as amostras do trecho.
+
+Em **Ferramentas**, visualize picos candidatos com janela de cinco amostras e limiar relativo ao MAD ou absoluto em unidades do canal. Aplique a prévia para marcar as amostras como dummy. A quarta diferença centrada destaca mudanças rápidas na ordem de aquisição. **Salvar canal** publica as edições das linhas visitadas do canal ativo com um novo nome e registra a origem, versões e operações no catálogo. As demais amostras mantêm os valores de origem.
+
 ---
 
 [Índice](README.md) · [Anterior](04_importacion.md) · [Próximo](06_perfiles_qc.md)

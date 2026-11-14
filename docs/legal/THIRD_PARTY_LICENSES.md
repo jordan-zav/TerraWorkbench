@@ -79,7 +79,7 @@ Joblib, threadpoolctl, fsspec, Toolz, Cloudpickle and Click declare BSD-3-Clause
 
 ## Optional future integrations
 
-The optional GDB archive converter prepares the official GX 2024.2 full redistributable only after explicit download approval in the dependency manager. Native binaries remain outside the plugin ZIP and repository. The [archive design and terms](../development/gdb_open_archive.md) distinguish the BSD wrapper license from vendor entitlement and third-party restrictions. The setup retains copyright, license and third-party notices beside the downloaded runtime; it does not accept Seequent identity or subscription terms for the user.
+The optional GDB archive converter prepares the official GX 2024.2 full redistributable only after explicit download approval in the dependency manager. Native binaries remain outside the plugin ZIP and repository. The archive design and terms distinguish the BSD wrapper license from vendor entitlement and third-party restrictions. The setup retains copyright, license and third-party notices beside the downloaded runtime; it does not accept Seequent identity or subscription terms for the user.
 
 PyVista, GemPy, pyGIMLi, empymod and UBC-GIF are not bundled or required by the current release. Each integration must receive a separate license review before distribution. UBC-GIF executables must never be redistributed; a future connector may only work with a licensed copy installed separately by the user.
 

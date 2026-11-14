@@ -272,7 +272,7 @@ def process(args):
             "Source CRS is an explicit caller declaration; ASC does not embed a CRS.",
             "One survey, all sensors together at their supplied coordinates; no cross-flight fusion or height normalization.",
             "Grid/filter parameters are a reproducible processing example, not a survey interpretation.",
-            "No equivalence to ARCHIE/Oasis filters or eight-million-point performance certification.",
+            "Performance on eight million points has not been verified.",
             "No RTP: derivatives are of the median residual without an assumed geomagnetic field."],
         "libraries": {"numpy": np.__version__, "gdal": gdal.VersionInfo()},
         "elapsed_seconds": time.perf_counter() - started}

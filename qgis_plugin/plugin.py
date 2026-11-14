@@ -31,6 +31,7 @@ class TerraWorkbenchPlugin:
         self.dependency_action = None
         self.workspace_action = None
         self.workspace_dialog = None
+        self.profile_dock = self.profile_tool = self.profile_action = None
         self.process_action = None
         self.process_dialog = None
 
@@ -86,15 +87,24 @@ class TerraWorkbenchPlugin:
             self.process_action.triggered.connect(self.show_processes)
             self.iface.addPluginToRasterMenu("TerraWorkbench", self.process_action)
             self.filter_stack_dock.show()
+            self.profile_action = QAction(QIcon(str(BRAND_ICON_PATH)), "", self.iface.mainWindow())
+            self.profile_action.triggered.connect(self.pick_profile_on_map)
+            self.iface.addPluginToRasterMenu("TerraWorkbench", self.profile_action)
+            self.iface.addToolBarIcon(self.profile_action)
+            self.iface.mapCanvas().selectionChanged.connect(self._profile_map_selection)
             self.retranslate()
 
     def retranslate(self):
-        for dialog in (self.process_dialog, self.workspace_dialog):
+        from ..ui.survey_sheet import tr
+
+        if self.profile_action is not None:
+            self.profile_action.setText(tr(
+                "Pick a profile on the map", "Elegir perfil en el mapa", "Escolher perfil no mapa",
+            ))
+        for dialog in (self.process_dialog, self.workspace_dialog, self.profile_dock):
             if dialog is not None:
                 dialog.retranslate()
         if self.process_action is not None:
-            from ..ui.survey_workspace_dialog import tr
-
             self.process_action.setText(
                 tr(
                     "TerraWorkbench — Geophysical processes…",
@@ -103,8 +113,6 @@ class TerraWorkbenchPlugin:
                 )
             )
         if self.workspace_action is not None:
-            from ..ui.survey_workspace_dialog import tr
-
             self.workspace_action.setText(
                 tr(
                     "TerraWorkbench — Survey databases…",
@@ -138,6 +146,7 @@ class TerraWorkbenchPlugin:
 
         if self.workspace_dialog is None:
             self.workspace_dialog = SurveyWorkspaceDialog(self.iface.mainWindow(), iface=self.iface)
+            self.workspace_dialog.profilesRequested.connect(self._open_profiles)
         self.workspace_dialog._close_requested = False
         context = (path, database_id) if path and database_id else survey_layer_database(
             QgsProject.instance(), getattr(self.iface, "activeLayer", lambda: None)(),
@@ -151,6 +160,79 @@ class TerraWorkbenchPlugin:
         self.workspace_dialog.raise_()
         self.workspace_dialog.activateWindow()
 
+    def _open_profiles(self, store, options):
+        from ..ui.survey_profile_dock import SurveyProfileDock
+
+        if self.profile_dock is None:
+            self.profile_dock = SurveyProfileDock(self.iface.mainWindow(), self.iface.mapCanvas())
+            self.profile_dock.mapPickRequested.connect(self.pick_profile_on_map)
+            self.profile_dock.published.connect(self._profile_published)
+            self.iface.addDockWidget(
+                qt_enum(Qt, "DockWidgetArea", "BottomDockWidgetArea"), self.profile_dock,
+            )
+        self.profile_dock.open_survey(store, **options)
+        self.profile_dock.raise_()
+        self.profile_dock.plot.setFocus()
+
+    def _profile_published(self):
+        if self.workspace_dialog is not None:
+            self.workspace_dialog.refresh_channels()
+
+    def pick_profile_on_map(self):
+        """Activate the survey line picker on the QGIS map."""
+        from .profile_map_tool import ProfileMapTool
+
+        canvas = self.iface.mapCanvas()
+        if self.profile_tool is None:
+            self.profile_tool = ProfileMapTool(canvas, self._open_map_profile)
+        canvas.setMapTool(self.profile_tool)
+
+    def _open_map_profile(self, layer, feature, point, crs):
+        from qgis.core import QgsWkbTypes
+
+        from .profile_map_tool import ProfileMapTool
+        from ..terraworkbench_core.survey_map import survey_map_channels
+        from ..terraworkbench_core.survey_store import SurveyStore
+
+        context = ProfileMapTool.context(layer)
+        if context is None:
+            return False
+        fields = feature.fields().names()
+        try:
+            store = SurveyStore(context[0])
+            database = context[1]
+            if "line_id" in fields and layer.geometryType() == QgsWkbTypes.LineGeometry:
+                line = feature["line_id"]
+            else:
+                roles, _ = survey_map_channels(store, database)
+                if roles.line not in fields or layer.geometryType() != QgsWkbTypes.PointGeometry:
+                    return False
+                line = feature[roles.line]
+            self._open_profiles(store, dict(database=database, line=line, point=(point, crs)))
+        except (ValueError, OSError) as error:
+            self.iface.messageBar().pushWarning("TerraWorkbench", str(error))
+            return False
+        return True
+
+    def _profile_map_selection(self, layer):
+        from qgis.core import QgsPointXY, QgsWkbTypes
+        from .profile_map_tool import ProfileMapTool
+
+        if ProfileMapTool.context(layer) is None or layer.selectedFeatureCount() != 1:
+            return
+        feature = next(layer.getSelectedFeatures())
+        geometry = feature.geometry()
+        if geometry.isEmpty():
+            return
+        if layer.geometryType() == QgsWkbTypes.LineGeometry:
+            point = geometry.interpolate(geometry.length() / 2)
+        elif layer.geometryType() == QgsWkbTypes.PointGeometry:
+            point = geometry
+        else:
+            return
+        if not point.isEmpty() and not point.isMultipart():
+            self._open_map_profile(layer, feature, QgsPointXY(point.asPoint()), layer.crs())
+
     def show_processes(self):
         from ..ui.process_centre import ProcessCentre
 
@@ -160,6 +242,21 @@ class TerraWorkbenchPlugin:
         self.process_dialog.raise_()
 
     def unload(self):
+        if self.profile_action is not None:
+            self.iface.mapCanvas().selectionChanged.disconnect(self._profile_map_selection)
+            self.iface.removePluginRasterMenu("TerraWorkbench", self.profile_action)
+            self.iface.removeToolBarIcon(self.profile_action)
+            self.profile_action.deleteLater()
+            self.profile_action = None
+        if self.profile_tool is not None:
+            self.iface.mapCanvas().unsetMapTool(self.profile_tool)
+            self.profile_tool.deleteLater()
+            self.profile_tool = None
+        if self.profile_dock is not None:
+            self.profile_dock.dispose()
+            self.iface.removeDockWidget(self.profile_dock)
+            self.profile_dock.deleteLater()
+            self.profile_dock = None
         if self.process_dialog is not None:
             dispose_with_workers(self.process_dialog)
             self.process_dialog = None

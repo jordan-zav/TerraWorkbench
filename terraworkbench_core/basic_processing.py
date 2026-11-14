@@ -8,7 +8,7 @@ class ThinPlateGridder:
     """Global minimum-bending TPS, or explicitly local TPS approximation.
 
     Coordinates use a single isotropic scale. Smoothing is dimensionless in
-    those normalized coordinates, not tension or a RANGRID parameter.
+    those normalized coordinates, not tension.
     Coincident observations are averaged deterministically.
     """
 
@@ -83,59 +83,21 @@ def smooth_nine_point(values, passes=1, canceled=None):
     return result
 
 
-# Published GRIDFLTN default least-squares coefficients for the 9x9 filter.
-# Triangular ordering is 00, 10, 11, 20, 21, 22, ..., 44.
-GRIDFLT9_LEAST_SQUARES_SOURCE = (
-    "https://github.com/GeosoftInc/gxc/blob/master/examples/gridfltn/gridfltn.gxc"
-)
-GRIDFLT9_LEAST_SQUARES_COEFFICIENTS = (
-    .04441238, .04200738, .03960237, .03479237, .03238737,
-    .02517236, .02276736, .02036235, .01314735, .00112233,
-    .00593234, .00352734, -.00368767, -.01571268, -.03254770,
-)
-
-
 def smooth_least_squares_9x9(values, passes=2, canceled=None):
-    """Optional GRIDFLT9 least-squares kernel, with approximate edge handling.
+    """Removed in 1.1.0; always raises NotImplementedError.
 
-    Uses the published 15 coefficients without weight normalization. Their
-    rounded sum is 1.0000001, so a constant has that small gain each pass.
-    The default is two passes to match the ARCHIE Sandbox smoothing stage.
-    This is independent of the existing binomial smooth_nine_point default.
-
-    Nearest finite cells fill NoData once before convolution; ties use SciPy's
-    distance_transform_edt ordering. Each pass repeats the outermost cells
-    outside the array. The original NoData mask is reapplied after all passes.
-    This preserves shape and holes but does not claim Oasis's proprietary
-    boundary/NoData preparation. Agreement with GRIDFLT9 is expected only
-    when the entire radius 4 * passes neighborhood has finite input support.
+    The optional GX example coefficients are no longer distributed.
+    Use TerraWorkbench smooth_nine_point for binomial smoothing or
+    circular_median for a nonlinear median filter. No fallback is applied.
     """
-    from scipy.ndimage import convolve, distance_transform_edt
-
-    data, valid = _raster(values)
-    if not np.isscalar(passes) or not isinstance(passes, (int, float, np.integer, np.floating)):
-        raise ValueError("Smoothing passes must be an integer from 1 to 100.")
-    if not np.isfinite(passes) or int(passes) != passes or not 1 <= passes <= 100:
-        raise ValueError("Smoothing passes must be an integer from 1 to 100.")
-    if canceled is not None and canceled():
-        raise InterruptedError("Processing canceled.")
-    offsets = np.abs(np.arange(9) - 4)
-    hi = np.maximum(offsets[:, None], offsets[None, :])
-    lo = np.minimum(offsets[:, None], offsets[None, :])
-    kernel = np.asarray(GRIDFLT9_LEAST_SQUARES_COEFFICIENTS)[hi * (hi + 1) // 2 + lo]
-    if valid.all():
-        result = data.copy()
-    else:
-        nearest = distance_transform_edt(~valid, return_distances=False,
-                                         return_indices=True)
-        result = data[tuple(nearest)]
-    for _ in range(int(passes)):
-        if canceled is not None and canceled():
-            raise InterruptedError("Processing canceled.")
-        result = convolve(result, kernel, mode="nearest")
-    if canceled is not None and canceled():
-        raise InterruptedError("Processing canceled.")
-    return np.where(valid, result, np.nan)
+    raise NotImplementedError(
+        "EN: The optional 9x9 least-squares smoother was removed in TerraWorkbench 1.1.0. "
+        "Use TerraWorkbench smooth_nine_point (binomial) or circular_median (median). "
+        "ES: El suavizador opcional 9x9 de mínimos cuadrados se retiró en TerraWorkbench 1.1.0. "
+        "Use smooth_nine_point (binomial) o circular_median (mediana) de TerraWorkbench. "
+        "PT: O suavizador opcional 9x9 de mínimos quadrados foi removido no TerraWorkbench 1.1.0. "
+        "Use smooth_nine_point (binomial) ou circular_median (mediana) do TerraWorkbench."
+    )
 
 
 def circular_median(values, radius=1, canceled=None):

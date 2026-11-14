@@ -55,6 +55,16 @@ See [workspaces](../../guides/survey_workspaces.md), [explorer](../../guides/sur
 
 [survey_store](../../../terraworkbench_core/survey_store.py), [survey_explorer](../../../terraworkbench_core/survey_explorer.py), [survey_recipes](../../../terraworkbench_core/survey_recipes.py)
 
+## Line profiles
+
+Choose a line in the survey sheet and click **Profiles**. In QGIS, activate **Pick a profile on the map** and click a survey line, or select a line or sample feature. The dock marks the closest sample to the map position. Hover over a profile to mark the original sample on the map.
+
+Check the channels to display. Each track has its own vertical scale. Choose fiducial or cumulative distance in meters according to the database fields and CRS. Use the wheel to zoom, right drag to pan, and press the left and right arrow keys over the plot to move between lines.
+
+Click to select one sample or left drag to select an interval. Edit the active track with **Dummy**, **Undo**, and **Redo**. **Interpolate** fills bounded gaps on the current axis using linear or Akima interpolation. Without a selection it considers the entire line. Akima requires five distinct valid positions. Statistics use every sample in the interval.
+
+Use **Tools** to preview spikes with a five-sample window and either a MAD multiplier or an absolute threshold in channel units. Apply the preview to mark those samples dummy. The centered fourth difference highlights rapid changes in acquisition order. **Save channel** publishes edits across the visited lines of the active channel under a new name and records the source, versions and operations in the catalogue. Other samples retain their source values.
+
 ---
 
 [Contents](README.md) · [Previous](04_importacion.md) · [Next](06_perfiles_qc.md)

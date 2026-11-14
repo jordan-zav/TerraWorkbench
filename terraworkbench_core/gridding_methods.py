@@ -3,8 +3,7 @@
 
 Minimum curvature defaults to multilevel finite-difference collocation with
 Briggs curvature constraints at spatially averaged observations. A direct
-variational solver remains available for explicit comparisons. Neither solver
-is a certified replica of RANGRID.
+variational solver remains available.
 
 The sinc implementation is an interpolator, not a raster filter.  It uses a
 separable windowed cardinal sinc kernel on a regular sample lattice.
@@ -25,8 +24,9 @@ def _finite_points(coordinates, values):
     valid = np.isfinite(xy).all(axis=1) & np.isfinite(z)
     if valid.sum() < 3:
         raise ValueError("At least three finite observations are required.")
-    xy = xy[valid]
-    z = z[valid]
+    if not valid.all():
+        xy = xy[valid]
+        z = z[valid]
     if np.ptp(xy, axis=0).min() <= 0.0:
         raise ValueError("Observations must span a two-dimensional area.")
     return xy, z
@@ -95,7 +95,7 @@ def _linear_ghost_boundary(q, nx, ny):
     """Experimental zero normal curvature on the two outer ghost rings.
 
     Replace boundary equations only; retain the interior biharmonic stencil.
-    This is an independent boundary approximation, not RANGRID equivalence.
+    This is an independent boundary approximation.
     """
     q = q.tolil()
     for row in range(ny):
@@ -169,7 +169,43 @@ def _prolongate(coarse, coarse_x, coarse_y, x_axis, y_axis):
     return result
 
 
-def _briggs_constraints(points, values, x_axis, y_axis, tension=0.0):
+def _nearest_observations(points, values, x_axis, y_axis, canceled=None):
+    """Select the same lexicographic winner per node using bounded sort blocks."""
+    nx = len(x_axis)
+    winners = np.full(nx*len(y_axis), -1, dtype=np.intp)
+    best = np.full(winners.size, np.inf)
+    for start in range(0, len(points), 131072):
+        if canceled and canceled():
+            raise InterruptedError("Processing canceled.")
+        xy = points[start:start+131072]
+        z = values[start:start+131072]
+        ix = _nearest_axis_indices(xy[:, 0], x_axis)
+        iy = _nearest_axis_indices(xy[:, 1], y_axis)
+        node = iy*nx+ix
+        distance = (xy[:, 0]-x_axis[ix])**2+(xy[:, 1]-y_axis[iy])**2
+        eligible = np.flatnonzero(distance <= best[node])
+        order = eligible[np.lexsort((z[eligible], xy[eligible, 1], xy[eligible, 0],
+                                     distance[eligible], node[eligible]))]
+        selected = order[np.r_[True, np.diff(node[order]) != 0]] if order.size else order
+        anchors = node[selected]
+        prior = winners[anchors]
+        ties = distance[selected] == best[anchors]
+        candidate = selected[ties]
+        old = prior[ties]
+        if len(old):
+            x, y = xy[candidate].T
+            px, py = points[old].T
+            preferred = (x < px) | ((x == px) & ((y < py) |
+                        ((y == py) & (z[candidate] < values[old]))))
+            ties[ties] = ~preferred
+        anchors, selected = anchors[~ties], selected[~ties]
+        best[anchors] = distance[selected]
+        winners[anchors] = start+selected
+    anchors = np.flatnonzero(winners >= 0)
+    return winners[anchors], anchors
+
+
+def _briggs_constraints(points, values, x_axis, y_axis, tension=0.0, canceled=None):
     """Couple off-node data to the local curvature equation.
 
     Moment fitting at four neighbouring nodes and the observation estimates
@@ -182,13 +218,8 @@ def _briggs_constraints(points, values, x_axis, y_axis, tension=0.0):
 
     nx, ny = len(x_axis), len(y_axis)
     h = x_axis[1]-x_axis[0]
-    ix = _nearest_axis_indices(points[:, 0], x_axis)
-    iy = _nearest_axis_indices(points[:, 1], y_axis)
-    nodes = iy*nx+ix
-    distance = (points[:, 0]-x_axis[ix])**2+(points[:, 1]-y_axis[iy])**2
-    order = np.lexsort((values, points[:, 1], points[:, 0], distance, nodes))
-    selected = order[np.r_[True, np.diff(nodes[order]) != 0]]
-    ix, iy, anchors = ix[selected], iy[selected], nodes[selected]
+    selected, anchors = _nearest_observations(points, values, x_axis, y_axis, canceled)
+    iy, ix = np.divmod(anchors, nx)
     if np.any(ix < 2) or np.any(iy < 2) or np.any(ix >= nx-2) or np.any(iy >= ny-2):
         raise ValueError("Briggs constraints require a two-node margin.")
     uv = np.column_stack(((points[selected, 0]-x_axis[ix])/h,
@@ -230,15 +261,54 @@ def _briggs_constraints(points, values, x_axis, y_axis, tension=0.0):
     return a, values[selected], anchors
 
 
+_MULTILEVEL_NODE_LIMIT = 500_000
+
+
+class MinimumCurvatureNodeLimitError(ValueError):
+    """The working domain exceeds the default multilevel budget."""
+
+    def __init__(self, nodes, suggested_cell_size):
+        """Record the working node count and the suggested cell size in CRS units."""
+        self.nodes = nodes
+        self.suggested_cell_size = suggested_cell_size
+        super().__init__(
+            f"Minimum curvature needs {nodes:,} working nodes; the limit is "
+            f"{_MULTILEVEL_NODE_LIMIT:,}. Try a cell size of at least "
+            f"{suggested_cell_size:.3g} in CRS units, or reduce the extent."
+        )
+
+
+def minimum_curvature_cell_size(width, height):
+    """Suggest a square cell size that fits the multilevel working-node budget.
+
+    Width and height are the combined spans of the requested cell centers and
+    observations. Reserve an extra node for alignment to the requested grid.
+    """
+    if not np.isfinite([width, height]).all() or min(width, height) <= 0:
+        raise ValueError("Expected positive finite gridding spans.")
+    low = 0.
+    high = max(width, height)
+    for _ in range(64):
+        step = (low + high)/2
+        if (np.ceil(width/step)+7)*(np.ceil(height/step)+7) <= _MULTILEVEL_NODE_LIMIT:
+            high = step
+        else:
+            low = step
+    # Round upwards to three significant digits so the displayed value is usable.
+    magnitude = 10.**(np.floor(np.log10(high))-2)
+    return float(np.ceil(high/magnitude)*magnitude)
+
+
 def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
                         coarse_grid, search_radius, weighting_power, tension,
                         tolerance, pass_tolerance, max_iterations,
-                        canceled=None, progress=None, boundary_mode="natural"):
+                        canceled=None, progress=None, boundary_mode="natural",
+                        allow_large_grid=False):
     """Collocate the biharmonic equation and off-node Briggs constraints.
 
     A datum replaces the equation at its nearest node. In particular it does
     not exert the distributed adjoint forces of the variational KKT solver.
-    The public RANGRID workflow motivates coarse-to-fine iteration and limits;
+    The solver uses coarse-to-fine iteration and limits;
     our stencils, natural boundaries and stopping tests remain independent.
     """
     from scipy.sparse import coo_matrix, tril, triu
@@ -257,14 +327,16 @@ def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
     # an east/north-only extension and changes the converged boundary problem.
     nx = int(np.ceil((max(x_axis[-1], points[:, 0].max())-x0)/h))
     ny = int(np.ceil((max(y_axis[-1], points[:, 1].max())-y0)/h))
-    if (nx+5)*(ny+5) > 250000:
-        raise ValueError("Minimum curvature is limited to 250000 working nodes; increase cell size.")
+    working_nodes = (nx+5)*(ny+5)
+    if working_nodes > _MULTILEVEL_NODE_LIMIT and not allow_large_grid:
+        raise MinimumCurvatureNodeLimitError(
+            working_nodes, minimum_curvature_cell_size(nx*h, ny*h)
+        )
     factors = []
     factor = coarse_grid
     while factor >= 1:
         factors.append(factor)
         factor //= 2
-    tree = cKDTree(points)
     radius = search_radius or 4*coarse_grid*h
     previous = None
     previous_x = previous_y = None
@@ -275,7 +347,7 @@ def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
         level_ny = int(np.ceil(ny/factor))*factor
         ax = x0+np.arange(-2*factor, level_nx+2*factor+1, factor)*h
         ay = y0+np.arange(-2*factor, level_ny+2*factor+1, factor)*h
-        a, z, anchors = _briggs_constraints(points, values, ax, ay, tension)
+        a, z, anchors = _briggs_constraints(points, values, ax, ay, tension, canceled)
         q = _bending_energy(len(ax), len(ay), tension)
         if boundary_mode == "linear_ghost":
             q = _linear_ghost_boundary(q, len(ax), len(ay))
@@ -288,8 +360,13 @@ def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
                              np.r_[qc.col[keep], ac.col])), shape=q.shape).tocsr()
         rhs = np.zeros(q.shape[0])
         rhs[anchors] = z
-        lower, upper = tril(matrix, format="csc"), triu(matrix, 1, format="csr")
+        diagonal = matrix.diagonal()
+        normalized = matrix.multiply((1/diagonal)[:, None]).tocsr()
+        lower = tril(normalized, -1, format="csc")
+        upper = triu(normalized, 1, format="csr")
+        scaled_rhs = rhs/diagonal
         if previous is None:
+            tree = cKDTree(points)
             gx, gy = np.meshgrid(ax, ay)
             nodes = np.column_stack((gx.ravel(), gy.ravel()))
             u = np.full(len(nodes), np.mean(values))
@@ -305,18 +382,19 @@ def _multilevel_surface(points, values, x_axis, y_axis, cell_size, *,
                 else:
                     weights = (distances.min()/distances)**weighting_power
                     u[i] = np.dot(weights, values[neighbors])/weights.sum()
+            del tree
         else:
             u = _prolongate(previous, previous_x, previous_y, ax, ay).ravel()
         converged = False
         for iteration in range(max(1, max_iterations//factor)):
             check_cancel()
-            updated = spsolve_triangular(lower, rhs-upper@u, lower=True)
+            updated = spsolve_triangular(lower, scaled_rhs-upper@u, lower=True, unit_diagonal=True)
             if not np.isfinite(updated).all():
                 raise ValueError("Minimum-curvature iteration produced non-finite values.")
             change = abs(updated-u)
             u = updated
             data_error = abs(a@u-z)
-            equation_error = abs(matrix@u-rhs)/abs(matrix.diagonal())
+            equation_error = abs(matrix@u-rhs)/abs(diagonal)
             pass_percent = float(np.mean(change <= tolerance)*100)
             equation_pass = float(np.mean(equation_error <= tolerance)*100)
             data_pass = float(np.mean(data_error <= tolerance)*100)
@@ -343,14 +421,13 @@ class MinimumCurvatureGridder:
 
     Briggs constraints couple off-node observations to curvature. Natural
     discrete energy boundaries and grid-unit
-    tension are independently defined, not certified RANGRID equivalents.
+    tension are defined by this solver.
     boundary_mode="linear_ghost" optionally applies experimental zero normal
     curvature at the two outer ghost rings (multilevel, zero tension only).
     Multilevel iteration uses the seed, refinement and pass controls. The
     optional variational solver records the controls it does not use.
 
-    ``blanking_metric='oasis_grid'`` is an explicit compatibility mode for
-    the observed RANGRID DSF=1 mask behavior.  It rounds each input location
+    ``blanking_metric='cell_manhattan'`` is a cell-based blanking mode. It rounds each input location
     to the nearest output cell and measures Manhattan distance between cell
     indices.  The regular ``euclidean`` and ``manhattan`` modes retain their
     continuous-coordinate semantics.
@@ -363,7 +440,9 @@ class MinimumCurvatureGridder:
                  weighting_slope=0.0, tolerance=0.01258,
                  pass_tolerance=99.0, max_iterations=100, tension=0.0,
                  coarse_grid=16, solver="multilevel", blanking_metric="euclidean",
-                 boundary_mode="natural"):
+                 boundary_mode="natural", average_cells=True, allow_large_grid=False):
+        self.average_cells = average_cells
+        self.allow_large_grid = allow_large_grid
         self.points, self.values = _finite_points(coordinates, values)
         if solver not in ("multilevel", "variational"):
             raise ValueError("Minimum-curvature solver must be multilevel or variational.")
@@ -373,22 +452,22 @@ class MinimumCurvatureGridder:
             raise ValueError("linear_ghost boundary requires multilevel solver and zero tension.")
         self.boundary_mode = boundary_mode
         self.solver = solver
-        if blanking_metric not in ("euclidean", "manhattan", "oasis_grid"):
-            raise ValueError("Blanking metric must be euclidean, manhattan, or oasis_grid.")
+        if blanking_metric not in ("euclidean", "manhattan", "cell_manhattan"):
+            raise ValueError("Blanking metric must be euclidean, manhattan, or cell_manhattan.")
         if not np.isfinite(cell_size) or cell_size <= 0.0:
             raise ValueError("Cell size must be finite and positive.")
         if blanking_distance < 0.0 or not np.isfinite(blanking_distance):
             raise ValueError("Blanking distance must be finite and non-negative.")
         if int(desample_factor) != desample_factor or desample_factor < 1:
             raise ValueError("Desample factor must be a positive integer.")
-        if blanking_metric == "oasis_grid" and int(desample_factor) != 1:
-            raise ValueError("oasis_grid blanking requires desample_factor=1.")
+        if blanking_metric == "cell_manhattan" and int(desample_factor) != 1:
+            raise ValueError("cell_manhattan blanking requires desample_factor=1.")
         if search_radius < 0.0 or not np.isfinite(search_radius):
             raise ValueError("Search radius must be finite and non-negative.")
         if weighting_power <= 0.0 or not np.isfinite(weighting_power):
             raise ValueError("Weighting power must be finite and positive.")
         if weighting_slope != 0.0 or not np.isfinite(weighting_slope):
-            raise ValueError("Nonzero RANGRID weighting slope is not implemented; use zero.")
+            raise ValueError("Nonzero minimum-curvature weighting slope is not implemented; use zero.")
         if tolerance <= 0.0 or not np.isfinite(tolerance):
             raise ValueError("Tolerance must be finite and positive.")
         if not 0.0 < pass_tolerance <= 100.0 or not np.isfinite(pass_tolerance):
@@ -414,6 +493,8 @@ class MinimumCurvatureGridder:
         self.metadata = {}
 
     def _desample(self, origin=None):
+        if self.desample_factor == 1 and not self.average_cells:
+            return self.points, self.values
         spacing = self.cell_size * self.desample_factor
         origin = self.points.min(axis=0) if origin is None else np.asarray(origin)
         indices = np.floor((self.points - origin) / spacing + 0.5).astype(np.int64)
@@ -427,7 +508,7 @@ class MinimumCurvatureGridder:
         z = np.bincount(inverse, weights=self.values) / counts
         return np.column_stack((x, y)), z
 
-    def grid(self, x_axis, y_axis, canceled=None, progress=None):
+    def grid(self, x_axis, y_axis, canceled=None, progress=None, *, boundary=None):
         """Return a float grid indexed as rows by y and columns by x."""
         x_axis = np.asarray(x_axis, dtype=float)
         y_axis = np.asarray(y_axis, dtype=float)
@@ -442,11 +523,7 @@ class MinimumCurvatureGridder:
         points, values = self._desample((requested_x[0], requested_y[0]))
         trend_origin = points.mean(axis=0)
         trend_scale = np.ptp(points, axis=0).max()
-        design = np.column_stack((np.ones(len(points)), (points-trend_origin)/trend_scale))
-        if np.linalg.matrix_rank(design) < 3:
-            raise ValueError("Minimum curvature requires non-collinear working points.")
-        trend = np.linalg.lstsq(design, values, rcond=None)[0]
-        values = values - design @ trend
+        trend, values = _remove_plane(points, values, trend_origin, trend_scale, canceled)
         if self.solver == "multilevel":
             result, iteration_metadata, working_nodes = _multilevel_surface(
                 points, values, x_axis, y_axis, self.cell_size,
@@ -454,38 +531,21 @@ class MinimumCurvatureGridder:
                 weighting_power=self.weighting_power, tension=self.tension,
                 tolerance=self.tolerance, pass_tolerance=self.pass_tolerance,
                 max_iterations=self.max_iterations, canceled=canceled, progress=progress,
-                boundary_mode=self.boundary_mode)
+                boundary_mode=self.boundary_mode, allow_large_grid=self.allow_large_grid)
         else:
             result, iteration_metadata, working_nodes = self._variational_grid(
                 points, values, x_axis, y_axis, canceled, progress)
-        gx, gy = np.meshgrid(x_axis, y_axis)
-        result += trend[0] + trend[1]*(gx-trend_origin[0])/trend_scale + trend[2]*(gy-trend_origin[1])/trend_scale
+        result += (trend[0] + trend[1]*(x_axis[None, :]-trend_origin[0])/trend_scale
+                   + trend[2]*(y_axis[:, None]-trend_origin[1])/trend_scale)
         if not np.isfinite(result).all():
             raise ValueError("Minimum-curvature solve produced non-finite values.")
-        if self.blanking_distance > 0.0:
-            from scipy.spatial import cKDTree
-
-            query = np.column_stack((gx.ravel(), gy.ravel()))
-            if self.blanking_metric == "oasis_grid":
-                # RANGRID with DSF=1 first assigns samples to the nearest
-                # grid cell.  Its observed mask is reproduced by the
-                # Manhattan distance on those integer cell indices.
-                origin = np.array([requested_x[0], requested_y[0]])
-                point_indices = np.floor(
-                    (self.points-origin)/self.cell_size + 0.5).astype(np.int64)
-                query_indices = np.floor(
-                    (query-origin)/self.cell_size + 0.5).astype(np.int64)
-                distances, _ = cKDTree(point_indices).query(
-                    query_indices, k=1, p=1)
-                distances = distances*self.cell_size
-            else:
-                distances, _ = cKDTree(self.points).query(
-                    query, k=1, p=1 if self.blanking_metric == "manhattan" else 2)
-            result.ravel()[distances > self.blanking_distance] = np.nan
+        _blank_grid(result, x_axis, y_axis, self.points, self.blanking_distance,
+                    self.blanking_metric, self.cell_size, boundary, canceled)
         self.metadata = {
             "algorithm": "minimum_curvature_"+self.solver,
             "cell_size": self.cell_size,
             "desample_factor": self.desample_factor,
+            "average_cells": self.average_cells,
             "search_radius": self.search_radius,
             "weighting_power": self.weighting_power,
             "weighting_slope": self.weighting_slope,
@@ -499,6 +559,7 @@ class MinimumCurvatureGridder:
             "input_points": int(len(self.points)),
             "working_points": int(len(points)),
             "working_nodes": int(working_nodes),
+            "allow_large_grid": self.allow_large_grid,
             "required_pass_percent": self.pass_tolerance if self.solver == "multilevel" else 100.,
             "desample_origin": [float(requested_x[0]), float(requested_y[0])],
             "proprietary_equivalence": False,
@@ -537,6 +598,251 @@ class MinimumCurvatureGridder:
             progress(1.0)
         result = _prolongate(current, x_axis, y_axis, requested_x, requested_y)
         return result, iteration_metadata, current.size
+
+
+def _remove_plane(points, values, origin, scale, canceled):
+    """Fit a normalized affine plane using bounded blocks."""
+    gram = np.zeros((3, 3))
+    rhs = np.zeros(3)
+    residuals = np.empty_like(values)
+    for start in range(0, len(points), 131072):
+        if canceled and canceled():
+            raise InterruptedError("Processing canceled.")
+        block = slice(start, start+131072)
+        design = np.column_stack((np.ones(len(points[block])), (points[block]-origin)/scale))
+        gram += design.T @ design
+        rhs += design.T @ values[block]
+    if np.linalg.matrix_rank(gram) < 3:
+        raise ValueError("Gridding requires non-collinear working points.")
+    trend = np.linalg.solve(gram, rhs)
+    for start in range(0, len(points), 131072):
+        block = slice(start, start+131072)
+        residuals[block] = values[block]-trend[0]-((points[block]-origin)/scale) @ trend[1:]
+    return trend, residuals
+
+
+def _blank_grid(result, x_axis, y_axis, points, distance, metric, cell_size,
+                boundary, canceled):
+    """Mask raster centers in blocks, including polygon holes."""
+    if not distance and boundary is None:
+        return
+    from scipy.spatial import cKDTree
+
+    origin = np.array([x_axis[0], y_axis[0]])
+    grid_metric = metric == "cell_manhattan"
+    tree = None
+    if distance:
+        support = np.floor((points-origin)/cell_size + 0.5) if grid_metric else points
+        tree = cKDTree(support)
+    if boundary is not None:
+        from shapely import intersects_xy, prepare
+        prepare(boundary)
+    nx = len(x_axis)
+    for start in range(0, result.size, 65536):
+        if canceled and canceled():
+            raise InterruptedError("Processing canceled.")
+        block = slice(start, start+65536)
+        rows, cols = np.divmod(np.arange(start, min(start+65536, result.size)), nx)
+        query = np.column_stack((x_axis[cols], y_axis[rows]))
+        valid = np.ones(len(query), dtype=bool)
+        if boundary is not None:
+            valid &= intersects_xy(boundary, query[:, 0], query[:, 1])
+        if tree is not None:
+            support = np.column_stack((cols, rows)) if grid_metric else query
+            radius = distance/cell_size if grid_metric else distance
+            d, _ = tree.query(support[valid], p=2 if metric == "euclidean" else 1,
+                              distance_upper_bound=np.nextafter(radius, np.inf))
+            valid[valid] = d <= radius
+        result.flat[block] = np.where(valid, result.flat[block], np.nan)
+
+
+def _line_groups(line_ids):
+    """Group observations by line while preserving acquisition order."""
+    labels = np.asarray(line_ids)
+    if labels.ndim != 1:
+        raise ValueError("Line IDs must be a one-dimensional array.")
+    if labels.dtype.kind in "fc" and not np.isfinite(labels).all():
+        raise ValueError("Flight-line IDs must be finite.")
+    order = np.argsort(labels, kind="stable")
+    cuts = np.flatnonzero(labels[order[1:]] != labels[order[:-1]])+1
+    return np.split(order, cuts)
+
+
+def _flight_frame(points, groups):
+    vectors = []
+    for group in groups:
+        if len(group) < 2:
+            continue
+        centered = points[group]-points[group].mean(axis=0)
+        eigenvalues, axes = np.linalg.eigh(centered.T @ centered)
+        if eigenvalues[-1] > 0:
+            vectors.append((eigenvalues, axes[:, -1]))
+    if len(vectors) < 2:
+        raise ValueError("At least two flight lines with distinct points are required.")
+    directions = np.array([axis for _, axis in vectors])
+    _, axes = np.linalg.eigh(directions.T @ directions)
+    along = axes[:, -1]
+    if (np.any(abs(directions @ along) < np.cos(np.deg2rad(20))) or
+            any(eigenvalues[0] > 0.12*eigenvalues[1] for eigenvalues, _ in vectors)):
+        raise ValueError("Select roughly parallel flight lines and exclude tie lines.")
+    return np.column_stack((along, [-along[1], along[0]]))
+
+
+def _line_spacing(points, groups, frame):
+    offsets = sorted(np.median(points[group] @ frame[:, 1])
+                     for group in groups if len(group) > 1)
+    spacing = np.diff(offsets)
+    spacing = spacing[spacing > 0]
+    if not len(spacing):
+        raise ValueError("Unable to estimate spacing between distinct flight lines.")
+    return float(np.median(spacing))
+
+
+def suggest_flight_cell_size(coordinates, line_ids, divisor=4):
+    """Return median projected flight-line spacing divided by 4 or 5."""
+    points = np.asarray(coordinates, dtype=float)
+    if (points.ndim != 2 or points.shape[1] != 2 or
+            np.shape(line_ids) != (len(points),) or not np.isfinite(points).all()):
+        raise ValueError("Expected finite N x 2 coordinates and N line IDs.")
+    if divisor not in (4, 5):
+        raise ValueError("Flight-line spacing divisor must be 4 or 5.")
+    groups = _line_groups(line_ids)
+    return _line_spacing(points, groups, _flight_frame(points, groups))/divisor
+
+
+def _collapse_profile(abscissa, values):
+    order = np.argsort(abscissa, kind="stable")
+    x = abscissa[order]
+    starts = np.r_[0, np.flatnonzero(np.diff(x))+1]
+    z = np.add.reduceat(values[order], starts)/np.diff(np.r_[starts, len(x)])
+    return x[starts], z
+
+
+class BidirectionalGridder:
+    """Grid approximately parallel profiles in two passes on a flight-aligned grid.
+
+    Linear interpolation follows each flight's projected track. Cross-track
+    interpolation is linear or shape-preserving cubic (PCHIP). The resulting
+    aligned grid is sampled bilinearly at the requested output centers.
+    """
+
+    def __init__(self, coordinates, values, line_ids, *, trend=False,
+                 cross_method="linear", blanking_distance=0., max_line_gap=0.,
+                 max_sample_gap=0.):
+        """Configure flight profiles, cross-line interpolation and support limits."""
+        xy = np.asarray(coordinates, dtype=float)
+        z = np.asarray(values, dtype=float)
+        labels = np.asarray(line_ids)
+        if xy.ndim != 2 or xy.shape[1] != 2 or z.shape != (len(xy),) or labels.shape != z.shape:
+            raise ValueError("Expected N x 2 coordinates, N values and N line IDs.")
+        valid = np.isfinite(xy).all(axis=1) & np.isfinite(z)
+        if not valid.all():
+            xy, z, labels = xy[valid], z[valid], labels[valid]
+        if cross_method not in ("linear", "pchip"):
+            raise ValueError("Cross-line interpolation must be linear or pchip.")
+        limits = [blanking_distance, max_line_gap, max_sample_gap]
+        if not np.isfinite(limits).all() or min(limits) < 0.:
+            raise ValueError("Distance controls must be finite and non-negative.")
+        self.groups = _line_groups(labels)
+        self.frame = _flight_frame(xy, self.groups)
+        self.origin = xy.mean(axis=0)
+        self.points, self.values = xy, z
+        self.line_spacing = _line_spacing(xy, self.groups, self.frame)
+        self.trend = trend
+        self.cross_method = cross_method
+        self.blanking_distance = blanking_distance
+        self.max_line_gap = max_line_gap
+        self.max_sample_gap = max_sample_gap
+
+    def grid(self, x_axis, y_axis, canceled=None, *, boundary=None):
+        """Return rows by ascending y and columns by ascending x, with NaN gaps."""
+        from scipy.interpolate import PchipInterpolator
+        from scipy.ndimage import map_coordinates
+
+        x_axis, y_axis = np.asarray(x_axis, dtype=float), np.asarray(y_axis, dtype=float)
+        if any(axis.ndim != 1 or len(axis) < 2 or not np.isfinite(axis).all()
+               for axis in (x_axis, y_axis)):
+            raise ValueError("Grid axes must have at least two finite coordinates.")
+        step = x_axis[1]-x_axis[0]
+        if step <= 0 or any(not np.allclose(np.diff(axis), step, rtol=1e-7, atol=1e-9)
+                            for axis in (x_axis, y_axis)):
+            raise ValueError("Bidirectional gridding requires uniform square cells.")
+        corners = np.array([[x, y] for x in x_axis[[0, -1]] for y in y_axis[[0, -1]]])
+        flight_corners = (corners-self.origin) @ self.frame
+        start = flight_corners.min(axis=0)
+        sizes = np.ceil((flight_corners.max(axis=0)-start)/step).astype(int)+1
+        if np.prod(sizes, dtype=float) > 10_000_000 or sizes[0]*len(self.groups) > 10_000_000:
+            raise ValueError("Bidirectional working grid is too large; increase cell size.")
+        u, v = (start[i]+step*np.arange(sizes[i]) for i in range(2))
+        def check_cancel():
+            if canceled and canceled():
+                raise InterruptedError("Processing canceled.")
+
+        values = self.values
+        scale = np.ptp(self.points, axis=0).max()
+        if self.trend:
+            plane, values = _remove_plane(self.points, values, self.origin, scale, canceled)
+
+        epsilon = step*1e-8
+        offsets = np.full((len(self.groups), len(u)), np.nan)
+        profiles = np.full_like(offsets, np.nan)
+        for i, group in enumerate(self.groups):
+            check_cancel()
+            xy = (self.points[group]-self.origin) @ self.frame
+            order = np.argsort(xy[:, 0], kind="stable")
+            ordered_u = xy[order, 0]
+            starts = np.r_[0, np.flatnonzero(np.diff(ordered_u))+1]
+            axis = ordered_u[starts]
+            if len(axis) < 2:
+                continue
+            counts = np.diff(np.r_[starts, len(order)])
+            offset = np.add.reduceat(xy[order, 1], starts)/counts
+            z = np.add.reduceat(values[group[order]], starts)/counts
+            supported = (u >= axis[0]-epsilon) & (u <= axis[-1]+epsilon)
+            if self.max_sample_gap:
+                right = np.clip(np.searchsorted(axis, u), 1, len(axis)-1)
+                left = right-1
+                supported &= ((axis[right]-axis[left] <= self.max_sample_gap) |
+                              (abs(u-axis[right]) <= epsilon) | (abs(u-axis[left]) <= epsilon))
+            offsets[i, supported] = np.interp(u[supported], axis, offset)
+            profiles[i, supported] = np.interp(u[supported], axis, z)
+
+        aligned = np.full((len(v), len(u)), np.nan)
+        for i, column in enumerate(profiles.T):
+            check_cancel()
+            valid = np.isfinite(column)
+            if not valid.any():
+                continue
+            axis, z = _collapse_profile(offsets[valid, i], column[valid])
+            splits = np.flatnonzero(np.diff(axis) > self.max_line_gap)+1 if self.max_line_gap else []
+            for indices in np.split(np.arange(len(axis)), splits):
+                if len(indices) < 2:
+                    continue
+                x = axis[indices]
+                targets = (v >= x[0]-epsilon) & (v <= x[-1]+epsilon)
+                query = np.clip(v[targets], x[0], x[-1])
+                aligned[targets, i] = (np.interp(query, x, z[indices]) if self.cross_method == "linear"
+                                       else PchipInterpolator(x, z[indices])(query))
+
+        # Use a support raster to avoid interpolating across the footprint edge.
+        supported = np.isfinite(aligned)
+        aligned[~supported] = 0.
+        result = np.empty((len(y_axis), len(x_axis)))
+        for start_index in range(0, result.size, 65536):
+            check_cancel()
+            block = slice(start_index, start_index+65536)
+            rows, cols = np.divmod(np.arange(start_index, min(start_index+65536, result.size)), len(x_axis))
+            points = np.column_stack((x_axis[cols], y_axis[rows]))-self.origin
+            indices = np.clip(((points @ self.frame-start)/step).T, 0, (sizes-1)[:, None])
+            coordinates = indices[::-1]
+            data = map_coordinates(aligned, coordinates, order=1, prefilter=False)
+            weight = map_coordinates(supported, coordinates, order=1, prefilter=False, output=float)
+            if self.trend:
+                data += plane[0]+points @ plane[1:]/scale
+            result.flat[block] = np.where(weight >= 1.-1e-8, data, np.nan)
+        _blank_grid(result, x_axis, y_axis, self.points, self.blanking_distance,
+                    "euclidean", step, boundary, canceled)
+        return result
 
 
 class SincGridder:

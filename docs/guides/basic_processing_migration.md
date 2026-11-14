@@ -1,7 +1,6 @@
-# Procesamiento básico sin Oasis: alcance y plan
+# Procesamiento básico: alcance y plan
 
 Estado: primera implementación independiente, validada el 20-09-2026.
-Este documento no certifica equivalencia numérica con Oasis.
 
 ## Implementado
 
@@ -40,10 +39,7 @@ históricas. No se exponen controles ficticios para operaciones no implementadas
 ## Alcance acordado
 
 Puntos y canales → gridding → suavizado y filtros → exportación GeoTIFF.
-La ejecución de esta cadena no debe necesitar Oasis Montaj. Un lector opcional
-de GDB puede mantenerse separado, sin convertirlo en requisito para entradas
-abiertas. No confundir independencia de la aplicación con ausencia de cualquier
-biblioteca Geosoft.
+El lector opcional de archivos GDB de Geosoft se utiliza para importar ese formato.
 
 Quedan fuera: pseudogradientes, crosshatch, fusión entre vuelos, máscaras de
 comparación entre alturas y demás experimentos arqueológicos. Su presencia en
@@ -59,31 +55,8 @@ los scripts revisados no los convierte en funcionalidades solicitadas.
 | P1 | AGC | RMS local con piso y límite de ganancia implementado | Comparar con referencias; separar realce visual de amplitud física |
 | P1 | Derivadas, THDR, tilt y señal analítica | Candidatos en <code>algorithms/magnetic_filters.py</code> | Comparar signos, unidades, bordes, padding y máscaras con referencias |
 | P1 | Continuación ascendente | Candidatos en <code>algorithms/transforms.py</code> y <code>algorithms/magnetic_filters.py</code> | Verificar altura, respuesta espectral y convenciones |
-| P2 | Entrada de puntos/canales y exportación | Infraestructura existente | Encadenar entrada abierta, selección de canal, procesamiento y GeoTIFF sin ejecutar Oasis |
+| P2 | Entrada de puntos/canales y exportación | Infraestructura existente | Encadenar entrada abierta, selección de canal, procesamiento y GeoTIFF |
 | P2 | Recetas y procedencia | Infraestructura de workflow existente | Integrar los nuevos algoritmos sin cambiar IDs ni romper recetas guardadas |
-
-## Evidencia de los scripts revisados
-
-ARCHIE, <code>archie_injector.py</code>, genera llamadas de creación/importación de GDB
-(<code>NewGDB</code>, <code>impasc.gx</code>, <code>selall.gx</code>, <code>setchprj.gx</code>, <code>newxy.gx</code>, <code>closegdb.gx</code>),
-gridding (<code>GridUtils.GriddingTool</code>, parámetros <code>RANGRID</code>), suavizado
-(<code>gridflt9.gx</code>) y exportación (<code>CopyConvertMultiGrids</code>). Sus cadenas incluyen
-<code>gridvd.gx</code>, <code>tiltdrv.gx</code>, <code>uxdxdydz.gx</code> + <code>gridmath.gx</code>, <code>gridasig.gx</code>,
-<code>gridagc.gx</code> y continuación mediante <code>magmap.gx</code> o <code>FFT2D.MAGMAPFiltering</code>.
-
-Los pipelines de trabajo reutilizan ese inyector para gridding y ensayos de
-radio de búsqueda. El script <code>grid_moving_median_gdb_channels.py</code> también
-comprueba el canal y el radio escritos en la macro. La escritura de canales
-GDB mediante <code>gxpy</code> en <code>run_moving_median_on_clean_gdb.py</code> es una dependencia
-de almacenamiento distinta del cálculo numérico; no es necesario reproducir
-ese experimento para completar el alcance básico.
-
-Parámetros históricos observados, útiles como casos de comparación, **no como
-valores universales recomendados**: celda 0,25 m; radio 5 u 8 m; 100 iteraciones;
-blank distance 3; tensión 0; tolerancia 0,01258. No asumir que búsqueda y blanking
-tienen idénticas unidades o semántica en otro backend. ARCHIE incluye suavizado
-de dos pasadas, mientras algunas cadenas de trabajo lo desactivan: debe ser un
-paso opcional, no una alteración silenciosa del gridding.
 
 ## Orden de implementación
 
@@ -97,8 +70,7 @@ paso opcional, no una alteración silenciosa del gridding.
 4. Añadir suavizado de nueve puntos y AGC como procesos independientes,
    incluyendo salidas constantes, bordes y NoData en sus pruebas.
 5. Validar las transformaciones existentes y conectar la receta completa con
-   entradas abiertas y salida GeoTIFF. La comparación con resultados históricos
-   no debe introducir Oasis como dependencia de ejecución ni de CI.
+   entradas abiertas y salida GeoTIFF.
 
 ## Criterios de aceptación
 
@@ -114,7 +86,7 @@ paso opcional, no una alteración silenciosa del gridding.
   dependencias/licencias y mostrarlas discretamente en la información de cada
   proceso. Etiquetas y ayuda nuevas en español, inglés y portugués.
 - Una ejecución limpia con puntos de formato abierto debe completar toda la
-  receta sin invocar Oasis, macros GX ni requerir una GDB intermedia.
+  receta con entradas y salidas abiertas.
 
 ## Límites de esta revisión
 

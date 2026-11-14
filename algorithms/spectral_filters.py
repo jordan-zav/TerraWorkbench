@@ -110,6 +110,9 @@ class SpectralFilterBase(RasterAlgorithmBase):
     def prepare(self, grid, parameters, context, feedback):
         del grid, parameters, context, feedback
 
+    def finalize_values(self, values, source_values, parameters, context):
+        return values
+
     def processAlgorithm(self, parameters, context, feedback):
         grid = self.input_grid(parameters, context, require_projected=True)
         orientation = to_regular_data_array(grid, fill_missing=True)
@@ -145,7 +148,7 @@ class SpectralFilterBase(RasterAlgorithmBase):
         filtered = finish_fft_grid(
             apply_transfer(prepared, response), fft_state, restore_trend
         )
-        values = restore_raster_order(filtered, orientation)
+        values = self.finalize_values(restore_raster_order(filtered, orientation), grid.values, parameters, context)
         feedback.setProgress(85)
         output = self.output_path(parameters, context)
         write_geotiff(output, values, grid, self.output_description, output_nodata=float("nan"))

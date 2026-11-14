@@ -1,4 +1,4 @@
-"""Audit orientation independently of Oasis; write reproducible JSON evidence."""
+"""Audit orientation; write reproducible JSON evidence."""
 import argparse
 import json
 from pathlib import Path

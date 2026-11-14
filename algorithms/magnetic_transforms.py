@@ -13,7 +13,7 @@ from .spectral_filters import SpectralFilterBase
 from ..terraworkbench_core.geomagnetism import evaluate_igrf
 from ..qgis_plugin.dependencies import import_ppigrf
 from ..qgis_plugin.qgis_compat import PROCESSING_NUMBER_DOUBLE, PROCESSING_NUMBER_INTEGER
-from ..compat.spectral import magnetic_field_transform
+from ..compat.spectral import magnetic_field_transform, set_rtp_mean
 from ..qgis_plugin.crs_utils import grid_convergence_degrees, raster_center
 
 
@@ -303,6 +303,16 @@ class MagneticDirectionTransformBase(SpectralFilterBase):
 
 class ReductionToPoleIgrfAlgorithm(MagneticDirectionTransformBase):
     output_description = "Reduction to the pole (IGRF/manual)"
+    PRESERVE_MEAN = "PRESERVE_MEAN"
+
+    def add_target_parameters(self):
+        self.addParameter(QgsProcessingParameterNumber(
+            self.PRESERVE_MEAN, self.tr("Preserve input mean in RTP"),
+            type=PROCESSING_NUMBER_INTEGER, defaultValue=1, minValue=0, maxValue=1))
+
+    def finalize_values(self, values, source_values, parameters, context):
+        return set_rtp_mean(values, source_values,
+                            self.parameterAsInt(parameters, self.PRESERVE_MEAN, context) == 1)
 
     def name(self):
         return "reduction_to_pole_igrf"

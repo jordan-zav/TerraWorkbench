@@ -35,7 +35,7 @@ class OrientedGrid:
 
 def _physical_source(layer):
     source = layer.source().split("|", 1)[0]
-    if not source or not os.path.exists(source):
+    if not source or not (os.path.exists(source) or (source.startswith('/vsimem/tw-') and gdal.VSIStatL(source))):
         raise QgsProcessingException(
             "The input raster must be backed by a local file. Save temporary or "
             "remote layers to GeoTIFF before running this algorithm."
@@ -144,7 +144,13 @@ def restore_raster_order(values, orientation):
 
 
 def write_geotiff(output_path, values, grid, description, output_nodata=None, *, float32=False):
-    """Write a georeferenced floating-point GeoTIFF."""
+    """Write a georeferenced floating-point GeoTIFF.
+
+    TW_PREVIEW metadata selects uncompressed Float32 temporary storage to avoid
+    compression latency. Native outputs retain their existing precision/options.
+    """
+    preview = grid.metadata.get("TW_PREVIEW") == "1"
+    float32 = float32 or preview
     rows, columns = values.shape
     driver = gdal.GetDriverByName("GTiff")
     dataset = driver.Create(
@@ -153,7 +159,7 @@ def write_geotiff(output_path, values, grid, description, output_nodata=None, *,
         rows,
         1,
         gdal.GDT_Float32 if float32 else gdal.GDT_Float64,
-        options=["TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=3"],
+        options=["TILED=YES"] if preview else ["TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=3"],
     )
     if dataset is None:
         raise QgsProcessingException(

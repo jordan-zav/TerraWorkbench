@@ -6,7 +6,7 @@
 
 Un filtro espacial opera sobre vecindarios del raster; un filtro FFT aplica una transferencia espectral. Algunos filtros lineales tienen representaciones relacionadas en ambos dominios, pero una mediana es no lineal y no se describe mediante una transferencia Fourier única. La mediana circular 2D y la mediana sobre un canal 1D son herramientas distintas.
 
-smooth_nine_point y smooth_least_squares_9x9 implementan suavizados locales diferentes. circular_median utiliza soporte circular y su tamaño debe expresarse conforme al contrato de la API o formulario. automatic_gain_control ajusta contraste local: su salida realzada no mantiene necesariamente la amplitud original de una anomalía para estimar propiedades físicas.
+smooth_nine_point ofrece el suavizado binomial de TerraWorkbench. La API opcional smooth_least_squares_9x9 se retiró en 1.1.0 y siempre lanza NotImplementedError; se debe migrar explícitamente a smooth_nine_point o circular_median. Son filtros diferentes y no se afirma equivalencia numérica. circular_median utiliza soporte circular y su tamaño debe expresarse conforme al contrato de la API o formulario. automatic_gain_control ajusta contraste local: su salida realzada no mantiene necesariamente la amplitud original de una anomalía para estimar propiedades físicas.
 
 ## Procedimiento recomendado
 

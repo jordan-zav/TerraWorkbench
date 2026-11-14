@@ -204,14 +204,14 @@ and copying the entire pipeline as JSON. It is an inspector, not an editable or
 executable pipeline designer. Graphs are limited to 200 version nodes.
 
 Algorithm definitions and dependencies are available via the process's **i**
-button. No Oasis algorithm equivalence is claimed. Reference API:
+button. Reference API:
 [SciPy forward/backward SOS filtering](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.sosfiltfilt.html).
 Tests include analytical frequency separation, Hampel/median/mean/detrend,
 cross-batch run isolation, nulls, invalid sampling, cancellation and rollback,
 versioned branching lineage, and real QGIS UI/worker/graph checks in EN/ES/PT.
 
 SQLite is provided by Python; PyArrow is an explicit runtime dependency and
-uses the Apache-2.0 license. No GDB or Oasis runtime is required for this store.
+uses the Apache-2.0 license.
 [Arrow Parquet documentation](https://arrow.apache.org/docs/python/parquet.html)
 and [batch-reading API](https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetFile.html).
 

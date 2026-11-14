@@ -6,7 +6,7 @@ authors:
   - family-names: Zavaleta
     given-names: Jordan
     # orcid: "[ORCID PENDIENTE]"
-version: "1.0.2"
+version: "1.1.0"
 license: GPL-3.0-or-later
 url: "https://github.com/jordan-zav/TerraWorkbench"
 repository-code: "https://github.com/jordan-zav/TerraWorkbench"

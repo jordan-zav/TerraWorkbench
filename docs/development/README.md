@@ -8,4 +8,4 @@
 - [Acquisition tools](standalone_acquisition.md)
 
 - [Survey map layers](survey_map_layers.md)
-- [Archivo abierto de GeoDatabase Geosoft](gdb_open_archive.md)
+- Archivo abierto de GeoDatabase Geosoft

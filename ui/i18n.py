@@ -119,6 +119,7 @@ _ES = {
     "Upward continuation": "Continuación ascendente",
     "Gaussian low-pass filter": "Filtro gaussiano de paso bajo",
     "Gaussian high-pass filter": "Filtro gaussiano de paso alto",
+    "Preserve input mean in RTP": "Conservar la media de entrada en RTP",
     "RTP — manual Harmonica": "RTP — Harmonica manual",
     "RTP — automatic IGRF-14 / manual (stabilized)": "RTP — IGRF-14 automático / manual (estabilizado)",
     "RTE — automatic IGRF-14 / manual (stabilized)": "RTE — IGRF-14 automático / manual (estabilizado)",
@@ -456,6 +457,7 @@ _ES = {
 
 
 _PT_EXACT = {
+    "Preserve input mean in RTP": "Preservar a média de entrada no RTP",
     "General": "Geral",
     "Processing": "Processamento",
     "Integrations": "Integrações",
@@ -1236,6 +1238,38 @@ _BASIC_PROCESSING_TRANSLATIONS = {
     "RMS floor fraction": ("Fracción mínima del RMS", "Fração mínima do RMS"),
     "Maximum gain": ("Ganancia máxima", "Ganho máximo"),
     "Minimum curvature (global thin-plate spline)": ("Mínima curvatura (spline global de placa delgada)", "Curvatura mínima (spline global de placa fina)"),
+    "Numeric dummy value (optional)": ("Valor numérico nulo (opcional)", "Valor numérico nulo (opcional)"),
+    "Minimum curvature needs {nodes:,} working nodes; the limit is {limit:,}. Try a cell size of at least {size:.3g} in CRS units, or reduce the extent.": (
+        "La mínima curvatura requiere {nodes:,} nodos de trabajo y el límite es {limit:,}. Pruebe un tamaño de celda de al menos {size:.3g} en unidades del SRC o reduzca la extensión.",
+        "A curvatura mínima requer {nodes:,} nós de trabalho e o limite é {limit:,}. Experimente uma célula de pelo menos {size:.3g} em unidades do SRC ou reduza a extensão."),
+    "Allow large minimum-curvature grids": ("Permitir grillas grandes de mínima curvatura", "Permitir grades grandes de curvatura mínima"),
+    "To proceed, enable Allow large minimum-curvature grids in Advanced parameters.": (
+        "Para continuar, active Permitir grillas grandes de mínima curvatura en Parámetros avanzados.",
+        "Para continuar, ative Permitir grades grandes de curvatura mínima em Parâmetros avançados."),
+    "Continue only this time": ("Continuar solo esta vez", "Continuar somente desta vez"),
+    "A large grid can require substantially more memory and time.": (
+        "Una grilla grande puede requerir mucha más memoria y tiempo.",
+        "Uma grade grande pode exigir muito mais memória e tempo."),
+    "Minimum curvature (multilevel solver)": ("Mínima curvatura (solver multinivel)", "Curvatura mínima (solver multinível)"),
+    "Bidirectional flight-line gridding": ("Interpolación bidireccional de líneas de vuelo", "Interpolação bidirecional de linhas de voo"),
+    "Cell size in output CRS units (0 = automatic)": ("Tamaño de celda en unidades del SRC de salida (0 = automático)", "Tamanho da célula em unidades do SRC de saída (0 = automático)"),
+    "Flight-line ID field": ("Campo identificador de línea de vuelo", "Campo identificador da linha de voo"),
+    "Automatic cell size: fraction of flight-line spacing": ("Tamaño de celda automático: fracción del espaciado entre líneas", "Tamanho automático da célula: fração do espaçamento entre linhas"),
+    "Cross-line interpolation": ("Interpolación entre líneas", "Interpolação entre linhas"),
+    "Shape-preserving cubic (PCHIP)": ("Cúbica con preservación de forma (PCHIP)", "Cúbica com preservação de forma (PCHIP)"),
+    "Remove and restore a planar trend": ("Retirar y reponer una tendencia plana", "Remover e repor uma tendência planar"),
+    "Maximum gap between flight lines (0 = unlimited)": ("Separación máxima entre líneas de vuelo (0 = ilimitada)", "Separação máxima entre linhas de voo (0 = ilimitada)"),
+    "Maximum gap along a flight line (0 = unlimited)": ("Hueco máximo a lo largo de una línea de vuelo (0 = ilimitado)", "Lacuna máxima ao longo de uma linha de voo (0 = ilimitada)"),
+    "Bidirectional blanking distance (0 = disabled)": ("Distancia de máscara bidireccional (0 = desactivada)", "Distância da máscara bidirecional (0 = desativada)"),
+    "Survey coverage polygon (survey_boundary)": ("Polígono de cobertura (survey_boundary)", "Polígono de cobertura (survey_boundary)"),
+    "Average observations within each cell before minimum curvature": ("Promediar observaciones por celda antes de la mínima curvatura", "Calcular médias por célula antes da curvatura mínima"),
+    "Choose a flight-line ID field for bidirectional gridding.": ("Elija un campo de línea para la interpolación bidireccional.", "Selecione um campo de linha para a interpolação bidirecional."),
+    "The flight-line ID field does not exist.": ("El campo de línea de vuelo no existe.", "O campo da linha de voo não existe."),
+    "Automatic cell size: {size:.3f} CRS units.": ("Tamaño de celda automático: {size:.3f} unidades del SRC.", "Tamanho automático da célula: {size:.3f} unidades do SRC."),
+    "The coverage polygon needs a valid CRS.": ("El polígono de cobertura requiere un SRC válido.", "O polígono de cobertura precisa de um SRC válido."),
+    "The coverage polygon is empty.": ("El polígono de cobertura está vacío.", "O polígono de cobertura está vazio."),
+    "Grid a numeric survey channel in a projected CRS. With a flight-line ID field, automatic cell size uses one quarter or one fifth of the median line spacing. Without line IDs, automatic cell size uses point density. Bidirectional gridding requires roughly parallel flight lines. Select production lines and exclude tie lines. Distance limits and the coverage polygon write unsupported cells as NoData.": ("Interpola un canal numérico en un SRC proyectado. Con identificadores de línea, el tamaño automático es un cuarto o un quinto del espaciado mediano. Sin ellos se usa la densidad de puntos. El método bidireccional requiere líneas aproximadamente paralelas. Seleccione las líneas de producción y excluya las de amarre. Los límites de distancia y el polígono de cobertura asignan NoData a las celdas sin soporte.", "Interpola um canal numérico num SRC projetado. Com identificadores de linha, o tamanho automático é um quarto ou um quinto do espaçamento mediano. Sem eles usa-se a densidade de pontos. O método bidirecional requer linhas aproximadamente paralelas. Selecione as linhas de produção e exclua as de amarração. Os limites de distância e o polígono de cobertura atribuem NoData às células sem suporte."),
+    "Piecewise linear": ("Lineal por tramos", "Linear por trechos"),
     "Minimum curvature (experimental multilevel solver)": ("Mínima curvatura (solver multirresolución experimental)", "Curvatura mínima (solver multirresolución experimental)"),
     "Local thin-plate spline (approximation)": ("Spline local de placa delgada (aproximación)", "Spline local de placa fina (aproximação)"),
     "Sinc(x)/x (windowed 2D interpolator)": ("Sinc(x)/x (interpolador 2D con ventana)", "Sinc(x)/x (interpolador 2D com janela)"),
@@ -1260,9 +1294,9 @@ _BASIC_PROCESSING_TRANSLATIONS = {
     "Scales the field by global RMS divided by local RMS in a square pixel window, with an RMS floor and gain cap. No mean subtraction; original NoData is preserved. This changes physical amplitudes: use for enhancement, not quantitative inversion.": (
         "Multiplica el campo por RMS global/RMS local en una ventana cuadrada de píxeles, con piso RMS y ganancia máxima. No resta la media y conserva NoData. Modifica amplitudes físicas: usar para realce, no para inversión cuantitativa.",
         "Multiplica o campo por RMS global/RMS local em uma janela quadrada de pixels, com piso RMS e ganho máximo. Não subtrai a média e preserva NoData. Altera amplitudes físicas: usar para realce, não para inversão quantitativa."),
-    "Global thin-plate spline minimizes bending with an affine polynomial and is limited to 2000 unique points. Local TPS uses a configurable neighborhood and is not a global minimum-curvature solution. Coincident values are averaged. Smoothing uses isotropically normalized coordinates; it is not tension. Search radius only masks TPS output by distance to the nearest observation. No RANGRID equivalence is claimed.": (
-        "El spline global de placa delgada minimiza la flexión con un polinomio afín y admite hasta 2000 puntos únicos. El TPS local usa vecinos configurables y no es una solución global de mínima curvatura. Se promedian valores coincidentes. El suavizado usa coordenadas normalizadas isotrópicamente; no es tensión. El radio solo enmascara la salida TPS por distancia a la observación más cercana. No se afirma equivalencia con RANGRID.",
-        "O spline global de placa fina minimiza a flexão com um polinômio afim e admite até 2000 pontos únicos. O TPS local usa vizinhos configuráveis e não é uma solução global de curvatura mínima. Valores coincidentes são promediados. A suavização usa coordenadas normalizadas isotropicamente; não é tensão. O raio apenas mascara a saída TPS pela distância à observação mais próxima. Não se afirma equivalência com RANGRID."),
+    "Global thin-plate spline minimizes bending with an affine polynomial and is limited to 2000 unique points. Local TPS uses a configurable neighborhood and is not a global minimum-curvature solution. Coincident values are averaged. Smoothing uses isotropically normalized coordinates; it is not tension. Search radius only masks TPS output by distance to the nearest observation.": (
+        "El spline global de placa delgada minimiza la flexión con un polinomio afín y admite hasta 2000 puntos únicos. El TPS local usa vecinos configurables y no es una solución global de mínima curvatura. Se promedian valores coincidentes. El suavizado usa coordenadas normalizadas isotrópicamente; no es tensión. El radio solo enmascara la salida TPS por distancia a la observación más cercana.",
+        "O spline global de placa fina minimiza a flexão com um polinômio afim e admite até 2000 pontos únicos. O TPS local usa vizinhos configuráveis e não é uma solução global de curvatura mínima. Valores coincidentes são promediados. A suavização usa coordenadas normalizadas isotropicamente; não é tensão. O raio apenas mascara a saída TPS pela distância à observação mais próxima."),
 }
 _ES.update({key: value[0] for key, value in _BASIC_PROCESSING_TRANSLATIONS.items()})
 _PT_EXACT.update({key: value[1] for key, value in _BASIC_PROCESSING_TRANSLATIONS.items()})
@@ -1479,3 +1513,5 @@ _PT_EXACT.update({
     "Third-party licences": "Licenças de terceiros",
     "To import GDB, prepare conversion support.": "Para importar GDB, prepare o suporte de conversão.",
 })
+
+_PT_EXACT.update({"Live preview": "Prévia ao vivo", "Before / after (F6)": "Antes / depois (F6)", "Adjust colours (GeoRamp)": "Ajustar cores (GeoRamp)", "Install GeoRamp": "Instalar GeoRamp", "Preview": "Prévia", "Apply": "Aplicar", "Preview failed: {error}": "Falha na prévia: {error}", "Use a projected raster for filtering.": "Use um ráster projetado para filtrar."})

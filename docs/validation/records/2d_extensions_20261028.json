@@ -391,7 +391,6 @@
     "terraworkbench_core/complex_calibration.py": "0ca4dba30e856cf080c161f8357a4fc554312b01c853005c860abd6882363135",
     "terraworkbench_core/ip_stacking.py": "cf7bf8f17cddb7194ac76bfc9f6b8e5c51b4a3569ce76ef2a025c27adf67ce83",
     "terraworkbench_core/compact_magnetics.py": "bd9e0fdf6964fe6991556bd4f86d510f668e85ff4b5fe932150e5d1a8a1b6e6a",
-    "terraworkbench_core/oasis_style.py": "fca027541efc61942f61e15ef5aaa7706fe6d5ff2dc9d3c91fbf16c0257c1be0",
     "terraworkbench_core/multisensor_project.py": "7852d00013afeead0ebe2e8289320419dcb834ea1064d5a39aba1cb28fb429be",
     "terraworkbench_core/layered_electrical.py": "3316b0eb897b4361ba62c1274fe9adfedcd1a944dbcd4bd83cfa8dd2788120c7",
     "terraworkbench_core/well_log_io.py": "8ee1306812582dc5396f2db91ba363c57b8f82288576478d97ddce9aaed758b7",
@@ -400,7 +399,8 @@
     "terraworkbench_core/self_potential.py": "b58fa508960de653f78d9123c2b764119fca5bceee8969b07d965b78315b77d2",
     "terraworkbench_core/vector_grid_audit.py": "c3459b25a6065f53d424341edeb5fc0393c9d1c1c69e784d45ef155f8043fbef",
     "terraworkbench_core/multisensor_fusion.py": "e18d6c2ba8dd3b268d90739fbb9c87108ad91ab184ffa4280f3783c430e47153",
-    "terraworkbench_core/ip_waveform.py": "d1fb7308d37b0ad1439c31f2fac5b2d545956eff5f94fda60349bf5eb2e97cdf"
+    "terraworkbench_core/ip_waveform.py": "d1fb7308d37b0ad1439c31f2fac5b2d545956eff5f94fda60349bf5eb2e97cdf",
+    "terraworkbench_core/classic_style.py": "fca027541efc61942f61e15ef5aaa7706fe6d5ff2dc9d3c91fbf16c0257c1be0"
   },
   "runner_sha256": "ae12cff59a2fba01e72d5113764c7646cf7a36257715a3083bb8d0f28f4e9917",
   "git_head": "f2674ead2f5db2ca90f391e80a5807a543906fd9",
@@ -417,5 +417,14 @@
     "status": "completed",
     "url": "https://github.com/jordan-zav/TerraWorkbench/actions/runs/40718409619"
   },
-  "evidence_scope": "Independent numerical agreement and analytic checks. Atmospheric field calibration and geological uniqueness are not established."
+  "evidence_scope": "Independent numerical agreement and analytic checks. Atmospheric field calibration and geological uniqueness are not established.",
+  "module_rename_note": {
+    "note": "The module was renamed to classic_style.py. Provenance keys use the current path; all historical digest values and results are preserved and do not certify current source bytes.",
+    "original_module_basename": "oasis_style.py",
+    "original_source_sha256": [
+      "fca027541efc61942f61e15ef5aaa7706fe6d5ff2dc9d3c91fbf16c0257c1be0"
+    ],
+    "original_record_sha256": "5d30381cf19e99815e49365b8dd6576faa718c4632aee540cbf67dafef2e5d4a",
+    "original_record_sha256_lf": "58e13acd5cdb37d95ef9ddfd72be8f7c85db155fba25cbaf31b042496620f8cf"
+  }
 }

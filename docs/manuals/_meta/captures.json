@@ -26,7 +26,7 @@
   "ui_sources_sha256_lf": {
     "ui/full_manual.py": "d087b53b6c82dbc98a2358e91909c1826f47215b1c7291ad80033d9873b71287",
     "ui/evidence_api.py": "517bc312f550b32a7dbd72a48c9f9f11384b997caecb833e0ad9c30ff6ea7274",
-    "ui/workflow_dock.py": "4dfcfa1c5ba83e088622a0d6409e3d63f36cdc6b0bc33399c3101ff0ce33a067",
+    "ui/workflow_dock.py": "d48fc55e19e467fd4b29cdd4a95a2948a53dcdcdadaf713f1d69c2e1d4a01948",
     "scripts/capture_documentation.py": "e5bb7e06bede0a68e80048bb2a4b5861a54d9815e296b23438b1d107e49ad712",
     "scripts/capture_manual_ui.py": "3a8bfe0fcbc8df707fb0cdca282381ac7d8a256f47f156db1a37abcd8d17b084"
   },

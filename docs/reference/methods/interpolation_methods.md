@@ -1,6 +1,6 @@
 # Interpoladores independientes
 
-Actualizado el 24 de septiembre de 2026. El método de mínima curvatura predeterminado usa diferencias finitas, restricciones fuera de nodo y refinamiento multirresolución. Es independiente y experimental; no se certifica equivalencia exacta con RANGRID. Sin(x)/x interpola muestras regulares mediante una ventana Lanczos explícita.
+Actualizado el 24 de septiembre de 2026. El método de mínima curvatura predeterminado usa diferencias finitas, restricciones fuera de nodo y refinamiento multirresolución. Es independiente y experimental. Sin(x)/x interpola muestras regulares mediante una ventana Lanczos explícita.
 
 ## Uso
 
@@ -16,9 +16,9 @@ Los datos se agrupan por celdas centradas en nodos. Se conservan el centroide XY
 
 La semilla inicial utiliza distancia inversa dentro del radio de búsqueda, con la potencia seleccionada. Si no hay vecinos, usa el promedio de los datos de trabajo. Después se realizan pasadas Gauss-Seidel por factores 16, 8, 4, 2 y 1, empezando en el factor elegido. La cota de iteraciones por nivel es el máximo final dividido por el factor, con mínimo una pasada. La superficie previa se prolonga bilinealmente. Cada nivel grueso redondea temporalmente su dominio a sus propios intervalos. El nivel final conserva los límites físicos alineados a la celda fina, añade dos nodos de margen por lado y se recorta al final; ya no hereda la extensión oriental y septentrional de la malla gruesa. El plano retirado antes del cálculo se restaura al terminar.
 
-Los nodos libres emplean el operador derivado de la energía discreta ||Dxx u||² + 2||Dxy u||² + ||Dyy u||², con bordes naturales discretos. Al sustituir filas para imponer observaciones fuera de nodo, el sistema es de colocación: no es el sistema variacional con fuerzas adjuntas distribuidas. La formulación, los bordes y la escala de tensión son propios y no están certificados como idénticos a Oasis.
+Los nodos libres emplean el operador derivado de la energía discreta ||Dxx u||² + 2||Dxy u||² + ||Dyy u||², con bordes naturales discretos. Al sustituir filas para imponer observaciones fuera de nodo, el sistema es de colocación: no es el sistema variacional con fuerzas adjuntas distribuidas. La formulación, los bordes y la escala de tensión son propios.
 
-Se comprueban tres porcentajes por pasada: cambio de nodos, residuo de ecuación dividido por su diagonal y residuo en los datos de trabajo. Solo se declara convergencia si los tres alcanzan el porcentaje exigido dentro de la tolerancia. Un límite de iteraciones alcanzado se informa explícitamente. No se confunde cumplimiento de restricciones con coincidencia frente a Oasis.
+Se comprueban tres porcentajes por pasada: cambio de nodos, residuo de ecuación dividido por su diagonal y residuo en los datos de trabajo. Solo se declara convergencia si los tres alcanzan el porcentaje exigido dentro de la tolerancia. Un límite de iteraciones alcanzado se informa explícitamente.
 
 Radio inicial, malla gruesa, potencia y porcentaje de paso están conectados al solver multirresolución. Pendiente de ponderación distinta de cero sigue rechazada por falta de implementación verificada. El blanking utiliza la distancia a las observaciones originales, después de resolver. Hay una cota de 250.000 nodos de trabajo, incluidos márgenes. La cota limita el tamaño del dominio de trabajo.
 

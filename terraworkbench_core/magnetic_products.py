@@ -6,7 +6,7 @@ def compute_magnetic_products(grid_south_to_north, cell_size, *, inclination,
                               declination, continuation_height=500, padding=16,
                               angle_units="degrees", canceled=None,
                               derivative_method="finite_difference", vertical_positive="down",
-                              composite_preparation=None):
+                              composite_preparation=None, preserve_rtp_mean=True):
     """Compute products from an nT grid; declination is measured from grid north.
 
     Arrays retain increasing northing by row. Publication alone reverses rows
@@ -32,7 +32,7 @@ def compute_magnetic_products(grid_south_to_north, cell_size, *, inclination,
         declination_frame="grid", derivative_method=derivative_method, vertical_positive=vertical_positive, composite_preparation=composite_preparation, angle_units=angle_units,
         continuation_height=float(continuation_height), padding_rows=padding,
         padding_columns=padding, detrend_order=-1, taper_percent=0.,
-        nodata_policy="nearest", max_gain=100.,
+        nodata_policy="nearest", max_gain=100., preserve_rtp_mean=preserve_rtp_mean,
     )
     products, recipe = magnetic_grid_products(values, (float(cell_size), float(cell_size)), options, canceled)
     units = {}
@@ -51,10 +51,9 @@ def compute_magnetic_products(grid_south_to_north, cell_size, *, inclination,
         product_units=units, field_source="explicit user values; declination from grid north",
         source_product="explicit caller grid", proprietary_equivalence=False,
         method_revision="archie-magnetic-2: positive-down vertical; central horizontal derivatives by default",
-        zero_frequency_policy="RTP transfer discards FFT DC; transformed products do not retain input baseline",
+        zero_frequency_policy="Only published RTP preserves the input mean by default; derived products use the original zero-DC workspace",
         limitations=["Induced magnetization follows the supplied field; remanence is not modeled.",
                      "RTP gain is capped at 100; low-inclination stabilization may alter amplitudes.",
-                     "RTP discards the padded-workspace mean; even polar RTP can differ from RMI by a constant.",
                      "All derivatives and continuation branch from RTP; not arbitrary sequential filters.",
                      "NoData is filled only within the FFT workspace; original output mask is restored."],
     )

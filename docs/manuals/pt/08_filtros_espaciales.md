@@ -6,7 +6,7 @@
 
 Um filtro espacial opera em vizinhanças; um filtro FFT aplica transferência espectral. Alguns filtros lineares possuem representações relacionadas em ambos os domínios, mas a mediana é não linear e não tem uma transferência Fourier única. A mediana circular 2D difere da mediana de um canal 1D.
 
-smooth_nine_point e smooth_least_squares_9x9 implementam suavizações locais diferentes. circular_median usa suporte circular e tamanho conforme a API ou formulário. automatic_gain_control altera contraste local: a imagem realçada não preserva necessariamente a amplitude original para estimar propriedades físicas.
+smooth_nine_point oferece a suavização binomial do TerraWorkbench. A API opcional smooth_least_squares_9x9 foi removida na versão 1.1.0 e sempre lança NotImplementedError; migre explicitamente para smooth_nine_point ou circular_median. São filtros diferentes, sem equivalência numérica declarada. circular_median usa suporte circular e tamanho conforme a API ou formulário. automatic_gain_control altera contraste local: a imagem realçada não preserva necessariamente a amplitude original para estimar propriedades físicas.
 
 ## Procedimento recomendado
 

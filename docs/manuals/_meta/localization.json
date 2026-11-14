@@ -126,8 +126,8 @@
       "file": "04_importacion.md",
       "versions": {
         "es": {
-          "sha256_lf": "dcc71897bcfa8a37ebf95817294d33f918e2c262eddca30d86f8231edc7ad760",
-          "words": 643,
+          "sha256_lf": "9d662aaeef7eb24e15d91161d72da8dadbbc26572b7df425658540247939e39b",
+          "words": 626,
           "sections": 7,
           "images": 0,
           "table_rows": 0,
@@ -141,8 +141,8 @@
           ]
         },
         "en": {
-          "sha256_lf": "aa5286e40372b26aeeae42eae30d9001eb115da11b7f553378e9252cc8576aa0",
-          "words": 588,
+          "sha256_lf": "fad293561d8969860a450b68c46db211b491c9914457f1398f9204b0d5d772d7",
+          "words": 572,
           "sections": 7,
           "images": 0,
           "table_rows": 0,
@@ -156,8 +156,8 @@
           ]
         },
         "pt": {
-          "sha256_lf": "9ca87a625480bb0477702b0a138b0f018f25b019d243d746294eea0ef7ad0f9c",
-          "words": 605,
+          "sha256_lf": "9e35100c1a245289aa00249c5c319078cfd316ff1793640674bfdfb6abed6429",
+          "words": 588,
           "sections": 7,
           "images": 0,
           "table_rows": 0,
@@ -176,9 +176,9 @@
       "file": "05_bases_canales.md",
       "versions": {
         "es": {
-          "sha256_lf": "a6117e19d4b76b42d12b85a1b6a0bdc59c0accb1627acc153dac8fa3314abae5",
-          "words": 859,
-          "sections": 7,
+          "sha256_lf": "6a6e4ed0d6ca1147e7c840ab2eba1db97626e5af2552b59e8a1a65e701a832ed",
+          "words": 1143,
+          "sections": 8,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
@@ -189,9 +189,9 @@
           "external_urls": []
         },
         "en": {
-          "sha256_lf": "0535351ec7de83566b8349ca44b7ea68a77923419a879ff1cb3ead0efaf22dd6",
-          "words": 764,
-          "sections": 7,
+          "sha256_lf": "a4beaf863044ac84994e8dcaad98f95e23299e1853e028f559b5e1010cb4c565",
+          "words": 996,
+          "sections": 8,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
@@ -202,9 +202,9 @@
           "external_urls": []
         },
         "pt": {
-          "sha256_lf": "f802d74d09435b7a94193e5f28e1e8907f4eddb1f031c914ea41371b095bced0",
-          "words": 802,
-          "sections": 7,
+          "sha256_lf": "153ff2fc5b5ab63cde9304ba2a8eeaa9f9851d8de656d79d80600f3a720185aa",
+          "words": 1046,
+          "sections": 8,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
@@ -282,9 +282,9 @@
       "file": "07_nivelacion_gridding.md",
       "versions": {
         "es": {
-          "sha256_lf": "58639c07d4bc3501107766e8c7b9530c246a0434a3e485ac1f45fb4640778401",
-          "words": 487,
-          "sections": 5,
+          "sha256_lf": "20a40a7d0dfef231f855a17f355f93b394b6619b89e6c26114cae1c84940b550",
+          "words": 974,
+          "sections": 7,
           "images": 0,
           "table_rows": 10,
           "source_modules": [
@@ -295,12 +295,15 @@
             "survey_grid_pipeline.py",
             "survey_processing.py"
           ],
-          "external_urls": []
+          "external_urls": [
+            "https://doi.org/10.1190/1.1440410",
+            "https://doi.org/10.1190/1.1442837"
+          ]
         },
         "en": {
-          "sha256_lf": "988f715abb2be52710f0de5ba6195830f181f346c4945b1f7bfca51e2afb2f06",
-          "words": 421,
-          "sections": 5,
+          "sha256_lf": "cb8ad74cff3a886e7d6dcf1e29b85fd4ceb30f28079271bfd2a24d62e8f66f69",
+          "words": 813,
+          "sections": 7,
           "images": 0,
           "table_rows": 10,
           "source_modules": [
@@ -311,12 +314,15 @@
             "survey_grid_pipeline.py",
             "survey_processing.py"
           ],
-          "external_urls": []
+          "external_urls": [
+            "https://doi.org/10.1190/1.1440410",
+            "https://doi.org/10.1190/1.1442837"
+          ]
         },
         "pt": {
-          "sha256_lf": "26047624efbad8839b66cdce524253ab47d713bfa8894a0b3f6eacfb4e72a0d7",
-          "words": 430,
-          "sections": 5,
+          "sha256_lf": "6054c274fe9c1de132a15ad8fdc078bf30f2756eae8737d2281d2bfa54fb019d",
+          "words": 886,
+          "sections": 7,
           "images": 0,
           "table_rows": 10,
           "source_modules": [
@@ -327,7 +333,10 @@
             "survey_grid_pipeline.py",
             "survey_processing.py"
           ],
-          "external_urls": []
+          "external_urls": [
+            "https://doi.org/10.1190/1.1440410",
+            "https://doi.org/10.1190/1.1442837"
+          ]
         }
       }
     },
@@ -335,8 +344,8 @@
       "file": "08_filtros_espaciales.md",
       "versions": {
         "es": {
-          "sha256_lf": "f772b15ac11ee71a452eb9899824d59d734b9d22c85971a5851f083382f0a685",
-          "words": 371,
+          "sha256_lf": "5145c20c591a8ca812953651d335c64c1ef8c4011c1a725a9a760025cac4f470",
+          "words": 400,
           "sections": 5,
           "images": 0,
           "table_rows": 0,
@@ -347,8 +356,8 @@
           "external_urls": []
         },
         "en": {
-          "sha256_lf": "ffe1ac5b2fb42bc14f9ab44fb7fb3d0f1827400c44e4a85b086e0814de1b56c1",
-          "words": 320,
+          "sha256_lf": "e90696bdfad48b97ba1cabe99ab42ad1c6692cff5d4575092efb84f0acc0ddb8",
+          "words": 346,
           "sections": 5,
           "images": 0,
           "table_rows": 0,
@@ -359,8 +368,8 @@
           "external_urls": []
         },
         "pt": {
-          "sha256_lf": "184ed916b04013d673ae2f9bc547626c495e1a66a229ed37623994ceac7a0333",
-          "words": 316,
+          "sha256_lf": "4c353ece10f362921384e3970ee1db37a708ceb41c0672258d8753c87482bf23",
+          "words": 342,
           "sections": 5,
           "images": 0,
           "table_rows": 0,
@@ -376,14 +385,14 @@
       "file": "09_fft_espectros.md",
       "versions": {
         "es": {
-          "sha256_lf": "05fd00630fed29a3d0f3a3ef8ccd0e80fef463843f9280e914704def35ea3fb7",
-          "words": 470,
+          "sha256_lf": "ee4f6d6f13d3f5b532803fd4c445a93b255061d7c57f003ab132607319c69525",
+          "words": 700,
           "sections": 5,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
+            "classic_style.py",
             "filter_recipes.py",
-            "oasis_style.py",
             "radial_filters.py",
             "spectral.py",
             "spectral_analysis.py"
@@ -391,14 +400,14 @@
           "external_urls": []
         },
         "en": {
-          "sha256_lf": "b0c12c253b386d2ebac5ece45b686ea0077b6bcfc40645f0be8dab89232dfb57",
-          "words": 407,
+          "sha256_lf": "bd921cac0834a4c8d6c01fc6a0c80a7081c8ae52ca44f17917d8b965a2626693",
+          "words": 603,
           "sections": 5,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
+            "classic_style.py",
             "filter_recipes.py",
-            "oasis_style.py",
             "radial_filters.py",
             "spectral.py",
             "spectral_analysis.py"
@@ -406,14 +415,14 @@
           "external_urls": []
         },
         "pt": {
-          "sha256_lf": "c820fef8fa5d81862c37b479a2465f4e280736c481537e6f6507416bd97eb4bf",
-          "words": 414,
+          "sha256_lf": "ba08c5f8b1059ff32400047dc6780d3dcf73bc5cfd559d292bb2e6944b2b4e84",
+          "words": 624,
           "sections": 5,
           "images": 1,
           "table_rows": 0,
           "source_modules": [
+            "classic_style.py",
             "filter_recipes.py",
-            "oasis_style.py",
             "radial_filters.py",
             "spectral.py",
             "spectral_analysis.py"
@@ -426,8 +435,8 @@
       "file": "10_magnetometria.md",
       "versions": {
         "es": {
-          "sha256_lf": "4ae6a86d0306791bec47adfba15c9a94db08c81dc9f585b5a8651ace703c21e0",
-          "words": 430,
+          "sha256_lf": "900b9855acb8c2c3e0a21c4736045f8b7a50c4200fa3f6837505e0c843652b69",
+          "words": 475,
           "sections": 5,
           "images": 0,
           "table_rows": 7,
@@ -443,8 +452,8 @@
           ]
         },
         "en": {
-          "sha256_lf": "3fdc034a379be42c94c7cd1f6ff25da479a389db9cbdebdc1eb4fb1f387a92e7",
-          "words": 373,
+          "sha256_lf": "91ebc53121fa9946f692a866c9e03d6da74c038475232895c1fbbce72ce1b465",
+          "words": 409,
           "sections": 5,
           "images": 0,
           "table_rows": 7,
@@ -460,8 +469,8 @@
           ]
         },
         "pt": {
-          "sha256_lf": "5771bb17259042b352f5973eb0449bff0723e4cb41fc322d13cde8f20750ed21",
-          "words": 388,
+          "sha256_lf": "04f76e0c6910e6846ffec10d6dc4935fdf99ee93371c5e62b21b007b096ac13e",
+          "words": 429,
           "sections": 5,
           "images": 0,
           "table_rows": 7,

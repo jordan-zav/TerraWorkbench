@@ -119,6 +119,7 @@ class StoreWorker(QThread):
 
 
 class SurveyWorkspaceDialog(QDialog):
+    profilesRequested = pyqtSignal(object, object)
     def __init__(self, parent=None, *, iface=None):
         super().__init__(parent)
         self._translations = []
@@ -403,7 +404,11 @@ class SurveyWorkspaceDialog(QDialog):
         self.line_field.clicked.connect(self._choose_line_channel)
         columns = self._translated_widget(QPushButton, "Columns…", "Columnas…", "Colunas…")
         columns.clicked.connect(self._choose_columns)
-        for widget in (self.line_previous, self.line_selector, self.line_next, self.line_field, columns):
+        profiles = self._translated_widget(QPushButton, "Profiles", "Perfiles", "Perfis")
+        profiles.setObjectName("surveyProfiles")
+        profiles.clicked.connect(self._open_line_profiles)
+        for widget in (self.line_previous, self.line_selector, self.line_next,
+                       self.line_field, columns, profiles):
             line_tools.addWidget(widget, 1 if widget is self.line_selector else 0)
         table_layout.addLayout(line_tools)
         self.line_previous.clicked.connect(lambda: self.line_selector.setCurrentIndex(self.line_selector.currentIndex() - 1))
@@ -1033,6 +1038,15 @@ class SurveyWorkspaceDialog(QDialog):
             "{count:,} linhas · somente leitura",
         ).format(count=ends[-1]))
         self._refresh_sheet_profile()
+
+    def _open_line_profiles(self):
+        ids = self.selected_databases()
+        if self.store is not None and len(ids) == 1:
+            self.profilesRequested.emit(self.store, dict(
+                database=ids[0], line=self.line_selector.currentData(),
+                field=self._line_channel, indexed=self._lines or None,
+                channels=self._sidebar_channels() or [self._sheet_channel],
+            ))
 
     def _choose_line_channel(self):
         if not self._sheet_columns:

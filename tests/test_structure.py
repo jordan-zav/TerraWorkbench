@@ -21,7 +21,7 @@ def test_metadata_declares_processing_provider():
     assert re.fullmatch(
         r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", parser["general"]["version"]
     )
-    assert not parser["general"].get("plugin_dependencies", "").strip()
+    assert parser["general"].get("plugin_dependencies", "").strip() == "GeoRamp"
     assert parser["general"]["qgismaximumversion"] == "3.99"
     assert parser["general"]["experimental"] == "False"
     assert "requirements/base.txt" in parser["general"]["about"]
@@ -149,7 +149,7 @@ def test_embedded_dependency_manager_replaces_external_qpip_dependency():
     parser.read(ROOT / "metadata.txt", encoding="utf-8")
     packager = (ROOT / "scripts" / "package_plugin.py").read_text(encoding="utf-8")
     manager = (ROOT / "embedded_qpip" / "manager.py").read_text(encoding="utf-8")
-    assert not parser["general"].get("plugin_dependencies", "").strip()
+    assert parser["general"].get("plugin_dependencies", "").strip() == "GeoRamp"
     assert "--progress-bar" in manager
     assert '"raw"' in manager
     assert "active QGIS user profile" in manager

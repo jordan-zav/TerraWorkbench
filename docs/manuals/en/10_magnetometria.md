@@ -10,6 +10,8 @@ igrf_field computes East, North and Up components, total field and angular eleme
 
 ## RTP, RTE and components
 
+By default, RTP preserves the input mean over valid cells. A zero-mean output is optional. In the magnetic pipeline, the setting applies to the published RTP grid; derivatives and other products use the same computational surface.
+
 Reduction to the pole or equator transforms an anomaly under assumptions about field and magnetisation directions. An induced direction may be inadequate in the presence of remanence. Conditions producing small denominators need stabilisation; a symmetric map does not certify physical correctness.
 
 magnetic_components provides component conversion and TMI reconstruction from gradients with explicit directions. Weak-mode and mean-level recovery depend on the method's constraints; gradient integration does not necessarily recover a measured absolute datum. Document gradient units and any unobservable component.

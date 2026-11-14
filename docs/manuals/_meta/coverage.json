@@ -54,7 +54,8 @@
       "survey_store",
       "survey_explorer",
       "survey_recipes",
-      "survey_map"
+      "survey_map",
+      "survey_profile_edits"
     ],
     "titles": {
       "es": "Workspaces, canales, versiones y linaje",
@@ -95,7 +96,10 @@
       "es": "Cruces, nivelación e interpolación",
       "en": "Crossovers, levelling and interpolation",
       "pt": "Cruzamentos, nivelamento e interpolação"
-    }
+    },
+    "processing": [
+      "grid_survey_points"
+    ]
   },
   {
     "file": "08_filtros_espaciales.md",
@@ -118,7 +122,8 @@
       "spectral_analysis",
       "radial_filters",
       "filter_recipes",
-      "oasis_style"
+      "classic_style",
+      "live_preview"
     ],
     "titles": {
       "es": "FFT, continuación, derivadas y análisis espectral",

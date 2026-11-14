@@ -44,7 +44,7 @@ K/eU/eTh terminada.
 ## Prioridad A — cerrar el flujo 2D de producción
 
 El alcance inmediato de sustitución del procesamiento básico está definido en
-[Procesamiento básico sin Oasis](../guides/basic_processing_migration.md): mínima
+[Procesamiento básico](../guides/basic_processing_migration.md): mínima
 curvatura, controles de gridding, suavizado, filtros y exportación. TPS global/local,
 suavizado binomial de nueve puntos y AGC RMS tienen una primera implementación;
 la equivalencia con referencias históricas sigue pendiente. Excluye pseudogradientes, crosshatch

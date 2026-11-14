@@ -10,6 +10,16 @@ prepare_fft_grid puede quitar media o plano, reflejar bordes, aplicar taper fuer
 
 ## Operadores elementales
 
+### Vista previa en vivo y colores
+
+La ventana de entrada se reutiliza al editar parámetros. Cambiar la extensión, la banda, la fuente o la fecha de modificación del archivo invalida esa caché de una sola ventana.
+
+Activa Vista previa en vivo en la Pila de filtros. Los cambios y la navegación esperan 300 ms; un único hilo cancela solicitudes obsoletas y publica solo el resultado vigente. Una capa temporal Vista previa representa la pila hasta el filtro seleccionado. F6 alterna antes/después. Desactivar la casilla o cerrar el panel retira la capa. Aplicar ejecuta toda la pila a resolución nativa con procedencia.
+
+La lectura cubre la extensión visible con un margen de observaciones del 50% por lado, recortado a la fuente, a resolución de pantalla (máximo 512 muestras por lado visible). Los filtros FFT conservan su reflexión y taper; otras pilas reciben un margen adicional reflejado con taper. Las longitudes regionales, los cortes bruscos y una RTP inestable pueden depender de observaciones externas a la ventana. Compara el resultado nativo antes de interpretar.
+
+Ajustar colores (GeoRamp) abre paletas científicas e histogramas interactivos para la vista previa o la entrada. Los productos magnéticos usan classic_geophysics; derivadas con signo y tilt usan blue_white_red con límites simétricos respecto de cero. Instalar GeoRamp abre su ficha en el gestor cuando falta. QGIS resuelve la dependencia declarada GeoRamp; desde ZIP puede requerirse instalarla por separado.
+
     Continuación ascendente: H(k,h) = exp(−k h), h > 0
     Derivada en X: Hx = i kx
     Derivada en Y: Hy = i ky
@@ -36,7 +46,7 @@ Ver [análisis espectral y alcance](../../research/core_expansion_implementation
 
 ## Implementación relacionada
 
-[spectral](../../../terraworkbench_core/spectral.py), [spectral_analysis](../../../terraworkbench_core/spectral_analysis.py), [radial_filters](../../../terraworkbench_core/radial_filters.py), [filter_recipes](../../../terraworkbench_core/filter_recipes.py), [oasis_style](../../../terraworkbench_core/oasis_style.py)
+[spectral](../../../terraworkbench_core/spectral.py), [spectral_analysis](../../../terraworkbench_core/spectral_analysis.py), [radial_filters](../../../terraworkbench_core/radial_filters.py), [filter_recipes](../../../terraworkbench_core/filter_recipes.py), [classic_style](../../../terraworkbench_core/classic_style.py)
 
 ---
 

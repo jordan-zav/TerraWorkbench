@@ -28,6 +28,16 @@ Downward continuation increasingly amplifies short wavelengths and is unstable w
 
 ## Spectra and interpretation
 
+### Live preview and colours
+
+The input window is cached across parameter edits. Changing the extent, band, source or file timestamp invalidates that single-window cache.
+
+Enable Live preview in the Filter Stack. Edits and map navigation debounce for 300 ms; one background worker cancels obsolete requests and publishes only the newest result. A single temporary Preview layer represents the stack through the selected filter. F6 toggles before/after. Disabling preview or closing the dock removes it. Apply executes the entire stack at native resolution with provenance.
+
+The preview reads the visible extent with a 50% observation margin on each side, clipped to the source, at screen resolution (visible side capped at 512 samples). FFT filters retain their reflection/taper settings; other stacks receive an additional reflected and tapered margin. Regional wavelengths, sharp cutoffs and unstable RTP can require observations beyond the window. Compare the native result before interpretation.
+
+Adjust colours (GeoRamp) opens interactive scientific palettes and histograms for the preview or input. Magnetic products use classic_geophysics; signed derivatives and tilt use blue_white_red with symmetric limits around zero. Install GeoRamp opens its plugin-manager entry when unavailable. QGIS resolves the declared GeoRamp dependency; ZIP installs may require a separate installation.
+
 radial_power_spectrum and spectral_analysis offer PSDs, binning and depth fits. Check detrending, normalisation, rings/sectors, k range and samples per bin. Spectral slope depends on the source model and fitted interval: regression error is not geological depth uncertainty.
 
 matched_layer_filters, Wiener and coherence/admittance use prescribed models, noise or layers; they do not independently discover correct geometry. Historical preparation helpers retain recipe compatibility; their names do not prove equivalence with other software.
@@ -36,7 +46,7 @@ See [spectral analysis and scope](../../research/core_expansion_implementation.m
 
 ## Related implementation
 
-[spectral](../../../terraworkbench_core/spectral.py), [spectral_analysis](../../../terraworkbench_core/spectral_analysis.py), [radial_filters](../../../terraworkbench_core/radial_filters.py), [filter_recipes](../../../terraworkbench_core/filter_recipes.py), [oasis_style](../../../terraworkbench_core/oasis_style.py)
+[spectral](../../../terraworkbench_core/spectral.py), [spectral_analysis](../../../terraworkbench_core/spectral_analysis.py), [radial_filters](../../../terraworkbench_core/radial_filters.py), [filter_recipes](../../../terraworkbench_core/filter_recipes.py), [classic_style](../../../terraworkbench_core/classic_style.py)
 
 ---
 

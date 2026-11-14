@@ -35,7 +35,9 @@ include-package-data = false
 target-version = "py39"
 line-length = 88
 # Archived replay packages are frozen evidence and are not linted or edited.
-extend-exclude = ["reproducibility"]
+# Private editorial capture requires environment/QGIS initialization before imports.
+# Preserve its execution ordering; it is excluded from public source and plugin.
+extend-exclude = ["reproducibility", "**/capture_esi_hires.py"]
 
 [tool.ruff.lint]
 # Keep the CI contract explicit so Ruff default-rule changes do not create

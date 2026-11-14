@@ -483,6 +483,7 @@ def _run_combined_spectral_stack(
     feedback,
     output_path,
     keep_intermediate,
+    temporary_prefix=None,
 ):
     """Apply compatible Fourier operators to one prepared forward transform."""
     source_layer = (
@@ -506,6 +507,7 @@ def _run_combined_spectral_stack(
     )
     transformed = np.fft.fft2(prepared)
     combined = np.ones(prepared.shape, dtype=np.complex128)
+    source_values = grid.values
     outputs = []
     last_index = len(steps)
     feedback.pushInfo(
@@ -529,10 +531,14 @@ def _run_combined_spectral_stack(
             fft_state,
             restore_trend=settings[3],
         )
-        values = restore_raster_order(filtered, orientation)
+        unadjusted = restore_raster_order(filtered, orientation)
+        values = algorithm.finalize_values(unadjusted, source_values, step.parameters, context)
+        source_values = unadjusted
         persist = output_path is not None and (keep_intermediate or index == last_index)
         if persist:
             destination = output_path / f"{_safe_output_stem(index, algorithm)}.tif"
+        elif temporary_prefix:
+            destination = Path(temporary_prefix + f"-{index}.tif")
         else:
             destination = Path(
                 QgsProcessingUtils.generateTempFilename(
@@ -983,6 +989,8 @@ class FilterStackDock(QDockWidget):
         self.iface = iface
         self.hillshade = HillshadeActions(self, iface)
         self._build_ui()
+        from .live_preview import LivePreview
+        self.live_preview = LivePreview(self, self.live_preview_layout)
         self.apply_preferences()
         self.retranslate()
         self._connect_project()
@@ -1329,9 +1337,15 @@ class FilterStackDock(QDockWidget):
         self.file_grid.addWidget(self.run_button, 1, 2)
         for column in range(3):
             self.file_grid.setColumnStretch(column, 1)
+        self.live_preview_layout = QVBoxLayout()
+        layout.addLayout(self.live_preview_layout)
         layout.addLayout(self.file_grid)
 
-        self.setWidget(body)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(qt_enum(QFrame, "Shape", "NoFrame"))
+        scroll.setWidget(body)
+        self.setWidget(scroll)
         self._apply_visual_style()
         self.algorithm_button.clicked.connect(self.show_algorithm_picker)
         self.algorithm_search.textChanged.connect(self.filter_algorithm_picker)
@@ -1410,6 +1424,7 @@ class FilterStackDock(QDockWidget):
             }}
             #TerraWorkbenchStepList::item {{ padding: 7px 5px; border-radius: 4px; }}
             #TerraWorkbenchStepList::item:hover {{ background: {hover}; }}
+            #TerraWorkbenchStepList::item:selected {{ background: #147d64; color: white; }}
             #TerraWorkbenchAlgorithmButton {{ text-align: left; padding: 5px 8px; }}
             #TerraWorkbenchAccentButton {{ font-weight: 600; padding: 5px 9px; }}
             #TerraWorkbenchPrimaryButton {{
@@ -1619,7 +1634,8 @@ class FilterStackDock(QDockWidget):
         self.knowledge_button.setText(text("Knowledge…", "Conocimiento…"))
         self.load_button.setText(text("Load stack…", "Cargar pila…"))
         self.save_button.setText(text("Save stack…", "Guardar pila…"))
-        self.run_button.setText(text("Run stack", "Ejecutar pila"))
+        self.run_button.setText(text("Apply", "Aplicar"))
+        self.live_preview.retranslate()
         self.settings_button.setText(text("Settings…", "Configuración…"))
         self.import_grid_action.setText(
             text("Survey grid file…", "Archivo de grilla de levantamiento…")
@@ -1733,6 +1749,8 @@ class FilterStackDock(QDockWidget):
         project.cleared.connect(self._work_project_changed)
 
     def disconnect_project(self):
+        self.live_preview.enabled.setChecked(False)
+        self.live_preview.stop()
         self.hillshade.close()
         if getattr(self, "_survey_notices", None):
             from .survey_workspace_dialog import close_survey_notices
@@ -1796,6 +1814,7 @@ class FilterStackDock(QDockWidget):
             layer
             for layer in QgsProject.instance().mapLayers().values()
             if isinstance(layer, QgsRasterLayer) and layer.isValid() and not layer.customProperty(EFFECT)
+            and not layer.customProperty("TerraWorkbench/livePreview")
         ]
         for layer in sorted(layers, key=lambda item: item.name().casefold()):
             self.layer_combo.addItem(layer.name(), layer.id())
@@ -2064,6 +2083,7 @@ class FilterStackDock(QDockWidget):
                 else text("Required", "Obligatorio")
             )
             editor.editingFinished.connect(self.update_current_parameters)
+            editor.textChanged.connect(self.live_preview.schedule)
             self._parameter_editors[parameter.name()] = (editor, parameter)
             self.parameter_form.addRow(parameter.description(), editor)
             editable += 1

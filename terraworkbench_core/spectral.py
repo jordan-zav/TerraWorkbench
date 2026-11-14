@@ -109,6 +109,17 @@ def finish_fft_grid(filtered, state, restore_trend=True):
     return result
 
 
+def set_rtp_mean(values, source, preserve=True):
+    """Set the mean on valid output cells to the corresponding input mean or zero."""
+    values = np.asarray(values, dtype=float)
+    source = np.asarray(source, dtype=float)
+    valid = np.isfinite(values) & np.isfinite(source)
+    if not valid.any():
+        return values
+    target = np.mean(source[valid]) if preserve else 0.
+    return values + (target - np.mean(values[valid]))
+
+
 def frequency_grid(shape, spacing_northing, spacing_easting):
     """Return east, north and radial angular wavenumbers in radians/unit."""
     rows, columns = shape

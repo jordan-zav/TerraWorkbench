@@ -1,7 +1,7 @@
 # Componentes magneticas e integracion de gradientes
 
 Las API directas de terraworkbench_core.magnetic_components no dependen de QGIS.
-Son una primera implementacion con pruebas sinteticas; no completan todo MAGMAP.
+Son una primera implementacion con pruebas sinteticas.
 
 ## Contrato comun
 
@@ -50,10 +50,7 @@ cancelacion y NoData. Un benchmark adicional contrasta la conversion U/E con
 prismas magneticos independientes de Harmonica en la region central de una
 ventana amplia. El borde finito y la periodicidad no son equivalentes.
 
-Referencias de alcance y convenciones:
-[conversion comercial de componentes](https://help.seequent.com/Oasismontaj/2025.2/Content/gxhelp/fft2con/fft2con_txyz.htm)
-y [forward independiente en ENU de Harmonica](https://www.fatiando.org/harmonica/latest/api/generated/harmonica.prism_magnetic.html).
-No se porta codigo propietario ni se afirma equivalencia numerica con ese producto.
+[Modelo directo en ENU de Harmonica](https://www.fatiando.org/harmonica/latest/api/generated/harmonica.prism_magnetic.html).
 
 ## Operador radial tabulado
 

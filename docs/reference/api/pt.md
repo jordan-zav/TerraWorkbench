@@ -6,7 +6,7 @@
 
 Documento gerado do código. Assinaturas, IDs e docstrings originais preservam idioma técnico; notas editoriais e navegação são localizadas. Dataclasses podem gerar construtores: campos anotados não são necessariamente argumentos. Defaults não são parâmetros físicos recomendados. Definições não contam métodos científicos independentes nem garantem API estável.
 
-92 módulo · 378 definições · 120 operações registradas.
+94 módulo · 406 definições · 120 operações registradas.
 
 | Módulo | Capítulo | Definições | Operações registradas |
 | --- | --- | ---: | ---: |
@@ -20,6 +20,7 @@ Documento gerado do código. Assinaturas, IDs e docstrings originais preservam i
 | basic_processing | [08](../../manuals/pt/08_filtros_espaciales.md) | 6 | 0 |
 | borehole | [22](../../manuals/pt/22_ondas_sondeos.md) | 2 | 2 |
 | channel_filters | [06](../../manuals/pt/06_perfiles_qc.md) | 6 | 0 |
+| classic_style | [09](../../manuals/pt/09_fft_espectros.md) | 5 | 0 |
 | compact_magnetics | [10](../../manuals/pt/10_magnetometria.md) | 2 | 2 |
 | complex_calibration | [20](../../manuals/pt/20_em_mt.md) | 2 | 2 |
 | coordinates | [03](../../manuals/pt/03_coordenadas.md) | 1 | 1 |
@@ -38,7 +39,7 @@ Documento gerado do código. Assinaturas, IDs e docstrings originais preservam i
 | gravity_network | [11](../../manuals/pt/11_gravimetria.md) | 2 | 2 |
 | gravity_profiles | [11](../../manuals/pt/11_gravimetria.md) | 2 | 2 |
 | grid_tools | [08](../../manuals/pt/08_filtros_espaciales.md) | 6 | 0 |
-| gridding_methods | [07](../../manuals/pt/07_nivelacion_gridding.md) | 7 | 0 |
+| gridding_methods | [07](../../manuals/pt/07_nivelacion_gridding.md) | 14 | 0 |
 | inversion | [15](../../manuals/pt/15_inversion_potencial.md) | 9 | 0 |
 | inversion_diagnostics | [17](../../manuals/pt/17_resolucion_incertidumbre.md) | 4 | 2 |
 | inversion_evidence | [17](../../manuals/pt/17_resolucion_incertidumbre.md) | 3 | 0 |
@@ -50,6 +51,7 @@ Documento gerado do código. Assinaturas, IDs e docstrings originais preservam i
 | layered_em | [20](../../manuals/pt/20_em_mt.md) | 6 | 6 |
 | line_processing | [07](../../manuals/pt/07_nivelacion_gridding.md) | 5 | 0 |
 | lineament_geometry | [14](../../manuals/pt/14_estructura_profundidad.md) | 1 | 1 |
+| live_preview | [09](../../manuals/pt/09_fft_espectros.md) | 7 | 0 |
 | magnetic_compensation | [06](../../manuals/pt/06_perfiles_qc.md) | 7 | 0 |
 | magnetic_components | [10](../../manuals/pt/10_magnetometria.md) | 2 | 2 |
 | magnetic_pipeline | [10](../../manuals/pt/10_magnetometria.md) | 4 | 0 |
@@ -58,7 +60,6 @@ Documento gerado do código. Assinaturas, IDs e docstrings originais preservam i
 | matrix_free_resolution | [17](../../manuals/pt/17_resolucion_incertidumbre.md) | 2 | 2 |
 | multisensor_fusion | [23](../../manuals/pt/23_integracion_experimentos.md) | 5 | 0 |
 | multisensor_project | [23](../../manuals/pt/23_integracion_experimentos.md) | 2 | 0 |
-| oasis_style | [09](../../manuals/pt/09_fft_espectros.md) | 5 | 0 |
 | operation_jobs | [25](../../manuals/pt/25_api_workflows.md) | 4 | 0 |
 | operation_workflows | [25](../../manuals/pt/25_api_workflows.md) | 2 | 0 |
 | operations | [25](../../manuals/pt/25_api_workflows.md) | 3 | 0 |
@@ -81,7 +82,7 @@ Documento gerado do código. Assinaturas, IDs e docstrings originais preservam i
 | self_potential_pde | [21](../../manuals/pt/21_potencial_espontaneo.md) | 2 | 2 |
 | source_depth | [14](../../manuals/pt/14_estructura_profundidad.md) | 9 | 6 |
 | spatial_constraints | [15](../../manuals/pt/15_inversion_potencial.md) | 1 | 1 |
-| spectral | [09](../../manuals/pt/09_fft_espectros.md) | 18 | 0 |
+| spectral | [09](../../manuals/pt/09_fft_espectros.md) | 19 | 0 |
 | spectral_analysis | [09](../../manuals/pt/09_fft_espectros.md) | 4 | 4 |
 | spherical_mvi | [16](../../manuals/pt/16_mvi_conjunta.md) | 15 | 0 |
 | structural_attributes | [14](../../manuals/pt/14_estructura_profundidad.md) | 3 | 3 |
@@ -91,6 +92,7 @@ Documento gerado do código. Assinaturas, IDs e docstrings originais preservam i
 | survey_grid_pipeline | [07](../../manuals/pt/07_nivelacion_gridding.md) | 1 | 0 |
 | survey_map | [05](../../manuals/pt/05_bases_canales.md) | 6 | 0 |
 | survey_processing | [07](../../manuals/pt/07_nivelacion_gridding.md) | 1 | 0 |
+| survey_profile_edits | [05](../../manuals/pt/05_bases_canales.md) | 13 | 0 |
 | survey_recipes | [05](../../manuals/pt/05_bases_canales.md) | 1 | 0 |
 | survey_store | [05](../../manuals/pt/05_bases_canales.md) | 22 | 0 |
 | survey_text_import | [04](../../manuals/pt/04_importacion.md) | 11 | 0 |
@@ -388,7 +390,7 @@ Independent spatial processing; no QGIS or proprietary runtime required.
 Global minimum-bending TPS, or explicitly local TPS approximation.
 
 Coordinates use a single isotropic scale. Smoothing is dimensionless in
-those normalized coordinates, not tension or a RANGRID parameter.
+those normalized coordinates, not tension.
 Coincident observations are averaged deterministically.
 
 ### ThinPlateGridder.__init__
@@ -412,19 +414,11 @@ holes after every pass. This is not a claimed gridflt9 reproduction.
 
     smooth_least_squares_9x9(values, passes=2, canceled=None)
 
-Optional GRIDFLT9 least-squares kernel, with approximate edge handling.
+Removed in 1.1.0; always raises NotImplementedError.
 
-Uses the published 15 coefficients without weight normalization. Their
-rounded sum is 1.0000001, so a constant has that small gain each pass.
-The default is two passes to match the ARCHIE Sandbox smoothing stage.
-This is independent of the existing binomial smooth_nine_point default.
-
-Nearest finite cells fill NoData once before convolution; ties use SciPy's
-distance_transform_edt ordering. Each pass repeats the outermost cells
-outside the array. The original NoData mask is reapplied after all passes.
-This preserves shape and holes but does not claim Oasis's proprietary
-boundary/NoData preparation. Agreement with GRIDFLT9 is expected only
-when the entire radius 4 * passes neighborhood has finite input support.
+The optional GX example coefficients are no longer distributed.
+Use TerraWorkbench smooth_nine_point for binomial smoothing or
+circular_median for a nonlinear median filter. No fallback is applied.
 
 ### circular_median
 
@@ -554,6 +548,59 @@ Zero-phase narrow-band rejection on one regular finite time run.
 Geophysical use and limitations: doi:10.1007/s00024-023-03323-w.
 Independent second-order IIR implementation, not the paper's adaptive
 sinusoidal subtraction. Forward/backward filtering squares its response.
+
+
+## classic_style
+
+Independent edge-plane FFT preparations and supported-grid derivatives.
+
+Legacy biharmonic fill and Burg axis prediction are explicit alternatives.
+Retained residuals and masks are preserved.
+
+[Fonte](../../../terraworkbench_core/classic_style.py) · [Capítulo](../../manuals/pt/09_fft_espectros.md)
+
+### classic_fft_size
+
+    classic_fft_size(n)
+
+Helper de compatibilidade que escolhe família de tamanhos FFT implementada. Comparações históricas têm intervalo limitado; o nome não demonstra equivalência geral de motores.
+
+Nota editorial baseada na implementação; não é nova validação científica.
+
+### prepare_independent
+
+    prepare_independent(data, expanded_shape=None, max_unknown=250000)
+
+Prepara grade por tratamento biharmônico e expansão explícita com limite de incógnitas. Exige scikit-image; preparação difere da filtragem posterior.
+
+Nota editorial baseada na implementação; não é nova validação científica.
+
+### prepare_prediction
+
+    prepare_prediction(data, expanded_shape=None, max_unknown=250000)
+
+Remove the edge plane and predict missing values along both axes.
+
+The documented FFT-preparation defaults determine model length and rolloff.
+Burg fitting is independent Python, with distance-weighted axis predictions.
+It never calls Geosoft or changes retained measurements.
+
+### central_valid
+
+    central_valid(a, axis, spacing)
+
+Calcula diferença central em eixo/espaçamento explícitos usando vizinhos finitos. Bordas sem suporte ficam ausentes, sem inventar derivada unilateral.
+
+Nota editorial baseada na implementação; não é nova validação científica.
+
+### composite_derivatives
+
+    composite_derivatives(values, spacing, vertical_positive='down', preparation='edge_plane_biharmonic')
+
+Central horizontal derivatives and independently prepared FFT verticals.
+
+No Geosoft imports or process calls. Preparation selects legacy biharmonic
+filling or independent Burg prediction; neither claims exact vendor parity.
 
 
 ## compact_magnetics
@@ -947,7 +994,7 @@ Independent sequential raster recipes backed by TerraWorkbench FFT helpers.
 
 ### apply_proposals
 
-    apply_proposals(grid_south_to_north, cell_size, proposals, *, base_grids=None, inclination=None, declination=None, padding=16, angle_units='degrees', canceled=None, base_units=None, composite_derivative_method='finite_difference', vertical_positive='down', composite_preparation=None, horizontal_fft_convention='oasis', validate_only=False, stage_callback=None)
+    apply_proposals(grid_south_to_north, cell_size, proposals, *, base_grids=None, inclination=None, declination=None, padding=16, angle_units='degrees', canceled=None, base_units=None, composite_derivative_method='finite_difference', vertical_positive='down', composite_preparation=None, horizontal_fft_convention='classic', validate_only=False, stage_callback=None)
 
 Return named final arrays and JSON-safe provenance for up to three recipes.
 
@@ -1370,14 +1417,34 @@ Independent gridders used by TerraWorkbench survey processing.
 
 Minimum curvature defaults to multilevel finite-difference collocation with
 Briggs curvature constraints at spatially averaged observations. A direct
-variational solver remains available for explicit comparisons. Neither solver
-is a certified replica of RANGRID.
+variational solver remains available.
 
 The sinc implementation is an interpolator, not a raster filter.  It uses a
 separable windowed cardinal sinc kernel on a regular sample lattice.
 Scattered GPS samples must be gridded before sinc expansion.
 
 [Fonte](../../../terraworkbench_core/gridding_methods.py) · [Capítulo](../../manuals/pt/07_nivelacion_gridding.md)
+
+### MinimumCurvatureNodeLimitError
+
+    class MinimumCurvatureNodeLimitError
+
+The working domain exceeds the default multilevel budget.
+
+### MinimumCurvatureNodeLimitError.__init__
+
+    MinimumCurvatureNodeLimitError.__init__(self, nodes, suggested_cell_size)
+
+Record the working node count and the suggested cell size in CRS units.
+
+### minimum_curvature_cell_size
+
+    minimum_curvature_cell_size(width, height)
+
+Suggest a square cell size that fits the multilevel working-node budget.
+
+Width and height are the combined spans of the requested cell centers and
+observations. Reserve an extra node for alignment to the requested grid.
 
 ### MinimumCurvatureGridder
 
@@ -1387,21 +1454,20 @@ Independent finite-difference minimum-curvature interpolation.
 
 Briggs constraints couple off-node observations to curvature. Natural
 discrete energy boundaries and grid-unit
-tension are independently defined, not certified RANGRID equivalents.
+tension are defined by this solver.
 boundary_mode="linear_ghost" optionally applies experimental zero normal
 curvature at the two outer ghost rings (multilevel, zero tension only).
 Multilevel iteration uses the seed, refinement and pass controls. The
 optional variational solver records the controls it does not use.
 
-blanking_metric='oasis_grid' is an explicit compatibility mode for
-the observed RANGRID DSF=1 mask behavior.  It rounds each input location
+blanking_metric='cell_manhattan' is a cell-based blanking mode. It rounds each input location
 to the nearest output cell and measures Manhattan distance between cell
 indices.  The regular euclidean and manhattan modes retain their
 continuous-coordinate semantics.
 
 ### MinimumCurvatureGridder.__init__
 
-    MinimumCurvatureGridder.__init__(self, coordinates, values, cell_size, *, blanking_distance=0.0, desample_factor=1, search_radius=0.0, weighting_power=2.0, weighting_slope=0.0, tolerance=0.01258, pass_tolerance=99.0, max_iterations=100, tension=0.0, coarse_grid=16, solver='multilevel', blanking_metric='euclidean', boundary_mode='natural')
+    MinimumCurvatureGridder.__init__(self, coordinates, values, cell_size, *, blanking_distance=0.0, desample_factor=1, search_radius=0.0, weighting_power=2.0, weighting_slope=0.0, tolerance=0.01258, pass_tolerance=99.0, max_iterations=100, tension=0.0, coarse_grid=16, solver='multilevel', blanking_metric='euclidean', boundary_mode='natural', average_cells=True, allow_large_grid=False)
 
 Prepara observações e controles da mínima curvatura experimental: suporte, desamostragem, tolerâncias, tensão, fronteiras e solver. Células pequenas e limites de iteração não garantem resolução ou convergência.
 
@@ -1409,9 +1475,37 @@ Nota editorial baseada na implementação; não é nova validação científica.
 
 ### MinimumCurvatureGridder.grid
 
-    MinimumCurvatureGridder.grid(self, x_axis, y_axis, canceled=None, progress=None)
+    MinimumCurvatureGridder.grid(self, x_axis, y_axis, canceled=None, progress=None, *, boundary=None)
 
 Return a float grid indexed as rows by y and columns by x.
+
+### suggest_flight_cell_size
+
+    suggest_flight_cell_size(coordinates, line_ids, divisor=4)
+
+Return median projected flight-line spacing divided by 4 or 5.
+
+### BidirectionalGridder
+
+    class BidirectionalGridder
+
+Grid approximately parallel profiles in two passes on a flight-aligned grid.
+
+Linear interpolation follows each flight's projected track. Cross-track
+interpolation is linear or shape-preserving cubic (PCHIP). The resulting
+aligned grid is sampled bilinearly at the requested output centers.
+
+### BidirectionalGridder.__init__
+
+    BidirectionalGridder.__init__(self, coordinates, values, line_ids, *, trend=False, cross_method='linear', blanking_distance=0.0, max_line_gap=0.0, max_sample_gap=0.0)
+
+Configure flight profiles, cross-line interpolation and support limits.
+
+### BidirectionalGridder.grid
+
+    BidirectionalGridder.grid(self, x_axis, y_axis, canceled=None, *, boundary=None)
+
+Return rows by ascending y and columns by ascending x, with NaN gaps.
 
 ### SincGridder
 
@@ -2012,6 +2106,73 @@ diagonals. Isolated pixels and short-path omissions are counted. No line
 smoothing, gap bridging, geological interpretation or CRS transformation.
 
 
+## live_preview
+
+Screen-resolution raster windows and cooperative latest-request cancellation.
+
+Preview windows include real observations around the viewport before the FFT
+engine adds reflection and taper. They approximate a full-grid calculation;
+long wavelength operators still depend on observations outside this window.
+
+[Fonte](../../../terraworkbench_core/live_preview.py) · [Capítulo](../../manuals/pt/09_fft_espectros.md)
+
+### PreviewWindow
+
+    class PreviewWindow
+
+GDAL source rectangle and bounded screen-resolution output dimensions.
+
+Campos anotados na classe:
+
+    xoff: int
+    yoff: int
+    width: int
+    height: int
+    columns: int
+    rows: int
+    transform: tuple
+
+### preview_window
+
+    preview_window(transform, shape, extent, screen, margin=0.5, max_side=768)
+
+Clip a north-up viewport plus margin to the source, without upsampling.
+
+Extent is xmin, ymin, xmax, ymax in source coordinates. Margin is a fraction
+of each visible dimension on each side. Output spacing follows screen
+pixels, capped at max_side for the visible portion, including on huge files.
+
+### LatestRequest
+
+    class LatestRequest
+
+Invalidate stale results and signal cancellation before the debounce ends.
+
+### LatestRequest.__init__
+
+    LatestRequest.__init__(self)
+
+Start with no pending request.
+
+### LatestRequest.replace
+
+    LatestRequest.replace(self)
+
+Cancel the previous token and return a new generation and event.
+
+### LatestRequest.accepts
+
+    LatestRequest.accepts(self, generation)
+
+Return whether a result still belongs to the latest live request.
+
+### product_palette
+
+    product_palette(algorithm_id)
+
+Choose GeoRamp's magnetic palette or a zero-centred signed palette.
+
+
 ## magnetic_compensation
 
 Explicit base-station, scalar TL and static vector norm calibration.
@@ -2156,6 +2317,7 @@ Campos anotados na classe:
     taper_percent: float = 0.0
     nodata_policy: str = 'nearest'
     max_gain: float = 100.0
+    preserve_rtp_mean: bool = True
 
 ### MagneticPipelineOptions.validate
 
@@ -2171,7 +2333,7 @@ Nota editorial baseada na implementação; não é nova validação científica.
 
 Branch from one padded RTP; crop/mask only final products.
 
-No removed trend is restored to transformed anomalies. RMI retains the input.
+Only the published RTP receives the selected mean. RMI retains the input.
 True-north declination follows the host convention: grid angle = true angle
 + supplied grid convergence. Callers must derive convergence for their CRS.
 
@@ -2194,7 +2356,7 @@ Standalone Archie adapter for Terra magnetic products; no host SDK required.
 
 ### compute_magnetic_products
 
-    compute_magnetic_products(grid_south_to_north, cell_size, *, inclination, declination, continuation_height=500, padding=16, angle_units='degrees', canceled=None, derivative_method='finite_difference', vertical_positive='down', composite_preparation=None)
+    compute_magnetic_products(grid_south_to_north, cell_size, *, inclination, declination, continuation_height=500, padding=16, angle_units='degrees', canceled=None, derivative_method='finite_difference', vertical_positive='down', composite_preparation=None, preserve_rtp_mean=True)
 
 Compute products from an nT grid; declination is measured from grid north.
 
@@ -2379,59 +2541,6 @@ output_directory. Optional: vector_path, vector_class_field,
 vector_operation, vector_source_crs, proj_grid_directory, buffers_m,
 thresholds, offsets_m, terrain_kind ('dtm'/'relief'), terrain_scale_m,
 terrain_elevation_unit ('m'/'ft'), report_percentile.
-
-
-## oasis_style
-
-Independent edge-plane FFT preparations and supported-grid derivatives.
-
-Legacy biharmonic fill and Burg axis prediction are explicit alternatives.
-Neither uses the Geosoft runtime. Retained residuals and masks are preserved.
-
-[Fonte](../../../terraworkbench_core/oasis_style.py) · [Capítulo](../../manuals/pt/09_fft_espectros.md)
-
-### oasis_observed_fft_size
-
-    oasis_observed_fft_size(n)
-
-Helper de compatibilidade que escolhe família de tamanhos FFT implementada. Comparações históricas têm intervalo limitado; o nome não demonstra equivalência geral de motores.
-
-Nota editorial baseada na implementação; não é nova validação científica.
-
-### prepare_independent
-
-    prepare_independent(data, expanded_shape=None, max_unknown=250000)
-
-Prepara grade por tratamento biharmônico e expansão explícita com limite de incógnitas. Exige scikit-image; preparação difere da filtragem posterior.
-
-Nota editorial baseada na implementação; não é nova validação científica.
-
-### prepare_prediction
-
-    prepare_prediction(data, expanded_shape=None, max_unknown=250000)
-
-Remove the edge plane and predict missing values along both axes.
-
-The documented FFT-preparation defaults determine model length and rolloff.
-Burg fitting is independent Python, with distance-weighted axis predictions.
-It never calls Geosoft or changes retained measurements.
-
-### central_valid
-
-    central_valid(a, axis, spacing)
-
-Calcula diferença central em eixo/espaçamento explícitos usando vizinhos finitos. Bordas sem suporte ficam ausentes, sem inventar derivada unilateral.
-
-Nota editorial baseada na implementação; não é nova validação científica.
-
-### composite_derivatives
-
-    composite_derivatives(values, spacing, vertical_positive='down', preparation='edge_plane_biharmonic')
-
-Central horizontal derivatives and independently prepared FFT verticals.
-
-No Geosoft imports or process calls. Preparation selects legacy biharmonic
-filling or independent Burg prediction; neither claims exact vendor parity.
 
 
 ## operation_jobs
@@ -3521,6 +3630,12 @@ Returns the prepared grid and a state dictionary consumed by
 
 Crop an FFT result to the original footprint and optionally restore trend.
 
+### set_rtp_mean
+
+    set_rtp_mean(values, source, preserve=True)
+
+Set the mean on valid output cells to the corresponding input mean or zero.
+
 ### frequency_grid
 
     frequency_grid(shape, spacing_northing, spacing_easting)
@@ -4163,6 +4278,94 @@ Tiled survey gridding and directional crosshatch fusion.
 Kernel de grade por tiles com core, halo, raio e callbacks fornecidos. Opções podem distinguir direções; não escolhe automaticamente SRC, resolução ou física.
 
 Nota editorial baseada na implementação; não é nova validação científica.
+
+
+## survey_profile_edits
+
+Exact sample editing and catalogue publication for line profiles.
+
+[Fonte](../../../terraworkbench_core/survey_profile_edits.py) · [Capítulo](../../manuals/pt/05_bases_canales.md)
+
+### ProfileEdits
+
+    class ProfileEdits
+
+Keep reversible, sparse edits to a channel in acquisition order.
+
+### ProfileEdits.__init__
+
+    ProfileEdits.__init__(self, values)
+
+Copy a vector of source samples into an independent draft.
+
+### ProfileEdits.operations
+
+    ProfileEdits.operations(self)
+
+Return the applied operations in chronological order.
+
+### ProfileEdits.dummy
+
+    ProfileEdits.dummy(self, first, last)
+
+Set the inclusive sample interval to dummy.
+
+### ProfileEdits.undo
+
+    ProfileEdits.undo(self)
+
+Reverse the most recent applied edit.
+
+### ProfileEdits.redo
+
+    ProfileEdits.redo(self)
+
+Reapply the most recently undone edit.
+
+### ProfileEdits.interpolate
+
+    ProfileEdits.interpolate(self, axis, first, last, method, *, axis_name=None)
+
+Fill bounded gaps in the selection by linear or Akima interpolation.
+
+### ProfileEdits.spike_candidates
+
+    ProfileEdits.spike_candidates(self, threshold, *, relative=True)
+
+Find local outliers with Hampel or an absolute median residual limit.
+
+### ProfileEdits.apply_spikes
+
+    ProfileEdits.apply_spikes(self, indices, threshold, *, relative=True)
+
+Mark the previewed samples dummy and retain detector parameters.
+
+### ProfileEdits.fourth_difference
+
+    ProfileEdits.fourth_difference(self)
+
+Return centered fourth sample differences, propagating dummies.
+
+### ProfileEdits.statistics
+
+    ProfileEdits.statistics(self, first, last)
+
+Return valid count, dummy count, min, max, mean and population SD.
+
+### ProfileEdits.changes
+
+    ProfileEdits.changes(self)
+
+Return sample indices and values that differ from the source.
+
+### publish_profile_edits
+
+    publish_profile_edits(store, database, source, output, inputs, unit, edits)
+
+Publish a row-aligned derivative from pinned catalogue versions.
+
+Edit records contain physical row positions, changed values and recipes.
+Other rows retain their source values.
 
 
 ## survey_recipes

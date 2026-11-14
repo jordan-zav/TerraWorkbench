@@ -2,9 +2,9 @@
   "schema_version": 2,
   "scope": "AST inventory; not all definitions are stable user API or registered GUI processes",
   "source_hash_scheme": "sha256 UTF-8 source with LF newlines",
-  "module_count": 92,
+  "module_count": 94,
   "registered_operation_count": 120,
-  "definition_count": 378,
+  "definition_count": 406,
   "modules": [
     {
       "module": "__init__",
@@ -270,7 +270,7 @@
     {
       "module": "basic_processing",
       "chapter": "08_filtros_espaciales.md",
-      "source_sha256": "481f750bd9a2b2ca35fa9b41a060a12c41cef0079ac37581abd1f68ca78cc351",
+      "source_sha256": "1aaa4122aace5ffda43949ed6acdc3e2b43a13ce2954d0a7f9e8020d13a1510d",
       "description": "Independent spatial processing; no QGIS or proprietary runtime required.",
       "summary": "Independent spatial processing; no QGIS or proprietary runtime required.",
       "definitions": [
@@ -278,7 +278,7 @@
           "name": "ThinPlateGridder",
           "line": 7,
           "signature": "class ThinPlateGridder",
-          "description": "Global minimum-bending TPS, or explicitly local TPS approximation.\n\nCoordinates use a single isotropic scale. Smoothing is dimensionless in\nthose normalized coordinates, not tension or a RANGRID parameter.\nCoincident observations are averaged deterministically.",
+          "description": "Global minimum-bending TPS, or explicitly local TPS approximation.\n\nCoordinates use a single isotropic scale. Smoothing is dimensionless in\nthose normalized coordinates, not tension.\nCoincident observations are averaged deterministically.",
           "description_origin": "source_docstring",
           "fields": [],
           "summary": "Global minimum-bending TPS, or explicitly local TPS approximation."
@@ -303,16 +303,16 @@
         },
         {
           "name": "smooth_least_squares_9x9",
-          "line": 98,
+          "line": 86,
           "signature": "smooth_least_squares_9x9(values, passes=2, canceled=None)",
-          "description": "Optional GRIDFLT9 least-squares kernel, with approximate edge handling.\n\nUses the published 15 coefficients without weight normalization. Their\nrounded sum is 1.0000001, so a constant has that small gain each pass.\nThe default is two passes to match the ARCHIE Sandbox smoothing stage.\nThis is independent of the existing binomial smooth_nine_point default.\n\nNearest finite cells fill NoData once before convolution; ties use SciPy's\ndistance_transform_edt ordering. Each pass repeats the outermost cells\noutside the array. The original NoData mask is reapplied after all passes.\nThis preserves shape and holes but does not claim Oasis's proprietary\nboundary/NoData preparation. Agreement with GRIDFLT9 is expected only\nwhen the entire radius 4 * passes neighborhood has finite input support.",
+          "description": "Removed in 1.1.0; always raises NotImplementedError.\n\nThe optional GX example coefficients are no longer distributed.\nUse TerraWorkbench smooth_nine_point for binomial smoothing or\ncircular_median for a nonlinear median filter. No fallback is applied.",
           "description_origin": "source_docstring",
           "fields": [],
-          "summary": "Optional GRIDFLT9 least-squares kernel, with approximate edge handling."
+          "summary": "Removed in 1.1.0; always raises NotImplementedError."
         },
         {
           "name": "circular_median",
-          "line": 141,
+          "line": 103,
           "signature": "circular_median(values, radius=1, canceled=None)",
           "description": "Median over a pixel-centre disk, not an angular/circular-statistics median.\n\nOffsets satisfy dx²+dy² <= radius². Ignore outside/NoData neighbors but\npreserve the original missing footprint. Even valid counts use their middle\npair average. Bounded gather blocks avoid a full image x footprint array.",
           "description_origin": "source_docstring",
@@ -321,7 +321,7 @@
         },
         {
           "name": "automatic_gain_control",
-          "line": 170,
+          "line": 132,
           "signature": "automatic_gain_control(values, window=11, floor_fraction=0.05, max_gain=10.0)",
           "description": "Global RMS / local RMS gain, with an RMS floor and gain cap.\n\nSquare odd-sized window in pixels; no mean subtraction. Units are retained\nalgebraically, but amplitude is altered and is unsuitable for inversion.",
           "description_origin": "source_docstring",
@@ -446,6 +446,61 @@
           "description_origin": "source_docstring",
           "fields": [],
           "summary": "Zero-phase narrow-band rejection on one regular finite time run."
+        }
+      ],
+      "operations": []
+    },
+    {
+      "module": "classic_style",
+      "chapter": "09_fft_espectros.md",
+      "source_sha256": "70f546bee42e2b3b8133a6e00e1b090e9074d6b3af62fd7328c237fd5de19366",
+      "description": "Independent edge-plane FFT preparations and supported-grid derivatives.\n\nLegacy biharmonic fill and Burg axis prediction are explicit alternatives.\nRetained residuals and masks are preserved.",
+      "summary": "Independent edge-plane FFT preparations and supported-grid derivatives.",
+      "definitions": [
+        {
+          "name": "classic_fft_size",
+          "line": 12,
+          "signature": "classic_fft_size(n)",
+          "description": "Compatibility helper selecting an implemented FFT-size family. Historical comparisons cover a limited tested range; the name establishes no general engine equivalence.",
+          "description_origin": "authored_manual_note",
+          "fields": [],
+          "summary": "Compatibility helper selecting an implemented FFT-size family. Historical comparisons cover a limited tested range; the name establishes no general engine equivalence."
+        },
+        {
+          "name": "prepare_independent",
+          "line": 32,
+          "signature": "prepare_independent(data, expanded_shape=None, max_unknown=250000)",
+          "description": "Prepare a grid with biharmonic treatment and explicit expansion under an unknown-count budget. Requires scikit-image; preparation is distinct from subsequent filtering.",
+          "description_origin": "authored_manual_note",
+          "fields": [],
+          "summary": "Prepare a grid with biharmonic treatment and explicit expansion under an unknown-count budget. Requires scikit-image; preparation is distinct from subsequent filtering."
+        },
+        {
+          "name": "prepare_prediction",
+          "line": 168,
+          "signature": "prepare_prediction(data, expanded_shape=None, max_unknown=250000)",
+          "description": "Remove the edge plane and predict missing values along both axes.\n\nThe documented FFT-preparation defaults determine model length and rolloff.\nBurg fitting is independent Python, with distance-weighted axis predictions.\nIt never calls Geosoft or changes retained measurements.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Remove the edge plane and predict missing values along both axes."
+        },
+        {
+          "name": "central_valid",
+          "line": 249,
+          "signature": "central_valid(a, axis, spacing)",
+          "description": "Compute a central difference along an explicit axis/spacing using finite neighbours. Unsupported boundaries remain missing rather than inventing one-sided derivatives.",
+          "description_origin": "authored_manual_note",
+          "fields": [],
+          "summary": "Compute a central difference along an explicit axis/spacing using finite neighbours. Unsupported boundaries remain missing rather than inventing one-sided derivatives."
+        },
+        {
+          "name": "composite_derivatives",
+          "line": 274,
+          "signature": "composite_derivatives(values, spacing, vertical_positive='down', preparation='edge_plane_biharmonic')",
+          "description": "Central horizontal derivatives and independently prepared FFT verticals.\n\nNo Geosoft imports or process calls. Preparation selects legacy biharmonic\nfilling or independent Burg prediction; neither claims exact vendor parity.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Central horizontal derivatives and independently prepared FFT verticals."
         }
       ],
       "operations": []
@@ -899,14 +954,14 @@
     {
       "module": "filter_recipes",
       "chapter": "09_fft_espectros.md",
-      "source_sha256": "28becf94762084110bb46bb88db82e41f9ce7497a97f3494820b70ce03a0be35",
+      "source_sha256": "e3851b21b2c70c350cc005c48dc83cd61a803047ede2f5893ef369734a73b32e",
       "description": "Independent sequential raster recipes backed by TerraWorkbench FFT helpers.",
       "summary": "Independent sequential raster recipes backed by TerraWorkbench FFT helpers.",
       "definitions": [
         {
           "name": "apply_proposals",
           "line": 85,
-          "signature": "apply_proposals(grid_south_to_north, cell_size, proposals, *, base_grids=None, inclination=None, declination=None, padding=16, angle_units='degrees', canceled=None, base_units=None, composite_derivative_method='finite_difference', vertical_positive='down', composite_preparation=None, horizontal_fft_convention='oasis', validate_only=False, stage_callback=None)",
+          "signature": "apply_proposals(grid_south_to_north, cell_size, proposals, *, base_grids=None, inclination=None, declination=None, padding=16, angle_units='degrees', canceled=None, base_units=None, composite_derivative_method='finite_difference', vertical_positive='down', composite_preparation=None, horizontal_fft_convention='classic', validate_only=False, stage_callback=None)",
           "description": "Return named final arrays and JSON-safe provenance for up to three recipes.\n\nEach proposal is {name, base, steps:[{filter, param, ...}]}. Bases raw/RMI\nselect the caller grid; others must exist in base_grids. UC param is height\nmetres. AGC param/window_metres is full square width; default 10 m with gain\ncapped at 10. LP/HP param is Gaussian sigma metres; MEDIAN/STD/VAR param\nis full square width metres. These five filters require explicit parameters.\nSTD and VAR use population moments. Each chain pads once in listed order. Original\nsupport is restored only on publication. No proprietary AGC parity claimed.",
           "description_origin": "source_docstring",
           "fields": [],
@@ -914,7 +969,7 @@
         },
         {
           "name": "radial_spectrum",
-          "line": 624,
+          "line": 635,
           "signature": "radial_spectrum(grid_south_to_north, cell_size, *, bins=96, units='nT', canceled=None)",
           "description": "JSON-safe Terra radial mean power, scaled by N squared (not PSD density).",
           "description_origin": "source_docstring",
@@ -1363,23 +1418,50 @@
     {
       "module": "gridding_methods",
       "chapter": "07_nivelacion_gridding.md",
-      "source_sha256": "02fab0fceed2f24331a9fa98d4b24dd921d7b2e21c040d29356aad3e44820adf",
-      "description": "Independent gridders used by TerraWorkbench survey processing.\n\nMinimum curvature defaults to multilevel finite-difference collocation with\nBriggs curvature constraints at spatially averaged observations. A direct\nvariational solver remains available for explicit comparisons. Neither solver\nis a certified replica of RANGRID.\n\nThe sinc implementation is an interpolator, not a raster filter.  It uses a\nseparable windowed cardinal sinc kernel on a regular sample lattice.\nScattered GPS samples must be gridded before sinc expansion.",
+      "source_sha256": "5158546f87623c52feb6d498452aa800c761ef2116c09850d9a25fa616d2a3d9",
+      "description": "Independent gridders used by TerraWorkbench survey processing.\n\nMinimum curvature defaults to multilevel finite-difference collocation with\nBriggs curvature constraints at spatially averaged observations. A direct\nvariational solver remains available.\n\nThe sinc implementation is an interpolator, not a raster filter.  It uses a\nseparable windowed cardinal sinc kernel on a regular sample lattice.\nScattered GPS samples must be gridded before sinc expansion.",
       "summary": "Independent gridders used by TerraWorkbench survey processing.",
       "definitions": [
         {
+          "name": "MinimumCurvatureNodeLimitError",
+          "line": 267,
+          "signature": "class MinimumCurvatureNodeLimitError",
+          "description": "The working domain exceeds the default multilevel budget.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "The working domain exceeds the default multilevel budget."
+        },
+        {
+          "name": "MinimumCurvatureNodeLimitError.__init__",
+          "line": 270,
+          "signature": "MinimumCurvatureNodeLimitError.__init__(self, nodes, suggested_cell_size)",
+          "description": "Record the working node count and the suggested cell size in CRS units.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Record the working node count and the suggested cell size in CRS units."
+        },
+        {
+          "name": "minimum_curvature_cell_size",
+          "line": 281,
+          "signature": "minimum_curvature_cell_size(width, height)",
+          "description": "Suggest a square cell size that fits the multilevel working-node budget.\n\nWidth and height are the combined spans of the requested cell centers and\nobservations. Reserve an extra node for alignment to the requested grid.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Suggest a square cell size that fits the multilevel working-node budget."
+        },
+        {
           "name": "MinimumCurvatureGridder",
-          "line": 341,
+          "line": 419,
           "signature": "class MinimumCurvatureGridder",
-          "description": "Independent finite-difference minimum-curvature interpolation.\n\nBriggs constraints couple off-node observations to curvature. Natural\ndiscrete energy boundaries and grid-unit\ntension are independently defined, not certified RANGRID equivalents.\nboundary_mode=\"linear_ghost\" optionally applies experimental zero normal\ncurvature at the two outer ghost rings (multilevel, zero tension only).\nMultilevel iteration uses the seed, refinement and pass controls. The\noptional variational solver records the controls it does not use.\n\nblanking_metric='oasis_grid' is an explicit compatibility mode for\nthe observed RANGRID DSF=1 mask behavior.  It rounds each input location\nto the nearest output cell and measures Manhattan distance between cell\nindices.  The regular euclidean and manhattan modes retain their\ncontinuous-coordinate semantics.",
+          "description": "Independent finite-difference minimum-curvature interpolation.\n\nBriggs constraints couple off-node observations to curvature. Natural\ndiscrete energy boundaries and grid-unit\ntension are defined by this solver.\nboundary_mode=\"linear_ghost\" optionally applies experimental zero normal\ncurvature at the two outer ghost rings (multilevel, zero tension only).\nMultilevel iteration uses the seed, refinement and pass controls. The\noptional variational solver records the controls it does not use.\n\nblanking_metric='cell_manhattan' is a cell-based blanking mode. It rounds each input location\nto the nearest output cell and measures Manhattan distance between cell\nindices.  The regular euclidean and manhattan modes retain their\ncontinuous-coordinate semantics.",
           "description_origin": "source_docstring",
           "fields": [],
           "summary": "Independent finite-difference minimum-curvature interpolation."
         },
         {
           "name": "MinimumCurvatureGridder.__init__",
-          "line": 361,
-          "signature": "MinimumCurvatureGridder.__init__(self, coordinates, values, cell_size, *, blanking_distance=0.0, desample_factor=1, search_radius=0.0, weighting_power=2.0, weighting_slope=0.0, tolerance=0.01258, pass_tolerance=99.0, max_iterations=100, tension=0.0, coarse_grid=16, solver='multilevel', blanking_metric='euclidean', boundary_mode='natural')",
+          "line": 438,
+          "signature": "MinimumCurvatureGridder.__init__(self, coordinates, values, cell_size, *, blanking_distance=0.0, desample_factor=1, search_radius=0.0, weighting_power=2.0, weighting_slope=0.0, tolerance=0.01258, pass_tolerance=99.0, max_iterations=100, tension=0.0, coarse_grid=16, solver='multilevel', blanking_metric='euclidean', boundary_mode='natural', average_cells=True, allow_large_grid=False)",
           "description": "Prepare observations and experimental minimum-curvature controls: support, desampling, tolerances, tension, boundaries and solver. Small cells and iteration limits do not guarantee resolution or convergence.",
           "description_origin": "authored_manual_note",
           "fields": [],
@@ -1387,16 +1469,52 @@
         },
         {
           "name": "MinimumCurvatureGridder.grid",
-          "line": 430,
-          "signature": "MinimumCurvatureGridder.grid(self, x_axis, y_axis, canceled=None, progress=None)",
+          "line": 511,
+          "signature": "MinimumCurvatureGridder.grid(self, x_axis, y_axis, canceled=None, progress=None, *, boundary=None)",
           "description": "Return a float grid indexed as rows by y and columns by x.",
           "description_origin": "source_docstring",
           "fields": [],
           "summary": "Return a float grid indexed as rows by y and columns by x."
         },
         {
+          "name": "suggest_flight_cell_size",
+          "line": 701,
+          "signature": "suggest_flight_cell_size(coordinates, line_ids, divisor=4)",
+          "description": "Return median projected flight-line spacing divided by 4 or 5.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return median projected flight-line spacing divided by 4 or 5."
+        },
+        {
+          "name": "BidirectionalGridder",
+          "line": 721,
+          "signature": "class BidirectionalGridder",
+          "description": "Grid approximately parallel profiles in two passes on a flight-aligned grid.\n\nLinear interpolation follows each flight's projected track. Cross-track\ninterpolation is linear or shape-preserving cubic (PCHIP). The resulting\naligned grid is sampled bilinearly at the requested output centers.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Grid approximately parallel profiles in two passes on a flight-aligned grid."
+        },
+        {
+          "name": "BidirectionalGridder.__init__",
+          "line": 729,
+          "signature": "BidirectionalGridder.__init__(self, coordinates, values, line_ids, *, trend=False, cross_method='linear', blanking_distance=0.0, max_line_gap=0.0, max_sample_gap=0.0)",
+          "description": "Configure flight profiles, cross-line interpolation and support limits.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Configure flight profiles, cross-line interpolation and support limits."
+        },
+        {
+          "name": "BidirectionalGridder.grid",
+          "line": 757,
+          "signature": "BidirectionalGridder.grid(self, x_axis, y_axis, canceled=None, *, boundary=None)",
+          "description": "Return rows by ascending y and columns by ascending x, with NaN gaps.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return rows by ascending y and columns by ascending x, with NaN gaps."
+        },
+        {
           "name": "SincGridder",
-          "line": 542,
+          "line": 848,
           "signature": "class SincGridder",
           "description": "Separable Lanczos-windowed cardinal sinc on a regular sample lattice.\n\nsinc(t) = sin(pi*t)/(pi*t); spacing is the ORIGINAL sample interval,\nindependent of the output cell size. Missing samples are not synthesized.\nCoordinates can be offset but the lattice is axis-aligned. This is an\nindependently specified windowed interpolator, not Geoplot parity.",
           "description_origin": "source_docstring",
@@ -1405,7 +1523,7 @@
         },
         {
           "name": "SincGridder.__init__",
-          "line": 551,
+          "line": 857,
           "signature": "SincGridder.__init__(self, coordinates, values, spacing, *, radius=4, blanking_distance=0.0, fallback='nodata')",
           "description": "Prepare sinc interpolation with explicit coordinates, values and spacing. Radius, blanking and fallback define support for queries; review the sampling assumption.",
           "description_origin": "authored_manual_note",
@@ -1414,7 +1532,7 @@
         },
         {
           "name": "SincGridder.evaluate",
-          "line": 585,
+          "line": 891,
           "signature": "SincGridder.evaluate(self, query, canceled=None)",
           "description": "Evaluate queries using the configured sinc interpolator, support policy and cancellation. No new sampling or CRS conversion is chosen.",
           "description_origin": "authored_manual_note",
@@ -1423,7 +1541,7 @@
         },
         {
           "name": "SincGridder.grid",
-          "line": 622,
+          "line": 928,
           "signature": "SincGridder.grid(self, x_axis, y_axis, canceled=None, progress=None)",
           "description": "Evaluate sinc on supplied X/Y axes, which define output lattice and size. Supports cancellation and progress.",
           "description_origin": "authored_manual_note",
@@ -2047,6 +2165,87 @@
       ]
     },
     {
+      "module": "live_preview",
+      "chapter": "09_fft_espectros.md",
+      "source_sha256": "cf169aac64984e30dbf0fb5efb0325859e525ddd60ea8e6fbe585f300975fe17",
+      "description": "Screen-resolution raster windows and cooperative latest-request cancellation.\n\nPreview windows include real observations around the viewport before the FFT\nengine adds reflection and taper. They approximate a full-grid calculation;\nlong wavelength operators still depend on observations outside this window.",
+      "summary": "Screen-resolution raster windows and cooperative latest-request cancellation.",
+      "definitions": [
+        {
+          "name": "PreviewWindow",
+          "line": 14,
+          "signature": "class PreviewWindow",
+          "description": "GDAL source rectangle and bounded screen-resolution output dimensions.",
+          "description_origin": "source_docstring",
+          "fields": [
+            "xoff: int",
+            "yoff: int",
+            "width: int",
+            "height: int",
+            "columns: int",
+            "rows: int",
+            "transform: tuple"
+          ],
+          "summary": "GDAL source rectangle and bounded screen-resolution output dimensions."
+        },
+        {
+          "name": "preview_window",
+          "line": 26,
+          "signature": "preview_window(transform, shape, extent, screen, margin=0.5, max_side=768)",
+          "description": "Clip a north-up viewport plus margin to the source, without upsampling.\n\nExtent is xmin, ymin, xmax, ymax in source coordinates. Margin is a fraction\nof each visible dimension on each side. Output spacing follows screen\npixels, capped at max_side for the visible portion, including on huge files.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Clip a north-up viewport plus margin to the source, without upsampling."
+        },
+        {
+          "name": "LatestRequest",
+          "line": 74,
+          "signature": "class LatestRequest",
+          "description": "Invalidate stale results and signal cancellation before the debounce ends.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Invalidate stale results and signal cancellation before the debounce ends."
+        },
+        {
+          "name": "LatestRequest.__init__",
+          "line": 77,
+          "signature": "LatestRequest.__init__(self)",
+          "description": "Start with no pending request.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Start with no pending request."
+        },
+        {
+          "name": "LatestRequest.replace",
+          "line": 82,
+          "signature": "LatestRequest.replace(self)",
+          "description": "Cancel the previous token and return a new generation and event.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Cancel the previous token and return a new generation and event."
+        },
+        {
+          "name": "LatestRequest.accepts",
+          "line": 89,
+          "signature": "LatestRequest.accepts(self, generation)",
+          "description": "Return whether a result still belongs to the latest live request.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return whether a result still belongs to the latest live request."
+        },
+        {
+          "name": "product_palette",
+          "line": 94,
+          "signature": "product_palette(algorithm_id)",
+          "description": "Choose GeoRamp's magnetic palette or a zero-centred signed palette.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Choose GeoRamp's magnetic palette or a zero-centred signed palette."
+        }
+      ],
+      "operations": []
+    },
+    {
       "module": "magnetic_compensation",
       "chapter": "06_perfiles_qc.md",
       "source_sha256": "5a300037256d92cad7af3493f7bfb72d4be569f1525656712e1377a030ba148e",
@@ -2163,7 +2362,7 @@
     {
       "module": "magnetic_pipeline",
       "chapter": "10_magnetometria.md",
-      "source_sha256": "e2f58754a30aebba619185618571f1b73ea7a5e3c65fc3182f18f6c926854f3c",
+      "source_sha256": "c8e7c43bd8e97b1a4e4a550ddc22b2d34c867c54524bf968a3ece1cceee64518",
       "description": "Versioned, GUI-independent magnetic grid pipeline with retained FFT margins.\n\nArrays are south-to-north, west-to-east. Filling is confined to the numerical\nworkspace; all published products restore the original support mask.",
       "summary": "Versioned, GUI-independent magnetic grid pipeline with retained FFT margins.",
       "definitions": [
@@ -2188,13 +2387,14 @@
             "detrend_order: int = -1",
             "taper_percent: float = 0.0",
             "nodata_policy: str = 'nearest'",
-            "max_gain: float = 100.0"
+            "max_gain: float = 100.0",
+            "preserve_rtp_mean: bool = True"
           ],
           "summary": "Options for magnetic products and preparation. Fields describe the actual recipe, not automatically inferred acquisition settings."
         },
         {
           "name": "MagneticPipelineOptions.validate",
-          "line": 32,
+          "line": 33,
           "signature": "MagneticPipelineOptions.validate(self)",
           "description": "Validate magnetic-pipeline settings before calculation. Syntactic validity still requires suitable physical units, directions and observations.",
           "description_origin": "authored_manual_note",
@@ -2203,16 +2403,16 @@
         },
         {
           "name": "magnetic_grid_products",
-          "line": 56,
+          "line": 57,
           "signature": "magnetic_grid_products(values, spacing, options, canceled=None)",
-          "description": "Branch from one padded RTP; crop/mask only final products.\n\nNo removed trend is restored to transformed anomalies. RMI retains the input.\nTrue-north declination follows the host convention: grid angle = true angle\n+ supplied grid convergence. Callers must derive convergence for their CRS.",
+          "description": "Branch from one padded RTP; crop/mask only final products.\n\nOnly the published RTP receives the selected mean. RMI retains the input.\nTrue-north declination follows the host convention: grid angle = true angle\n+ supplied grid convergence. Callers must derive convergence for their CRS.",
           "description_origin": "source_docstring",
           "fields": [],
           "summary": "Branch from one padded RTP; crop/mask only final products."
         },
         {
           "name": "line_correction_surface",
-          "line": 120,
+          "line": 122,
           "signature": "line_correction_surface(batches, x_name, y_name, line_name, correction_name, x_grid, y_grid, support, sample_step_cells=4.0, sigma_cells=2.0, canceled=None)",
           "description": "Rasterize database correction channels onto a published grid.\n\nLine rows must be contiguous and ordered. Sampling is based on cumulative\ndistance per line. This is not interpolation of raw magnetic observations.\nGrid coordinates must be increasing, regularly spaced pixel centers.",
           "description_origin": "source_docstring",
@@ -2225,14 +2425,14 @@
     {
       "module": "magnetic_products",
       "chapter": "10_magnetometria.md",
-      "source_sha256": "5a0c4eaa28fe629b63b1b3a9c9db529e27d27cdbe606a5f4147ecbbb4c4f2c71",
+      "source_sha256": "64872fd69fc06d1026f41bf5d1aad6bac10e3531b68a2c35fb303c61c218add3",
       "description": "Standalone Archie adapter for Terra magnetic products; no host SDK required.",
       "summary": "Standalone Archie adapter for Terra magnetic products; no host SDK required.",
       "definitions": [
         {
           "name": "compute_magnetic_products",
           "line": 5,
-          "signature": "compute_magnetic_products(grid_south_to_north, cell_size, *, inclination, declination, continuation_height=500, padding=16, angle_units='degrees', canceled=None, derivative_method='finite_difference', vertical_positive='down', composite_preparation=None)",
+          "signature": "compute_magnetic_products(grid_south_to_north, cell_size, *, inclination, declination, continuation_height=500, padding=16, angle_units='degrees', canceled=None, derivative_method='finite_difference', vertical_positive='down', composite_preparation=None, preserve_rtp_mean=True)",
           "description": "Compute products from an nT grid; declination is measured from grid north.\n\nArrays retain increasing northing by row. Publication alone reverses rows\nfor north-up GeoTIFFs. Field angles must be explicitly supplied in degrees.",
           "description_origin": "source_docstring",
           "fields": [],
@@ -2447,61 +2647,6 @@
           "description_origin": "source_docstring",
           "fields": [],
           "summary": "Run explicit user inputs; return saved products, tables and provenance."
-        }
-      ],
-      "operations": []
-    },
-    {
-      "module": "oasis_style",
-      "chapter": "09_fft_espectros.md",
-      "source_sha256": "fca027541efc61942f61e15ef5aaa7706fe6d5ff2dc9d3c91fbf16c0257c1be0",
-      "description": "Independent edge-plane FFT preparations and supported-grid derivatives.\n\nLegacy biharmonic fill and Burg axis prediction are explicit alternatives.\nNeither uses the Geosoft runtime. Retained residuals and masks are preserved.",
-      "summary": "Independent edge-plane FFT preparations and supported-grid derivatives.",
-      "definitions": [
-        {
-          "name": "oasis_observed_fft_size",
-          "line": 12,
-          "signature": "oasis_observed_fft_size(n)",
-          "description": "Compatibility helper selecting an implemented FFT-size family. Historical comparisons cover a limited tested range; the name establishes no general engine equivalence.",
-          "description_origin": "authored_manual_note",
-          "fields": [],
-          "summary": "Compatibility helper selecting an implemented FFT-size family. Historical comparisons cover a limited tested range; the name establishes no general engine equivalence."
-        },
-        {
-          "name": "prepare_independent",
-          "line": 32,
-          "signature": "prepare_independent(data, expanded_shape=None, max_unknown=250000)",
-          "description": "Prepare a grid with biharmonic treatment and explicit expansion under an unknown-count budget. Requires scikit-image; preparation is distinct from subsequent filtering.",
-          "description_origin": "authored_manual_note",
-          "fields": [],
-          "summary": "Prepare a grid with biharmonic treatment and explicit expansion under an unknown-count budget. Requires scikit-image; preparation is distinct from subsequent filtering."
-        },
-        {
-          "name": "prepare_prediction",
-          "line": 170,
-          "signature": "prepare_prediction(data, expanded_shape=None, max_unknown=250000)",
-          "description": "Remove the edge plane and predict missing values along both axes.\n\nThe documented FFT-preparation defaults determine model length and rolloff.\nBurg fitting is independent Python, with distance-weighted axis predictions.\nIt never calls Geosoft or changes retained measurements.",
-          "description_origin": "source_docstring",
-          "fields": [],
-          "summary": "Remove the edge plane and predict missing values along both axes."
-        },
-        {
-          "name": "central_valid",
-          "line": 252,
-          "signature": "central_valid(a, axis, spacing)",
-          "description": "Compute a central difference along an explicit axis/spacing using finite neighbours. Unsupported boundaries remain missing rather than inventing one-sided derivatives.",
-          "description_origin": "authored_manual_note",
-          "fields": [],
-          "summary": "Compute a central difference along an explicit axis/spacing using finite neighbours. Unsupported boundaries remain missing rather than inventing one-sided derivatives."
-        },
-        {
-          "name": "composite_derivatives",
-          "line": 277,
-          "signature": "composite_derivatives(values, spacing, vertical_positive='down', preparation='edge_plane_biharmonic')",
-          "description": "Central horizontal derivatives and independently prepared FFT verticals.\n\nNo Geosoft imports or process calls. Preparation selects legacy biharmonic\nfilling or independent Burg prediction; neither claims exact vendor parity.",
-          "description_origin": "source_docstring",
-          "fields": [],
-          "summary": "Central horizontal derivatives and independently prepared FFT verticals."
         }
       ],
       "operations": []
@@ -3690,7 +3835,7 @@
     {
       "module": "spectral",
       "chapter": "09_fft_espectros.md",
-      "source_sha256": "2421f46d446d6c72547191d870b04ed21e49ac5ed4285f5e78e9d4b849a2a21f",
+      "source_sha256": "fbcb61bb5d7e0631bc7a58501509b89b7befbe72beeb47318189370189d9a216",
       "description": "Numerical helpers for two-dimensional Fourier-domain raster filters.",
       "summary": "Numerical helpers for two-dimensional Fourier-domain raster filters.",
       "definitions": [
@@ -3713,8 +3858,17 @@
           "summary": "Crop an FFT result to the original footprint and optionally restore trend."
         },
         {
-          "name": "frequency_grid",
+          "name": "set_rtp_mean",
           "line": 112,
+          "signature": "set_rtp_mean(values, source, preserve=True)",
+          "description": "Set the mean on valid output cells to the corresponding input mean or zero.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Set the mean on valid output cells to the corresponding input mean or zero."
+        },
+        {
+          "name": "frequency_grid",
+          "line": 123,
           "signature": "frequency_grid(shape, spacing_northing, spacing_easting)",
           "description": "Return east, north and radial angular wavenumbers in radians/unit.",
           "description_origin": "source_docstring",
@@ -3723,7 +3877,7 @@
         },
         {
           "name": "apply_transfer",
-          "line": 121,
+          "line": 132,
           "signature": "apply_transfer(values, transfer)",
           "description": "Apply a real-valued or complex Fourier transfer function.",
           "description_origin": "source_docstring",
@@ -3732,7 +3886,7 @@
         },
         {
           "name": "apply_spectrum",
-          "line": 127,
+          "line": 138,
           "signature": "apply_spectrum(transformed, transfer)",
           "description": "Apply a transfer function to an existing 2D Fourier spectrum.",
           "description_origin": "source_docstring",
@@ -3741,7 +3895,7 @@
         },
         {
           "name": "cutoff_wavenumber",
-          "line": 133,
+          "line": 144,
           "signature": "cutoff_wavenumber(wavelength)",
           "description": "Convert wavelength in ground units to angular wavenumber.",
           "description_origin": "source_docstring",
@@ -3750,7 +3904,7 @@
         },
         {
           "name": "butterworth_lowpass",
-          "line": 141,
+          "line": 152,
           "signature": "butterworth_lowpass(radial, wavelength, order)",
           "description": "Build a radial low-pass gain from angular wavenumber, cutoff wavelength and order. It returns transfer, not a filtered grid; check units and apply through FFT.",
           "description_origin": "authored_manual_note",
@@ -3759,7 +3913,7 @@
         },
         {
           "name": "butterworth_highpass",
-          "line": 149,
+          "line": 160,
           "signature": "butterworth_highpass(radial, wavelength, order)",
           "description": "Build the complementary radial high-pass transfer. Cutoff uses Core wavelength conventions, not the Hz of a temporal series.",
           "description_origin": "authored_manual_note",
@@ -3768,7 +3922,7 @@
         },
         {
           "name": "butterworth_bandpass",
-          "line": 160,
+          "line": 171,
           "signature": "butterworth_bandpass(radial, long_wavelength, short_wavelength, order)",
           "description": "Combine long- and short-wavelength cutoffs into a radial Butterworth band. Check order and cutoff ordering; band choice changes interpreted scales.",
           "description_origin": "authored_manual_note",
@@ -3777,7 +3931,7 @@
         },
         {
           "name": "ideal_bandpass",
-          "line": 167,
+          "line": 178,
           "signature": "ideal_bandpass(radial, long_wavelength, short_wavelength)",
           "description": "Build an abrupt radial pass band. Spectral discontinuity may cause spatial ringing; ideal does not mean artefact-free.",
           "description_origin": "authored_manual_note",
@@ -3786,7 +3940,7 @@
         },
         {
           "name": "cosine_rolloff_lowpass",
-          "line": 174,
+          "line": 185,
           "signature": "cosine_rolloff_lowpass(radial, long_wavelength, short_wavelength, degree)",
           "description": "Smoothly roll from one to zero between two wavelength cutoffs.",
           "description_origin": "source_docstring",
@@ -3795,7 +3949,7 @@
         },
         {
           "name": "directional_cosine",
-          "line": 190,
+          "line": 201,
           "signature": "directional_cosine(k_east, k_north, azimuth, degree)",
           "description": "Pass structures oriented along a clockwise-from-north azimuth.",
           "description_origin": "source_docstring",
@@ -3804,7 +3958,7 @@
         },
         {
           "name": "stabilized_downward_continuation",
-          "line": 203,
+          "line": 214,
           "signature": "stabilized_downward_continuation(radial, height, lowpass_wavelength, order, max_gain)",
           "description": "Return downward continuation limited by a Butterworth taper and gain cap.",
           "description_origin": "source_docstring",
@@ -3813,7 +3967,7 @@
         },
         {
           "name": "integration_transfer",
-          "line": 216,
+          "line": 227,
           "signature": "integration_transfer(component, radial)",
           "description": "Return a stable zero-mean integration operator for one derivative component.",
           "description_origin": "source_docstring",
@@ -3822,7 +3976,7 @@
         },
         {
           "name": "vertical_integration_transfer",
-          "line": 225,
+          "line": 236,
           "signature": "vertical_integration_transfer(radial)",
           "description": "Return 1/k for positive radial modes and zero at DC. Integration cannot recover a mean absent from those modes.",
           "description_origin": "authored_manual_note",
@@ -3831,7 +3985,7 @@
         },
         {
           "name": "magnetic_direction_factor",
-          "line": 232,
+          "line": 243,
           "signature": "magnetic_direction_factor(k_east, k_north, radial, inclination, declination)",
           "description": "Return the frequency-domain directional factor for a magnetic vector.",
           "description_origin": "source_docstring",
@@ -3840,7 +3994,7 @@
         },
         {
           "name": "magnetic_field_transform",
-          "line": 247,
+          "line": 258,
           "signature": "magnetic_field_transform(k_east, k_north, radial, source_inclination, source_declination, target_inclination, target_declination, magnetization_inclination=None, magnetization_declination=None, max_gain=100.0)",
           "description": "Transform induced/remanent total-field anomalies between field directions.",
           "description_origin": "source_docstring",
@@ -3849,7 +4003,7 @@
         },
         {
           "name": "radial_power_spectrum",
-          "line": 291,
+          "line": 302,
           "signature": "radial_power_spectrum(values, spacing_northing, spacing_easting, bins=96)",
           "description": "Return radial wavenumber centers and mean power for preview plots.",
           "description_origin": "source_docstring",
@@ -4435,7 +4589,7 @@
     {
       "module": "survey_processing",
       "chapter": "07_nivelacion_gridding.md",
-      "source_sha256": "d25baf997c06424d32df83e0765d587d29ba3cd2b50caee82727b54239421587",
+      "source_sha256": "74ed2662f4361dc178eaffa526984e67086f5fde0b30a9578560b52e224b96fb",
       "description": "Tiled survey gridding and directional crosshatch fusion.",
       "summary": "Tiled survey gridding and directional crosshatch fusion.",
       "definitions": [
@@ -4447,6 +4601,133 @@
           "description_origin": "authored_manual_note",
           "fields": [],
           "summary": "Tiled gridding kernel with coordinator-supplied core, halo, radius and callbacks. Options may distinguish directions; the call does not automatically select CRS, resolution or physics."
+        }
+      ],
+      "operations": []
+    },
+    {
+      "module": "survey_profile_edits",
+      "chapter": "05_bases_canales.md",
+      "source_sha256": "5236e8dca33f3f57336733d485fb4bd12a147fa88ca913da392512483589f207",
+      "description": "Exact sample editing and catalogue publication for line profiles.",
+      "summary": "Exact sample editing and catalogue publication for line profiles.",
+      "definitions": [
+        {
+          "name": "ProfileEdits",
+          "line": 13,
+          "signature": "class ProfileEdits",
+          "description": "Keep reversible, sparse edits to a channel in acquisition order.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Keep reversible, sparse edits to a channel in acquisition order."
+        },
+        {
+          "name": "ProfileEdits.__init__",
+          "line": 16,
+          "signature": "ProfileEdits.__init__(self, values)",
+          "description": "Copy a vector of source samples into an independent draft.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Copy a vector of source samples into an independent draft."
+        },
+        {
+          "name": "ProfileEdits.operations",
+          "line": 24,
+          "signature": "ProfileEdits.operations(self)",
+          "description": "Return the applied operations in chronological order.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return the applied operations in chronological order."
+        },
+        {
+          "name": "ProfileEdits.dummy",
+          "line": 38,
+          "signature": "ProfileEdits.dummy(self, first, last)",
+          "description": "Set the inclusive sample interval to dummy.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Set the inclusive sample interval to dummy."
+        },
+        {
+          "name": "ProfileEdits.undo",
+          "line": 46,
+          "signature": "ProfileEdits.undo(self)",
+          "description": "Reverse the most recent applied edit.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Reverse the most recent applied edit."
+        },
+        {
+          "name": "ProfileEdits.redo",
+          "line": 53,
+          "signature": "ProfileEdits.redo(self)",
+          "description": "Reapply the most recently undone edit.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Reapply the most recently undone edit."
+        },
+        {
+          "name": "ProfileEdits.interpolate",
+          "line": 60,
+          "signature": "ProfileEdits.interpolate(self, axis, first, last, method, *, axis_name=None)",
+          "description": "Fill bounded gaps in the selection by linear or Akima interpolation.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Fill bounded gaps in the selection by linear or Akima interpolation."
+        },
+        {
+          "name": "ProfileEdits.spike_candidates",
+          "line": 100,
+          "signature": "ProfileEdits.spike_candidates(self, threshold, *, relative=True)",
+          "description": "Find local outliers with Hampel or an absolute median residual limit.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Find local outliers with Hampel or an absolute median residual limit."
+        },
+        {
+          "name": "ProfileEdits.apply_spikes",
+          "line": 117,
+          "signature": "ProfileEdits.apply_spikes(self, indices, threshold, *, relative=True)",
+          "description": "Mark the previewed samples dummy and retain detector parameters.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Mark the previewed samples dummy and retain detector parameters."
+        },
+        {
+          "name": "ProfileEdits.fourth_difference",
+          "line": 131,
+          "signature": "ProfileEdits.fourth_difference(self)",
+          "description": "Return centered fourth sample differences, propagating dummies.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return centered fourth sample differences, propagating dummies."
+        },
+        {
+          "name": "ProfileEdits.statistics",
+          "line": 138,
+          "signature": "ProfileEdits.statistics(self, first, last)",
+          "description": "Return valid count, dummy count, min, max, mean and population SD.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return valid count, dummy count, min, max, mean and population SD."
+        },
+        {
+          "name": "ProfileEdits.changes",
+          "line": 149,
+          "signature": "ProfileEdits.changes(self)",
+          "description": "Return sample indices and values that differ from the source.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Return sample indices and values that differ from the source."
+        },
+        {
+          "name": "publish_profile_edits",
+          "line": 158,
+          "signature": "publish_profile_edits(store, database, source, output, inputs, unit, edits)",
+          "description": "Publish a row-aligned derivative from pinned catalogue versions.\n\nEdit records contain physical row positions, changed values and recipes.\nOther rows retain their source values.",
+          "description_origin": "source_docstring",
+          "fields": [],
+          "summary": "Publish a row-aligned derivative from pinned catalogue versions."
         }
       ],
       "operations": []

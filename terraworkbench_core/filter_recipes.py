@@ -97,7 +97,7 @@ def apply_proposals(
     composite_derivative_method="finite_difference",
     vertical_positive="down",
     composite_preparation=None,
-    horizontal_fft_convention="oasis",
+    horizontal_fft_convention="classic",
     validate_only=False,
     stage_callback=None,
 ):
@@ -117,12 +117,13 @@ def apply_proposals(
         frequency_grid,
         apply_transfer,
         magnetic_field_transform,
+        set_rtp_mean,
     )
 
     _check(canceled)
     raw = _grid(grid_south_to_north, cell_size, padding)
-    if horizontal_fft_convention not in ("standard", "oasis"):
-        raise ValueError("Choose standard/oasis horizontal FFT convention explicitly.")
+    if horizontal_fft_convention not in ("standard", "classic"):
+        raise ValueError("Choose standard/classic horizontal FFT convention explicitly.")
     if angle_units not in ("degrees", "radians"):
         raise ValueError("Angle units must be degrees or radians.")
     if composite_derivative_method not in ("fft", "finite_difference"):
@@ -349,7 +350,11 @@ def apply_proposals(
                 )
                 if gain > 1000:
                     raise ValueError("RTP maximum gain must not exceed 1000.")
+                preserve_mean = step.get("preserve_mean", True)
+                if not isinstance(preserve_mean, bool):
+                    raise ValueError("RTP preserve_mean must be a boolean.")
                 params.update(
+                    preserve_mean=preserve_mean,
                     inclination=float(inclination),
                     declination=float(declination),
                     max_gain=gain,
@@ -374,16 +379,18 @@ def apply_proposals(
         ke, kn, radial = frequency_grid(work.shape, cell_size, cell_size)
         units = units_map.get(base, "nT")
         history = []
+        published = None
         for step_index, params in enumerate(steps):
             _check(canceled)
             f, input_units = params["filter"], units
+            rtp_source = finish_fft_grid(work, state, False) if f == "RTP" else None
             if f in ("DX", "DY", "1VD", "2VD", "UC", "RTP"):
                 if f == "DX":
                     transfer = 1j * ke
                 elif f == "DY":
                     transfer = 1j * kn.copy()
-                    if horizontal_fft_convention == "oasis" and work.shape[0] % 2 == 0:
-                        # Native Oasis DRVY uses the east-frequency half-plane
+                    if horizontal_fft_convention == "classic" and work.shape[0] % 2 == 0:
+                        # The classic convention uses the east-frequency half-plane
                         # to orient the self-aliased north Nyquist row. Other
                         # frequencies retain the standard spectral derivative.
                         row = work.shape[0] // 2
@@ -509,7 +516,7 @@ def apply_proposals(
                     work = work * np.minimum(gain, params["max_gain"])
             else:
                 if composite_preparation != "reflect":
-                    from terraworkbench_core.oasis_style import (
+                    from terraworkbench_core.classic_style import (
                         composite_derivatives,
                         central_valid,
                     )
@@ -574,15 +581,19 @@ def apply_proposals(
             if not np.isfinite(work).all():
                 raise ValueError(f"Nonfinite intermediate in proposal {name}: {f}")
             history.append(dict(params, input_units=input_units, output_units=units))
+            published = None
+            if rtp_source is not None:
+                published = set_rtp_mean(finish_fft_grid(work, state, False),
+                                         rtp_source, params["preserve_mean"])
             if stage_callback is not None:
                 stage_callback(
                     proposal_index,
                     step_index,
-                    finish_fft_grid(work, state, restore_trend=False),
+                    published if published is not None else finish_fft_grid(work, state, False),
                     units,
                 )
         _check(canceled)
-        products[name] = finish_fft_grid(work, state, restore_trend=False)
+        products[name] = published if published is not None else finish_fft_grid(work, state, False)
         product_units[name] = units
         recipes.append(
             {
@@ -609,12 +620,12 @@ def apply_proposals(
         "composite_derivative_method": composite_derivative_method,
         "composite_preparation": composite_preparation,
         "horizontal_fft_convention": horizontal_fft_convention,
-        "method_revision": "archie-filters-4: independent Burg composite preparation; explicit Oasis/standard standalone DY Nyquist convention; positive-down vertical; central composite derivatives",
+        "method_revision": "archie-filters-4: independent Burg composite preparation; explicit classic/standard standalone DY Nyquist convention; positive-down vertical; central composite derivatives",
         "agc_definition": "global supported-core RMS divided by reflect square-window local RMS; gain capped; units retained",
         "local_filters_definition": "LP: reflect Gaussian sigma metres, truncate 4 sigma; HP: input minus LP; MEDIAN: odd square median; STD/VAR: odd square population moments; workspace nearest-filled before filtering",
         "limitations": [
-            "RTP discards FFT DC and caps gain; angles measured from grid north.",
-            "AGC is a native RMS normalization, not certified Oasis method 0 equivalence.",
+            "RTP preserves the supported mean in published stages by default; subsequent stages use the zero-DC FFT workspace.",
+            "AGC normalizes by local RMS.",
             "Sequential filtering of angles is allowed and changes physical units accordingly.",
             "Workspace filling and padding influence boundaries; no synthetic coverage published.",
         ],

@@ -10,6 +10,8 @@ igrf_field calcula componentes Leste, Norte e Cima, campo total e elementos angu
 
 ## RTP, RTE e componentes
 
+Por padrão, a RTP preserva a média da entrada nas células válidas. A saída com média zero é opcional. Na cadeia magnética, a opção afeta a grade RTP publicada; as derivadas e os demais produtos usam a mesma superfície de cálculo.
+
 A redução ao polo ou equador transforma uma anomalia sob hipóteses de direção do campo e magnetização. Uma direção induzida pode ser insuficiente com remanência. Condições que produzem denominadores pequenos exigem estabilização; um mapa simétrico não certifica correção física.
 
 magnetic_components oferece conversão de componentes e reconstrução de TMI a partir de gradientes com direções explícitas. Recuperação de modos fracos e nível médio depende das restrições do método; integrar gradientes não recupera necessariamente um datum absoluto medido. Documentar unidades e componentes não observáveis.

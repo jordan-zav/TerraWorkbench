@@ -91,3 +91,34 @@ def test_database_line_leveling_atomic_provenance(tmp_path):
     assert not list(store.root.rglob("*.partial"))
     with pytest.raises(InterruptedError):
         store.level_lines(database, "mag", "line", [("a", "b", 2.)], "corr3", "leveled3", canceled=lambda: True)
+
+@pytest.mark.parametrize("method", ["fft", "finite_difference"])
+def test_rtp_mean_does_not_change_other_products(method):
+    values = 57000. + np.sin(np.arange(120).reshape(10, 12))
+    values[0, 0] = np.nan
+    keep, _ = magnetic_grid_products(values, (2., 2.), MagneticPipelineOptions(
+        70., 15., derivative_method=method))
+    remove, _ = magnetic_grid_products(values, (2., 2.), MagneticPipelineOptions(
+        70., 15., derivative_method=method, preserve_rtp_mean=False))
+    assert np.nanmean(keep["RTP"]) == pytest.approx(np.nanmean(values))
+    assert np.nanmean(remove["RTP"]) == pytest.approx(0., abs=1e-10)
+    assert np.isnan(keep["RTP"][0, 0])
+    for product in keep.keys() - {"RTP"}:
+        np.testing.assert_array_equal(keep[product], remove[product])
+
+
+def test_sequential_rtp_mean_only_changes_published_rtp():
+    from terraworkbench_core.filter_recipes import apply_proposals
+
+    values = 50000. + np.cos(np.arange(80).reshape(8, 10))
+    proposals = [
+        dict(name="RTP", steps=[dict(filter="RTP")]),
+        dict(name="UC from RTP", steps=[dict(filter="RTP"), dict(filter="UC", param=5)]),
+    ]
+    retained, _ = apply_proposals(values, 1., proposals, inclination=70., declination=15.)
+    for proposal in proposals:
+        proposal["steps"][0]["preserve_mean"] = False
+    removed, _ = apply_proposals(values, 1., proposals, inclination=70., declination=15.)
+    assert retained["RTP"].mean() == pytest.approx(values.mean())
+    assert removed["RTP"].mean() == pytest.approx(0., abs=1e-10)
+    np.testing.assert_array_equal(retained["UC from RTP"], removed["UC from RTP"])

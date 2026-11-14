@@ -34,10 +34,7 @@ grilla. Se supone magnetizacion inducida, sin remanencia ni correccion de
 autodesmagnetizacion. La susceptibilidad uniforme no produce campo externo
 en esta capa periodica. No se resta IGRF ni se corrigen terreno o datum.
 
-Es un modelo independiente. El operador SUSC de Oasis documenta prismas de
-profundidad infinita y unidades cgs, por lo que sus valores no deben compararse
-directamente como si fueran esta susceptibilidad SI. No se afirma paridad.
-[Especificacion publica de SUSC](https://help.seequent.com/Oasismontaj/2025.2/Content/gxhelp/fft2con/fft2con_susc.htm).
+El modelo expresa la susceptibilidad en unidades SI.
 
 ## Estabilizacion y resultados
 
